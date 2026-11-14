@@ -50,7 +50,7 @@ function PlusMenu({ onClose, onManual }: { onClose: () => void; onManual: () => 
           </span>
           Input manual
         </button>
-        <button type="button" role="menuitem" className="dial-item" disabled aria-disabled="true">
+        <button type="button" role="menuitem" className="dial-item" disabled aria-disabled="true" aria-label="Ambil foto, segera hadir">
           <span className="icb">
             <Camera size={20} aria-hidden="true" />
           </span>
@@ -59,7 +59,7 @@ function PlusMenu({ onClose, onManual }: { onClose: () => void; onManual: () => 
           </span>
           <span className="tag neu">segera hadir</span>
         </button>
-        <button type="button" role="menuitem" className="dial-item" disabled aria-disabled="true">
+        <button type="button" role="menuitem" className="dial-item" disabled aria-disabled="true" aria-label="Unggah gambar, segera hadir">
           <span className="icb">
             <ImageUp size={20} aria-hidden="true" />
           </span>

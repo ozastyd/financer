@@ -110,12 +110,13 @@ export default function BerandaPage() {
             <CashFlowChart
               series={series}
               prevLabel={r.prevLabel}
-              ariaLabel={`Grafik arus kas bersih ${r.label} dibanding ${r.prevLabel}. Saat ini ${formatRupiah(cur.net)}.`}
+              showPrevious={prev.count > 0}
+              ariaLabel={`Grafik arus kas bersih ${r.label}${prev.count > 0 ? ` dibanding ${r.prevLabel}` : ""}. Saat ini ${formatRupiah(cur.net)}.`}
             />
           </>
         )}
         <p className="s mut">
-          {cur.count > 0 && <>Garis putus-putus: {r.prevLabel}. </>}
+          {cur.count > 0 && prev.count > 0 && <>Garis putus-putus: {r.prevLabel}. </>}
           Saldo tercatat{" "}
           <span className="b num" style={{ color: "var(--ink)" }}>
             {formatRupiah(balance)}

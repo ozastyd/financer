@@ -156,7 +156,10 @@ export default function OnboardingPage() {
     );
   }
 
-  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d));
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => {
+    setError(null);
+    setDraft((d) => (d ? { ...d, [k]: v } : d));
+  };
 
   const payload = (nextStep: number, completed = false): OnboardingInput => ({
     step: nextStep,

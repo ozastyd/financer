@@ -20,7 +20,7 @@ function ChartTip({ active, payload, prevLabel }: TipProps) {
       <div>
         {p.label} · {p.current == null ? "—" : formatRupiah(p.current)}
       </div>
-      {p.previous != null && (
+      {p.previous != null && prevLabel && (
         <div style={{ fontWeight: 500, opacity: 0.85 }}>
           {prevLabel}: {formatRupiah(p.previous)}
         </div>
@@ -29,13 +29,13 @@ function ChartTip({ active, payload, prevLabel }: TipProps) {
   );
 }
 
-export function CashFlowChart({ series, prevLabel, ariaLabel }: { series: SeriesPoint[]; prevLabel: string; ariaLabel: string }) {
+export function CashFlowChart({ series, prevLabel, ariaLabel, showPrevious }: { series: SeriesPoint[]; prevLabel: string; ariaLabel: string; showPrevious: boolean }) {
   const ticks = [series[0]?.key, series[Math.floor(series.length / 2)]?.key, series[series.length - 1]?.key].filter(Boolean) as string[];
   const labelOf = (k: string) => series.find((s) => s.key === k)?.label ?? "";
   return (
     <div role="img" aria-label={ariaLabel} style={{ width: "100%", height: 150, marginTop: 6 }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={series} margin={{ top: 10, right: 6, bottom: 0, left: 6 }}>
+        <ComposedChart data={series} margin={{ top: 10, right: 22, bottom: 0, left: 22 }}>
           <XAxis
             dataKey="key"
             ticks={ticks}
@@ -46,8 +46,8 @@ export function CashFlowChart({ series, prevLabel, ariaLabel }: { series: Series
             tick={{ fill: "var(--mut)", fontSize: 11.5, fontWeight: 600 }}
           />
           <YAxis hide domain={["auto", "auto"]} />
-          <Tooltip content={<ChartTip prevLabel={prevLabel} />} cursor={{ stroke: "var(--ctl)", strokeWidth: 1 }} />
-          <Line type="monotone" dataKey="previous" stroke="var(--ctl)" strokeWidth={1.5} strokeDasharray="4 5" dot={false} isAnimationActive={false} />
+          <Tooltip content={<ChartTip prevLabel={showPrevious ? prevLabel : ""} />} cursor={{ stroke: "var(--ctl)", strokeWidth: 1 }} />
+          {showPrevious && <Line type="monotone" dataKey="previous" stroke="var(--ctl)" strokeWidth={1.5} strokeDasharray="4 5" dot={false} isAnimationActive={false} />}
           <Area
             type="monotone"
             dataKey="current"

@@ -32,7 +32,7 @@ export default function IntroPage() {
           <div className="bar" style={{ background: "var(--heroline)" }}>
             <i style={{ width: "40%", background: "#5EE0B0" }} />
           </div>
-          <p className="s mut">Progres naik tiap kali kamu setor</p>
+          <p className="s mut">Naik tiap kamu setor</p>
         </div>
         <div className="float" style={{ right: 18, top: 64, width: 136, alignItems: "center", transform: "rotate(7deg)" }}>
           <svg width="72" height="72" viewBox="0 0 88 88">

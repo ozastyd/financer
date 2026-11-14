@@ -111,15 +111,11 @@ function TransactionForm({ initialType, edit, onDone }: { initialType: TxType; e
           inputMode="none"
           autoComplete="off"
           value={formatRupiah(value)}
-          onChange={() => {}}
-          onKeyDown={(e) => {
-            if (/^\d$/.test(e.key)) {
-              e.preventDefault();
-              press(e.key);
-            } else if (e.key === "Backspace") {
-              e.preventDefault();
-              press("del");
-            }
+          onChange={(e) => {
+            // typing, pasting and deleting all edit the formatted text; keep only the digits
+            setError(null);
+            const digits = e.target.value.replace(/\D/g, "").replace(/^0+/, "");
+            if (!digits || Number(digits) <= MAX_AMOUNT) setAmount(digits);
           }}
           style={{ fontSize: 40, textAlign: "center", border: 0, background: "transparent", color: value ? "var(--ink)" : "var(--mut)", width: "100%", padding: 0 }}
         />
