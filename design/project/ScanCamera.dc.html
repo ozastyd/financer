@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Foto struk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="dark" style="width: 390px; height: 844px; background: #05080C">
+<div class="scr" style="gap: 16px; padding-bottom: 36px">
+
+<div class="hd">
+<a class="ibtn" href="PlusMenu.dc.html" aria-label="Tutup kamera"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+<p>Foto struk</p>
+<button class="ibtn" type="button" aria-label="Lampu kilat mati" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3 5 13h6l-1 8 8-10h-6z"/></svg></button>
+</div>
+
+<div style="flex: 1; position: relative; border-radius: 28px; background: #0F1620; display: grid; place-items: center">
+<div style="position: absolute; inset: 28px 44px; border: 2px dashed var(--ctl); border-radius: 16px"></div>
+<svg aria-hidden="true" viewBox="0 0 302 480" preserveAspectRatio="none" style="position: absolute; inset: 20px 36px; width: calc(100% - 72px); height: calc(100% - 40px)" fill="none" stroke-width="4" stroke-linecap="round"><path d="M2 40V14A12 12 0 0 1 14 2h26M262 2h26a12 12 0 0 1 12 12v26M300 440v26a12 12 0 0 1-12 12h-26M40 478H14A12 12 0 0 1 2 466v-26" style="stroke: var(--pri)"/></svg>
+<div class="col" style="align-items: center; gap: 6px; text-align: center; padding: 0 64px">
+<p class="sec">Pratinjau kamera</p>
+<p class="t">Posisikan seluruh struk di dalam bingkai</p>
+</div>
+</div>
+
+<p class="s mut" style="text-align: center">Cari tempat yang terang dan ratakan struknya, biar tulisannya terbaca.</p>
+
+<div class="row" style="justify-content: space-between; padding: 0 12px">
+<a class="col" href="ScanLoading.dc.html" style="align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-size: 12px; font-weight: 600; width: 72px"><span class="icb" style="width: 48px; height: 48px; border-radius: 14px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><circle cx="9" cy="10" r="1.5"/><path d="m4 17 5-4 4 3 3-2 4 3"/></svg></span>Galeri</a>
+<a href="ScanLoading.dc.html" aria-label="Ambil foto" style="width: 76px; height: 76px; border-radius: 50%; border: 4px solid #FFFFFF; display: grid; place-items: center"><span style="width: 58px; height: 58px; border-radius: 50%; background: #FFFFFF; display: block"></span></a>
+<a class="col" href="AddTx.dc.html" style="align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-size: 12px; font-weight: 600; width: 72px"><span class="icb" style="width: 48px; height: 48px; border-radius: 14px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></svg></span>Manual</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

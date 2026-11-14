@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Laporan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 1370px">
+<div class="scr" style="gap: 14px; padding-bottom: 32px">
+
+<div class="hd">
+<a class="ibtn" href="Profile.dc.html" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p>Laporan</p>
+<button class="ibtn" type="button" aria-label="Unduh laporan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></svg></button>
+</div>
+
+<div class="seg" role="group" aria-label="Jenis laporan">
+<button type="button" aria-pressed="false">Mingguan</button>
+<button class="on" type="button" aria-pressed="true">Bulanan</button>
+</div>
+
+<div class="col" style="gap: 2px">
+<p class="sec">November 2026 · sampai 14 Nov</p>
+<p class="big">Rp1.920.000</p>
+<p class="s mut">arus kas bersih, dari transaksi yang kamu catat</p>
+</div>
+
+<div class="g2">
+<div class="card" style="gap: 2px; padding: 14px"><p class="sec">Masuk</p><p class="h2 num">Rp4.850.000</p></div>
+<div class="card" style="gap: 2px; padding: 14px"><p class="sec">Keluar</p><p class="h2 num">Rp2.930.000</p></div>
+<div class="card" style="gap: 2px; padding: 14px"><p class="sec">Ditabung</p><p class="h2 num">Rp700.000</p></div>
+<div class="card" style="gap: 2px; padding: 14px"><p class="sec">Skor finansial</p><p class="h2 num">68 <span class="s pos">+4</span></p></div>
+</div>
+
+<section class="card blu" aria-label="Ringkasan dari AI">
+<div class="row">
+<span class="icb" style="background: var(--sf); color: var(--blu)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg></span>
+<p class="h3 sp">Ringkasan dari AI</p>
+</div>
+<p class="t">Kamu sudah nabung tepat waktu empat bulan berturut-turut. Pengeluaran makan naik karena pesan-antar; sisanya stabil. Budget masih cukup sampai akhir bulan kalau rata-rata harian di bawah Rp42.000.</p>
+<p class="s mut">Dibuat dari catatanmu. Angka harian adalah perkiraan.</p>
+</section>
+
+<section class="card" aria-label="Masuk dan keluar empat bulan terakhir">
+<div class="row"><p class="sec sp">Masuk vs keluar</p>
+<span class="s" style="display: inline-flex; align-items: center; gap: 6px"><i style="width: 10px; height: 10px; border-radius: 3px; background: var(--c1)"></i>Masuk</span>
+<span class="s" style="display: inline-flex; align-items: center; gap: 6px"><i style="width: 10px; height: 10px; border-radius: 3px; background: var(--c5)"></i>Keluar</span>
+</div>
+<svg viewBox="0 0 318 150" role="img" aria-label="Agustus masuk 4,5 juta keluar 3,2 juta. September 4,5 dan 3,1. Oktober 4,7 dan 2,95. November 4,85 dan 2,93." style="width: 100%; height: auto; display: block">
+<path d="M0 124H318" fill="none" stroke-width="1" style="stroke: var(--line)"/>
+<g font-size="11" font-weight="700" text-anchor="middle" style="fill: var(--ink)">
+<rect x="14" y="25" width="24" height="99" rx="5" style="fill: var(--c1)"/><text x="26" y="19">4,5</text>
+<rect x="42" y="54" width="24" height="70" rx="5" style="fill: var(--c5)"/><text x="54" y="48">3,2</text>
+<rect x="94" y="25" width="24" height="99" rx="5" style="fill: var(--c1)"/><text x="106" y="19">4,5</text>
+<rect x="122" y="56" width="24" height="68" rx="5" style="fill: var(--c5)"/><text x="134" y="50">3,1</text>
+<rect x="174" y="21" width="24" height="103" rx="5" style="fill: var(--c1)"/><text x="186" y="15">4,7</text>
+<rect x="202" y="59" width="24" height="65" rx="5" style="fill: var(--c5)"/><text x="214" y="53">2,95</text>
+<rect x="254" y="17" width="24" height="107" rx="5" style="fill: var(--c1)"/><text x="266" y="11">4,85</text>
+<rect x="282" y="60" width="24" height="64" rx="5" style="fill: var(--c5)"/><text x="294" y="54">2,93</text>
+</g>
+<g font-size="11.5" font-weight="600" text-anchor="middle" style="fill: var(--mut)">
+<text x="40" y="143">Agu</text><text x="120" y="143">Sep</text><text x="200" y="143">Okt</text><text x="280" y="143">Nov</text>
+</g>
+</svg>
+<p class="s mut">Dalam juta rupiah. November baru sampai tanggal 14.</p>
+</section>
+
+<section class="card" aria-label="Kekayaan bersih">
+<p class="sec">Kekayaan bersih tercatat</p>
+<p class="h1 num">Rp3.770.000</p>
+<hr class="div">
+<div class="row"><p class="s sp">Aset: kas dan tabungan</p><p class="s b num">Rp6.170.000</p></div>
+<div class="row"><p class="s sp">Utang: PayLater</p><p class="s b num">−Rp2.400.000</p></div>
+<p class="s mut">Dihitung dari yang kamu catat. Kalau ada aset atau utang yang belum dicatat, angka ini belum lengkap.</p>
+</section>
+
+<section class="card" aria-label="Saran bulan depan">
+<p class="sec">Coba bulan depan</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Batasi pesan-antar di Rp300.000</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Naikkan setoran tujuan jadi Rp750.000</p>
+<a class="lnk" href="Challenges.dc.html">Jadikan tantangan<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1370}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

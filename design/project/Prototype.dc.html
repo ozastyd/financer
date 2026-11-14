@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Prototipe Financial OS</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+.proto{scrollbar-width:none}
+.proto::-webkit-scrollbar{display:none}
+.proto .fo{overflow:visible;min-height:844px}
+.proto .fo .tab{position:sticky;bottom:0;z-index:3}
+</style>
+</helmet>
+<div class="proto" ref="{{ setScroller }}" onClick="{{ nav }}" style="width: 390px; height: 844px; overflow-x: hidden; overflow-y: auto; background: {{ground}}">
+<sc-if value="{{ isMain }}" hint-placeholder-val="{{ false }}"><dc-import name="Main" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}"><dc-import name="Signup" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isOnboardGoals }}" hint-placeholder-val="{{ false }}"><dc-import name="OnboardGoals" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isOnboardResult }}" hint-placeholder-val="{{ false }}"><dc-import name="OnboardResult" theme="{{ theme }}" hint-size="390px,940px"></dc-import></sc-if>
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}"><dc-import name="Home" theme="{{ theme }}" hint-size="390px,1770px"></dc-import></sc-if>
+<sc-if value="{{ isPlusMenu }}" hint-placeholder-val="{{ false }}"><dc-import name="PlusMenu" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isAddTx }}" hint-placeholder-val="{{ false }}"><dc-import name="AddTx" theme="{{ theme }}" hint-size="390px,880px"></dc-import></sc-if>
+<sc-if value="{{ isScanCamera }}" hint-placeholder-val="{{ false }}"><dc-import name="ScanCamera" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isScanLoading }}" hint-placeholder-val="{{ false }}"><dc-import name="ScanLoading" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isScanFail }}" hint-placeholder-val="{{ false }}"><dc-import name="ScanFail" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isScanResult }}" hint-placeholder-val="{{ false }}"><dc-import name="ScanResult" theme="{{ theme }}" hint-size="390px,1150px"></dc-import></sc-if>
+<sc-if value="{{ isScanSplit }}" hint-placeholder-val="{{ false }}"><dc-import name="ScanSplit" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}"><dc-import name="Transactions" theme="{{ theme }}" hint-size="390px,960px"></dc-import></sc-if>
+<sc-if value="{{ isGoals }}" hint-placeholder-val="{{ false }}"><dc-import name="Goals" theme="{{ theme }}" hint-size="390px,940px"></dc-import></sc-if>
+<sc-if value="{{ isGoalDetail }}" hint-placeholder-val="{{ false }}"><dc-import name="GoalDetail" theme="{{ theme }}" hint-size="390px,1000px"></dc-import></sc-if>
+<sc-if value="{{ isGoalRhythm }}" hint-placeholder-val="{{ false }}"><dc-import name="GoalRhythm" theme="{{ theme }}" hint-size="390px,844px"></dc-import></sc-if>
+<sc-if value="{{ isCoach }}" hint-placeholder-val="{{ false }}"><dc-import name="Coach" theme="{{ theme }}" hint-size="390px,1190px"></dc-import></sc-if>
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}"><dc-import name="Profile" theme="{{ theme }}" hint-size="390px,1220px"></dc-import></sc-if>
+<sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}"><dc-import name="Reports" theme="{{ theme }}" hint-size="390px,1370px"></dc-import></sc-if>
+<sc-if value="{{ isChallenges }}" hint-placeholder-val="{{ false }}"><dc-import name="Challenges" theme="{{ theme }}" hint-size="390px,900px"></dc-import></sc-if>
+<sc-if value="{{ isGrowth }}" hint-placeholder-val="{{ false }}"><dc-import name="Growth" theme="{{ theme }}" hint-size="390px,1000px"></dc-import></sc-if>
+<sc-if value="{{ isPricing }}" hint-placeholder-val="{{ false }}"><dc-import name="Pricing" theme="{{ theme }}" hint-size="390px,1180px"></dc-import></sc-if>
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Settings" theme="{{ theme }}" hint-size="390px,1210px"></dc-import></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"start":{"editor":"enum","options":["Main", "Signup", "OnboardGoals", "OnboardResult", "Home", "PlusMenu", "AddTx", "ScanCamera", "ScanLoading", "ScanFail", "ScanResult", "ScanSplit", "Transactions", "Goals", "GoalDetail", "GoalRhythm", "Coach", "Profile", "Reports", "Challenges", "Growth", "Pricing", "Settings"],"default":"Main"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { screen: null };
+this.SCREENS = ["Main", "Signup", "OnboardGoals", "OnboardResult", "Home", "PlusMenu", "AddTx", "ScanCamera", "ScanLoading", "ScanFail", "ScanResult", "ScanSplit", "Transactions", "Goals", "GoalDetail", "GoalRhythm", "Coach", "Profile", "Reports", "Challenges", "Growth", "Pricing", "Settings"];
+/* buttons that are not links in the screen files: where a tap on them leads in the prototype */
+this.BUTTONS = {
+"Daftar gratis": "OnboardGoals", "Lanjut dengan Google": "OnboardGoals", "Lanjut": "OnboardResult",
+"Simpan": "Transactions", "Simpan transaksi": "Transactions", "Simpan 2 transaksi": "Transactions",
+"Pakai ritme ini": "GoalDetail"
+};
+this.setScroller = (el) => { this.scroller = el; };
+this.nav = (e) => {
+const t = e.target;
+if (!t || !t.closest) return;
+const a = t.closest("a[href]");
+if (a) {
+const m = /^\/?([A-Za-z0-9_]+)\.dc\.html$/.exec(a.getAttribute("href") || "");
+if (m && this.SCREENS.indexOf(m[1]) !== -1) { e.preventDefault(); this.go(m[1]); }
+return;
+}
+const b = t.closest("button");
+if (b) {
+const to = this.BUTTONS[(b.textContent || "").trim()];
+if (to) this.go(to);
+}
+};
+}
+go(name) {
+clearTimeout(this.timer);
+this.setState({ screen: name }, () => {
+if (this.scroller) this.scroller.scrollTop = 0;
+if (name === "ScanLoading") this.timer = setTimeout(() => this.go("ScanResult"), 1800);
+});
+}
+componentWillUnmount() { clearTimeout(this.timer); }
+renderVals() {
+const theme = this.props.theme ?? "light";
+const screen = this.state.screen || this.props.start || "Main";
+const vals = { theme: theme, nav: this.nav, setScroller: this.setScroller, ground: theme === "dark" ? "#0B1220" : "#F5F6F2" };
+this.SCREENS.forEach((n) => { vals["is" + n] = n === screen; });
+return vals;
+}
+}
+</script>
+</body>
+</html>

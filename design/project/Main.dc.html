@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Intro Financial OS</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo" data-theme="{{theme}}" style="width: 390px; height: 844px">
+
+<div aria-hidden="true" style="position: relative; height: 452px; flex: none; background: var(--pris); border-radius: 0 0 36px 36px; overflow: hidden">
+
+<div class="float hero" style="left: 22px; top: 84px; width: 232px; transform: rotate(-6deg)">
+<div class="row"><p class="s mut sp">Tujuan utama</p><span class="tag" style="background: var(--heroline); color: var(--onhero)">42,5%</span></div>
+<p class="h2">Rp10 Juta Pertamaku</p>
+<div class="bar" style="background: var(--heroline)"><i style="width: 42.5%; background: #5EE0B0"></i></div>
+<p class="s mut num">Rp4.250.000 dari Rp10.000.000</p>
+</div>
+
+<div class="float" style="right: 18px; top: 60px; width: 132px; align-items: center; transform: rotate(7deg)">
+<svg width="76" height="76" viewBox="0 0 88 88">
+<circle cx="44" cy="44" r="38" fill="none" stroke-width="8" style="stroke: var(--sf2)"/>
+<circle cx="44" cy="44" r="38" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="162.4 238.8" transform="rotate(-90 44 44)" style="stroke: var(--pri)"/>
+<text x="44" y="46" text-anchor="middle" dominant-baseline="middle" font-size="26" font-weight="800" style="fill: var(--ink)">68</text>
+</svg>
+<p class="s b" style="text-align: center">Skor finansial</p>
+</div>
+
+<div class="float" style="left: 56px; top: 262px; width: 268px; transform: rotate(3deg)">
+<div class="row">
+<span class="icb bl" style="width: 32px; height: 32px; border-radius: 10px"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></span>
+<p class="s b sp">Insight dari AI</p>
+</div>
+<p class="s">Kurangi pesan-antar <span class="b num">Rp150.000</span>, target tabunganmu tercapai lebih cepat.</p>
+</div>
+
+<span class="tag" style="position: absolute; left: 30px; top: 392px; transform: rotate(-4deg); padding: 6px 12px; background: var(--sf); color: var(--onpris); box-shadow: 0 8px 18px rgba(16,27,23,.12)">12 hari berturut</span>
+<span class="tag" style="position: absolute; right: 34px; top: 222px; transform: rotate(-8deg); padding: 6px 12px; background: var(--pri); color: var(--onpri)">+10 XP</span>
+</div>
+
+<div class="scr" style="padding: 28px 24px 32px; gap: 14px">
+<h1 class="h1" style="font-size: 36px; line-height: 1.12">Uangmu, tujuanmu, masa depanmu.</h1>
+<p class="t mut">Catat pengeluaran, kejar target, dan tanya AI kapan pun kamu bingung soal uang.</p>
+<div class="sp"></div>
+<a class="btn" href="Signup.dc.html" style="height: 56px; border-radius: 999px">Mulai</a>
+<p class="s" style="text-align: center">Sudah punya akun? <a class="b" href="Signup.dc.html" style="color: var(--pri)">Masuk</a></p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

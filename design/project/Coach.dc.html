@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>AI Coach</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 1190px">
+<div class="scr" style="gap: 14px; padding-bottom: 36px">
+
+<div class="row">
+<div class="col sp" style="gap: 0">
+<h1 class="h1">AI Coach</h1>
+<p class="s mut">Hanya membaca data yang kamu izinkan</p>
+</div>
+<span class="tag neu">Sisa 3 chat hari ini</span>
+</div>
+
+<div style="align-self: flex-end; max-width: 82%; background: var(--pri); color: var(--onpri); border-radius: 18px 18px 4px 18px; padding: 12px 14px">
+<p class="t">Aku mampu beli iPhone Rp15 juta nggak?</p>
+</div>
+
+<div style="align-self: flex-start; max-width: 92%; background: var(--sf); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; padding: 12px 14px">
+<p class="t">Aku cek dari catatanmu ya. Ini hitungannya, biar kamu yang putuskan.</p>
+</div>
+
+<section class="card" aria-label="Hasil cek mampu beli">
+<div class="col" style="gap: 6px; align-items: flex-start">
+<span class="tag amb">Belum disarankan sekarang</span>
+<p class="h2 num">iPhone · Rp15.000.000</p>
+</div>
+<hr class="div">
+<div class="col" style="gap: 2px">
+<div class="row"><p class="s mut sp">Dana yang bisa dipakai</p><span class="tag neu">Angka tercatat</span></div>
+<p class="h2 num">Rp1.920.000</p>
+<p class="s mut">Saldo tercatat Rp6.170.000 dikurangi tabungan tujuan Rp4.250.000.</p>
+</div>
+<hr class="div">
+<div class="col" style="gap: 2px">
+<div class="row"><p class="s mut sp">Kalau dicicil 12 bulan</p><span class="tag blu">Asumsi tanpa bunga</span></div>
+<p class="h2 num">Rp1.250.000 / bulan</p>
+<p class="s mut">Lebih besar dari nabungmu sekarang, Rp700.000 per bulan.</p>
+</div>
+<hr class="div">
+<div class="row" style="align-items: flex-start">
+<span class="icb am"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v15H4zM4 10h16M8 3v4M16 3v4"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Target Rp10 juta mundur sekitar 12 bulan</p><p class="s mut">Karena tabungan berhenti selama cicilan berjalan.</p></div>
+</div>
+<div class="row" style="align-items: flex-start">
+<span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Alternatif</p><p class="s mut">HP di kisaran Rp4–5 juta, atau nabung khusus Rp500.000 per bulan.</p></div>
+</div>
+<div class="row" style="align-items: flex-start">
+<span class="icb bl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Jadi lebih aman kalau</p><p class="s mut">Dana darurat 3 bulan sudah terkumpul dan ada pemasukan tambahan sekitar Rp1 juta per bulan.</p></div>
+</div>
+</section>
+
+<div class="wrap">
+<button class="chip" type="button">Bikin rencana nabung iPhone</button>
+<button class="chip" type="button">Beli sekarang vs nabung dulu</button>
+</div>
+
+<div class="sp"></div>
+
+<p class="s mut" style="text-align: center">Edukasi finansial, bukan nasihat keuangan berlisensi.</p>
+<div class="row" style="gap: 8px">
+<input class="inp" type="text" aria-label="Tulis pertanyaan" placeholder="Tanya soal uangmu…">
+<button class="ibtn" type="button" aria-label="Kirim" style="width: 52px; height: 52px; background: var(--pri); color: var(--onpri); border-color: var(--pri)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+</div>
+</div>
+
+<nav class="tab" aria-label="Navigasi utama">
+<a href="Home.dc.html"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Beranda</a>
+<a href="Transactions.dc.html"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Transaksi</a>
+<a class="plus" href="PlusMenu.dc.html" aria-label="Tambah transaksi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+<a href="Goals.dc.html"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>Tujuan</a>
+<a class="ai on" href="Coach.dc.html" aria-current="page"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg></span>AI Coach</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1190}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

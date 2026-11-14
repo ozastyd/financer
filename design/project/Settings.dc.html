@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pengaturan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 1210px">
+<div class="scr" style="gap: 12px; padding-bottom: 32px">
+
+<div class="hd">
+<a class="ibtn" href="Profile.dc.html" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p>Pengaturan</p>
+<span class="gap"></span>
+</div>
+
+<p class="sec" style="margin-top: 4px">Keuangan</p>
+<div class="card" style="gap: 0; padding: 4px 16px">
+<a class="item" href="#pemasukan" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Pemasukan bulanan</span><span class="s mut num">Rp4.500.000</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg></a>
+<hr class="div">
+<a class="item" href="#budget" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Budget bulanan</span><span class="s mut num">Rp3.600.000</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg></a>
+<hr class="div">
+<a class="item" href="#kategori" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Kategori</span><span class="s mut">11 kategori</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg></a>
+</div>
+
+<p class="sec" style="margin-top: 4px">Notifikasi</p>
+<div class="card" style="gap: 0; padding: 4px 16px">
+<div class="item"><div class="col sp" style="gap: 0"><p class="t b">Pengingat catat harian</p><p class="s mut">Sekali sehari, jam 20.00</p></div><button class="tog on" type="button" role="switch" aria-checked="true" aria-label="Pengingat catat harian"><i></i></button></div>
+<hr class="div">
+<div class="item"><div class="col sp" style="gap: 0"><p class="t b">Review mingguan</p><p class="s mut">Tiap Minggu pagi</p></div><button class="tog on" type="button" role="switch" aria-checked="true" aria-label="Review mingguan"><i></i></button></div>
+<hr class="div">
+<div class="item"><div class="col sp" style="gap: 0"><p class="t b">Tips dari AI</p><p class="s mut">Paling banyak 2 kali seminggu</p></div><button class="tog" type="button" role="switch" aria-checked="false" aria-label="Tips dari AI"><i></i></button></div>
+</div>
+
+<p class="sec" style="margin-top: 4px">Privasi dan data</p>
+<div class="card" style="gap: 0; padding: 4px 16px">
+<div class="item"><div class="col sp" style="gap: 0"><p class="t b">AI boleh baca transaksi</p><p class="s mut">Dipakai untuk insight dan AI Coach</p></div><button class="tog on" type="button" role="switch" aria-checked="true" aria-label="AI boleh baca transaksi"><i></i></button></div>
+<hr class="div">
+<div class="item"><div class="col sp" style="gap: 0"><p class="t b">AI boleh baca utang</p><p class="s mut">Dipakai untuk rencana pelunasan</p></div><button class="tog" type="button" role="switch" aria-checked="false" aria-label="AI boleh baca utang"><i></i></button></div>
+<hr class="div">
+<a class="item" href="#ekspor" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Ekspor data (CSV)</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></svg></a>
+</div>
+
+<p class="sec" style="margin-top: 4px">Akun</p>
+<div class="card" style="gap: 0; padding: 4px 16px">
+<a class="item" href="#info" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Info pribadi</span><span class="s mut">Andi Pratama</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg></a>
+<hr class="div">
+<a class="item" href="#bahasa" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Bahasa</span><span class="s mut">Indonesia</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg></a>
+<hr class="div">
+<a class="item" href="Pricing.dc.html" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Paket langganan</span><span class="s mut">Gratis</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg></a>
+<hr class="div">
+<a class="item" href="#keluar" style="text-decoration: none; color: var(--ink)"><span class="t b sp">Keluar</span></a>
+</div>
+
+<a class="lnk" href="#hapus" style="color: var(--red); justify-content: center">Hapus akun dan semua data</a>
+<p class="s mut" style="text-align: center">Penghapusan bersifat permanen. Kami akan minta konfirmasi dulu.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1210}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

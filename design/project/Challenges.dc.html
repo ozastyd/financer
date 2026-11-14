@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Tantangan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 900px">
+<div class="scr" style="gap: 14px; padding-bottom: 32px">
+
+<div class="hd">
+<a class="ibtn" href="Profile.dc.html" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p>Tantangan</p>
+<span class="gap"></span>
+</div>
+
+<div class="col" style="gap: 4px">
+<h1 class="h1" style="font-size: 24px">Latihan kecil, tiap hari</h1>
+<p class="s mut">Semua tantangan opsional dan angkanya bisa kamu sesuaikan.</p>
+</div>
+
+<p class="sec" style="margin-top: 4px">Sedang berjalan</p>
+<section class="card hero" aria-label="Tantangan kurangi pesan-antar">
+<div class="row"><p class="h2 sp">Kurangi pesan-antar</p><span class="tag">Hari 9 dari 14</span></div>
+<div class="bar" role="img" aria-label="Hari ke-9 dari 14" style="background: var(--heroline)"><i style="width: 64%; background: #5EE0B0"></i></div>
+<div class="row"><p class="s mut sp">Batas 2 minggu</p><p class="s b num">Rp185.000 dari Rp300.000</p></div>
+<hr class="div">
+<div class="row"><p class="s mut sp">Masih aman. Sisa Rp115.000 untuk 5 hari.</p><span class="tag">+30 XP</span></div>
+</section>
+
+<p class="sec" style="margin-top: 4px">Bisa kamu ikuti</p>
+<div class="rowc" style="padding: 14px">
+<span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v15H4zM4 10h16M8 3v4M16 3v4"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Akhir pekan tanpa belanja</p><p class="s mut">2 hari · +30 XP</p></div>
+<button class="btn ghost sm" type="button" style="border-radius: 999px">Ikut</button>
+</div>
+<div class="rowc" style="padding: 14px">
+<span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14h.01"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Nabung 30 hari</p><p class="s mut">Mulai Rp10.000 per hari · +50 XP</p></div>
+<button class="btn ghost sm" type="button" style="border-radius: 999px">Ikut</button>
+</div>
+<div class="rowc" style="padding: 14px">
+<span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Dana darurat pertama</p><p class="s mut">Kumpulkan 1 bulan pengeluaran · +50 XP</p></div>
+<button class="btn ghost sm" type="button" style="border-radius: 999px">Ikut</button>
+</div>
+
+<p class="sec" style="margin-top: 4px">Selesai</p>
+<div class="rowc" style="padding: 14px">
+<span class="icb g" style="border-radius: 50%"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Rp1 Juta Pertama</p><p class="s mut">Selesai Agustus 2026</p></div>
+<span class="tag">+50 XP</span>
+</div>
+
+<div class="sp"></div>
+<p class="s mut" style="text-align: center">Paket Gratis: 1 tantangan aktif. <a class="b" href="Pricing.dc.html" style="color: var(--pri)">Lihat Pro</a></p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

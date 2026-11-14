@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pisah transaksi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div class="scr" style="gap: 14px; padding-bottom: 28px">
+
+<div class="hd">
+<a class="ibtn" href="ScanResult.dc.html" aria-label="Kembali ke hasil scan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p>Pisah transaksi</p>
+<span class="gap"></span>
+</div>
+
+<div class="col" style="gap: 4px">
+<h1 class="h1" style="font-size: 22px">Barang ini masuk kategori apa?</h1>
+<p class="s mut">Minimarket Kemang · 14 Nov 2026 · total Rp86.500. Ketuk kategori untuk menggantinya.</p>
+</div>
+
+<div class="col" style="gap: 8px">
+<div class="rowc"><div class="col sp" style="gap: 0"><p class="t b">Mi instan goreng × 5</p><p class="s mut num">Rp17.500</p></div><button class="chip" type="button">Makan<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+<div class="rowc"><div class="col sp" style="gap: 0"><p class="t b">Susu UHT 1 L</p><p class="s mut num">Rp19.900</p></div><button class="chip" type="button">Makan<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+<div class="rowc"><div class="col sp" style="gap: 0"><p class="t b">Sabun cair</p><p class="s mut num">Rp28.600</p></div><button class="chip on" type="button">Belanja<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+<div class="rowc"><div class="col sp" style="gap: 0"><p class="t b">Roti tawar</p><p class="s mut num">Rp20.500</p></div><button class="chip" type="button">Makan<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+</div>
+
+<div class="card soft" style="gap: 8px">
+<p class="sec" style="color: var(--onpris)">Jadi 2 transaksi</p>
+<div class="row"><p class="t sp">Makan &amp; minum · 3 barang</p><p class="t b num">Rp57.900</p></div>
+<div class="row"><p class="t sp">Belanja · 1 barang</p><p class="t b num">Rp28.600</p></div>
+<hr class="div" style="background: var(--pri); opacity: .25">
+<div class="row"><p class="s sp">Total tetap</p><p class="s b num">Rp86.500</p></div>
+</div>
+
+<div class="sp"></div>
+
+<div class="col" style="gap: 8px">
+<button class="btn" type="button" style="border-radius: 999px">Simpan 2 transaksi</button>
+<a class="btn ghost" href="ScanResult.dc.html" style="border-radius: 999px">Jadikan 1 transaksi saja</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

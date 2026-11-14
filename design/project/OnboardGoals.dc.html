@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Onboarding: pilih tujuan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div class="scr" style="padding-bottom: 28px">
+<div class="row">
+<a class="ibtn" href="#kembali" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<div class="col sp" style="gap: 8px">
+<p class="s mut b">Langkah 4 dari 6</p>
+<div class="steps" role="img" aria-label="Langkah 4 dari 6"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+</div>
+</div>
+
+<div class="col" style="gap: 6px">
+<h1 class="h1">Mau ngejar apa dulu?</h1>
+<p class="t mut">Pilih satu atau lebih. Bisa diubah kapan saja.</p>
+</div>
+
+<div class="g2">
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14h.01"/></svg></span>Rp1 juta pertama</button>
+<button class="tile on" type="button" aria-pressed="true"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span>Rp10 juta pertama</button>
+<button class="tile on" type="button" aria-pressed="true"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span>Dana darurat</button>
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 10h16"/></svg></span>Lunasin utang</button>
+<button class="tile on" type="button" aria-pressed="true"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span>Beli laptop</button>
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h4l4 8M10 9 8 6H5"/></svg></span>Beli motor</button>
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l18-7-7 18-3-8z"/></svg></span>Liburan</button>
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v10H4zM3 10l2-6h14l2 6M10 20v-5h4v5"/></svg></span>Modal usaha</button>
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></span>Mulai investasi</button>
+<button class="tile" type="button" aria-pressed="false"><span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h13v16H5zM9 4v16"/></svg></span>Pendidikan</button>
+</div>
+<button class="tile" type="button" style="min-height: 52px; justify-content: center; border-style: dashed"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tujuan lain</button>
+
+<div class="sp"></div>
+
+<div class="col" style="gap: 4px">
+<p class="s mut" style="text-align: center">3 tujuan dipilih</p>
+<button class="btn" type="button">Lanjut</button>
+<a class="lnk" href="#nanti" style="justify-content: center; color: var(--mut)">Simpan dulu, lanjut nanti</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

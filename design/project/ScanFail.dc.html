@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Struk belum terbaca</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div class="scr" style="gap: 18px; padding: 0 24px 32px">
+
+<div class="hd">
+<a class="ibtn" href="PlusMenu.dc.html" aria-label="Tutup"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+<p>Scan struk</p>
+<span class="gap"></span>
+</div>
+
+<span class="icb am" style="width: 64px; height: 64px; border-radius: 20px; margin-top: 16px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+
+<div class="col" style="gap: 8px">
+<h1 class="h1">Struknya belum terbaca</h1>
+<p class="t mut">Ini sering terjadi, apalagi kalau struknya kusut atau tintanya pudar. Coba salah satu ini:</p>
+</div>
+
+<div class="col" style="gap: 10px">
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Foto di tempat yang lebih terang</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Pastikan seluruh struk masuk bingkai</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Ratakan struk supaya tidak terlipat</p>
+</div>
+
+<a class="rowc" href="AddTx.dc.html" style="padding: 14px">
+<div class="col sp" style="gap: 2px">
+<p class="sec">Sempat terbaca</p>
+<p class="t b num">Total Rp86.500</p>
+<p class="s mut">Lanjut isi manual dengan angka ini</p>
+</div>
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+
+<div class="sp"></div>
+
+<div class="col" style="gap: 8px">
+<a class="btn" href="ScanCamera.dc.html" style="border-radius: 999px">Foto ulang</a>
+<a class="btn ghost" href="ScanCamera.dc.html" style="border-radius: 999px">Unggah gambar lain</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-14T16:00:00Z"
+ },
+ "title": "Financial OS Screens",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [
+  {
+   "id": "layar",
+   "name": "Layar"
+  },
+  {
+   "id": "prototipe",
+   "name": "Prototipe"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "01 Intro"
+  },
+  "Signup.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "02 Daftar"
+  },
+  "OnboardGoals.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "03 Onboarding: pilih tujuan"
+  },
+  "OnboardResult.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 940,
+   "title": "04 Onboarding: profil awal"
+  },
+  "Home.dc.html": {
+   "x": 1880,
+   "y": 0,
+   "w": 390,
+   "h": 1770,
+   "title": "05 Beranda"
+  },
+  "PlusMenu.dc.html": {
+   "x": 2350,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "06 Menu tambah (+)"
+  },
+  "AddTx.dc.html": {
+   "x": 2820,
+   "y": 0,
+   "w": 390,
+   "h": 880,
+   "title": "07 Input manual"
+  },
+  "Transactions.dc.html": {
+   "x": 3760,
+   "y": 0,
+   "w": 390,
+   "h": 960,
+   "title": "08 Transaksi"
+  },
+  "Goals.dc.html": {
+   "x": 4230,
+   "y": 0,
+   "w": 390,
+   "h": 940,
+   "title": "09 Tujuan"
+  },
+  "GoalDetail.dc.html": {
+   "x": 4700,
+   "y": 0,
+   "w": 390,
+   "h": 1000,
+   "title": "10 Detail tujuan"
+  },
+  "Coach.dc.html": {
+   "x": 5170,
+   "y": 0,
+   "w": 390,
+   "h": 1190,
+   "title": "11 AI Coach"
+  },
+  "Profile.dc.html": {
+   "x": 5640,
+   "y": 0,
+   "w": 390,
+   "h": 1220,
+   "title": "12 Profil"
+  },
+  "MainDark.dc.html": {
+   "x": 0,
+   "y": 3980,
+   "w": 390,
+   "h": 844,
+   "title": "01 Intro (gelap)"
+  },
+  "SignupDark.dc.html": {
+   "x": 470,
+   "y": 3980,
+   "w": 390,
+   "h": 844,
+   "title": "02 Daftar (gelap)"
+  },
+  "OnboardGoalsDark.dc.html": {
+   "x": 940,
+   "y": 3980,
+   "w": 390,
+   "h": 844,
+   "title": "03 Pilih tujuan (gelap)"
+  },
+  "OnboardResultDark.dc.html": {
+   "x": 1410,
+   "y": 3980,
+   "w": 390,
+   "h": 940,
+   "title": "04 Profil awal (gelap)"
+  },
+  "HomeDark.dc.html": {
+   "x": 1880,
+   "y": 3980,
+   "w": 390,
+   "h": 1770,
+   "title": "05 Beranda (gelap)"
+  },
+  "PlusMenuDark.dc.html": {
+   "x": 2350,
+   "y": 3980,
+   "w": 390,
+   "h": 844,
+   "title": "06 Menu tambah (gelap)"
+  },
+  "AddTxDark.dc.html": {
+   "x": 2820,
+   "y": 3980,
+   "w": 390,
+   "h": 880,
+   "title": "07 Input manual (gelap)"
+  },
+  "TransactionsDark.dc.html": {
+   "x": 3760,
+   "y": 3980,
+   "w": 390,
+   "h": 960,
+   "title": "08 Transaksi (gelap)"
+  },
+  "GoalsDark.dc.html": {
+   "x": 4230,
+   "y": 3980,
+   "w": 390,
+   "h": 940,
+   "title": "09 Tujuan (gelap)"
+  },
+  "GoalDetailDark.dc.html": {
+   "x": 4700,
+   "y": 3980,
+   "w": 390,
+   "h": 1000,
+   "title": "10 Detail tujuan (gelap)"
+  },
+  "CoachDark.dc.html": {
+   "x": 5170,
+   "y": 3980,
+   "w": 390,
+   "h": 1190,
+   "title": "11 AI Coach (gelap)"
+  },
+  "ProfileDark.dc.html": {
+   "x": 5640,
+   "y": 3980,
+   "w": 390,
+   "h": 1220,
+   "title": "12 Profil (gelap)"
+  },
+  "ScanResult.dc.html": {
+   "x": 3290,
+   "y": 0,
+   "w": 390,
+   "h": 1150,
+   "title": "07b Hasil scan struk"
+  },
+  "ScanResultDark.dc.html": {
+   "x": 3290,
+   "y": 3980,
+   "w": 390,
+   "h": 1150,
+   "title": "07b Hasil scan struk (gelap)"
+  },
+  "ScanCamera.dc.html": {
+   "x": 0,
+   "y": 2190,
+   "w": 390,
+   "h": 844,
+   "title": "13 Foto struk"
+  },
+  "ScanLoading.dc.html": {
+   "x": 470,
+   "y": 2190,
+   "w": 390,
+   "h": 844,
+   "title": "14 Membaca struk"
+  },
+  "ScanFail.dc.html": {
+   "x": 940,
+   "y": 2190,
+   "w": 390,
+   "h": 844,
+   "title": "15 Struk belum terbaca"
+  },
+  "ScanSplit.dc.html": {
+   "x": 1410,
+   "y": 2190,
+   "w": 390,
+   "h": 844,
+   "title": "16 Pisah transaksi"
+  },
+  "GoalRhythm.dc.html": {
+   "x": 1880,
+   "y": 2190,
+   "w": 390,
+   "h": 844,
+   "title": "17 Ritme nabung"
+  },
+  "Reports.dc.html": {
+   "x": 2350,
+   "y": 2190,
+   "w": 390,
+   "h": 1370,
+   "title": "18 Laporan"
+  },
+  "Challenges.dc.html": {
+   "x": 2820,
+   "y": 2190,
+   "w": 390,
+   "h": 900,
+   "title": "19 Tantangan"
+  },
+  "Growth.dc.html": {
+   "x": 3290,
+   "y": 2190,
+   "w": 390,
+   "h": 1000,
+   "title": "20 Tumbuh"
+  },
+  "Pricing.dc.html": {
+   "x": 3760,
+   "y": 2190,
+   "w": 390,
+   "h": 1180,
+   "title": "21 Paket"
+  },
+  "Settings.dc.html": {
+   "x": 4230,
+   "y": 2190,
+   "w": 390,
+   "h": 1210,
+   "title": "22 Pengaturan"
+  },
+  "ScanLoadingDark.dc.html": {
+   "x": 470,
+   "y": 6170,
+   "w": 390,
+   "h": 844,
+   "title": "14 Membaca struk (gelap)"
+  },
+  "ScanFailDark.dc.html": {
+   "x": 940,
+   "y": 6170,
+   "w": 390,
+   "h": 844,
+   "title": "15 Struk belum terbaca (gelap)"
+  },
+  "ScanSplitDark.dc.html": {
+   "x": 1410,
+   "y": 6170,
+   "w": 390,
+   "h": 844,
+   "title": "16 Pisah transaksi (gelap)"
+  },
+  "GoalRhythmDark.dc.html": {
+   "x": 1880,
+   "y": 6170,
+   "w": 390,
+   "h": 844,
+   "title": "17 Ritme nabung (gelap)"
+  },
+  "ReportsDark.dc.html": {
+   "x": 2350,
+   "y": 6170,
+   "w": 390,
+   "h": 1370,
+   "title": "18 Laporan (gelap)"
+  },
+  "ChallengesDark.dc.html": {
+   "x": 2820,
+   "y": 6170,
+   "w": 390,
+   "h": 900,
+   "title": "19 Tantangan (gelap)"
+  },
+  "GrowthDark.dc.html": {
+   "x": 3290,
+   "y": 6170,
+   "w": 390,
+   "h": 1000,
+   "title": "20 Tumbuh (gelap)"
+  },
+  "PricingDark.dc.html": {
+   "x": 3760,
+   "y": 6170,
+   "w": 390,
+   "h": 1180,
+   "title": "21 Paket (gelap)"
+  },
+  "SettingsDark.dc.html": {
+   "x": 4230,
+   "y": 6170,
+   "w": 390,
+   "h": 1210,
+   "title": "22 Pengaturan (gelap)"
+  },
+  "Prototype.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Prototipe (terang)",
+   "page": "prototipe",
+   "is_interactive": true
+  },
+  "PrototypeDark.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "Prototipe (gelap)",
+   "page": "prototipe",
+   "is_interactive": true
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Signup.dc.html",
+  "OnboardGoals.dc.html",
+  "OnboardResult.dc.html",
+  "Home.dc.html",
+  "PlusMenu.dc.html",
+  "AddTx.dc.html",
+  "ScanResult.dc.html",
+  "Transactions.dc.html",
+  "Goals.dc.html",
+  "GoalDetail.dc.html",
+  "Coach.dc.html",
+  "Profile.dc.html",
+  "MainDark.dc.html",
+  "SignupDark.dc.html",
+  "OnboardGoalsDark.dc.html",
+  "OnboardResultDark.dc.html",
+  "HomeDark.dc.html",
+  "PlusMenuDark.dc.html",
+  "AddTxDark.dc.html",
+  "ScanResultDark.dc.html",
+  "TransactionsDark.dc.html",
+  "GoalsDark.dc.html",
+  "GoalDetailDark.dc.html",
+  "CoachDark.dc.html",
+  "ProfileDark.dc.html",
+  "ScanCamera.dc.html",
+  "ScanLoading.dc.html",
+  "ScanFail.dc.html",
+  "ScanSplit.dc.html",
+  "GoalRhythm.dc.html",
+  "Reports.dc.html",
+  "Challenges.dc.html",
+  "Growth.dc.html",
+  "Pricing.dc.html",
+  "Settings.dc.html",
+  "ScanLoadingDark.dc.html",
+  "ScanFailDark.dc.html",
+  "ScanSplitDark.dc.html",
+  "GoalRhythmDark.dc.html",
+  "ReportsDark.dc.html",
+  "ChallengesDark.dc.html",
+  "GrowthDark.dc.html",
+  "PricingDark.dc.html",
+  "SettingsDark.dc.html",
+  "Prototype.dc.html",
+  "PrototypeDark.dc.html"
+ ],
+ "notes": {
+  "light": {
+   "x": 0,
+   "y": -300,
+   "text": "Financial OS · Terang",
+   "kind": "title1",
+   "maxW": 6030
+  },
+  "dark": {
+   "x": 0,
+   "y": 3680,
+   "text": "Financial OS · Gelap",
+   "kind": "title1",
+   "maxW": 6030
+  },
+  "light2": {
+   "x": 0,
+   "y": 1890,
+   "text": "Layar tambahan · Terang",
+   "kind": "title1",
+   "maxW": 4620
+  },
+  "dark2": {
+   "x": 0,
+   "y": 5870,
+   "text": "Layar tambahan · Gelap",
+   "kind": "title1",
+   "maxW": 4620
+  },
+  "proto": {
+   "x": 940,
+   "y": 0,
+   "w": 360,
+   "page": "prototipe",
+   "fill": "green",
+   "text": "Tekan Play pada artboard untuk mencoba.\n\nPrototipe ini memuat file layar yang sama dengan halaman \"Layar\", jadi setiap perubahan di sana langsung terlihat di sini.\n\nLayar awal dan tema bisa diganti lewat Tweaks."
+  }
+ },
+ "designSystems": []
+}

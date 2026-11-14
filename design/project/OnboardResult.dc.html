@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Onboarding: profil finansial awal</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 940px">
+<div class="scr" style="padding-bottom: 28px">
+<div class="row">
+<a class="ibtn" href="#kembali" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<div class="col sp" style="gap: 8px">
+<p class="s mut b">Langkah 6 dari 6</p>
+<div class="steps" role="img" aria-label="Langkah 6 dari 6"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+</div>
+</div>
+
+<div class="col" style="gap: 6px">
+<h1 class="h1">Ini titik awal kamu, Andi</h1>
+<p class="t mut">Dihitung dari jawabanmu barusan. Makin rajin mencatat, makin akurat.</p>
+</div>
+
+<div class="card hero" style="gap: 6px">
+<div class="row">
+<p class="s mut sp">Sisa uang per bulan</p>
+<span class="tag">Perkiraan</span>
+</div>
+<p class="big">Rp1.100.000</p>
+<p class="s mut num">Pemasukan Rp4.500.000 − pengeluaran Rp3.000.000 − cicilan Rp400.000</p>
+</div>
+
+<div class="card">
+<p class="sec">Yang sudah bagus</p>
+<div class="row" style="align-items: flex-start"><span class="icb g" style="width: 28px; height: 28px; border-radius: 9px"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><p class="t sp">Pemasukan rutin tiap bulan</p></div>
+<div class="row" style="align-items: flex-start"><span class="icb g" style="width: 28px; height: 28px; border-radius: 9px"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><p class="t sp">Sudah punya tabungan <span class="num b">Rp4.250.000</span></p></div>
+<hr class="div">
+<p class="sec">Yang bisa ditingkatkan</p>
+<div class="row" style="align-items: flex-start"><span class="icb am" style="width: 28px; height: 28px; border-radius: 9px"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></span><p class="t sp">Dana darurat baru cukup untuk 1,4 bulan</p></div>
+<div class="row" style="align-items: flex-start"><span class="icb am" style="width: 28px; height: 28px; border-radius: 9px"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></span><p class="t sp">Belanja impulsif dan PayLater masih sering</p></div>
+</div>
+
+<div class="card soft" style="gap: 6px">
+<p class="sec" style="color: var(--onpris)">Tujuan pertama yang kami sarankan</p>
+<p class="h2">Rp10 Juta Pertamaku</p>
+<p class="s">Sekaligus jadi dana darurat 3 bulan. Dengan nabung <span class="num b">Rp700.000</span> per bulan, tercapai sekitar Agustus 2027.</p>
+</div>
+
+<div class="sp"></div>
+
+<div class="col" style="gap: 8px">
+<p class="s mut" style="text-align: center">Langkah pertama: catat satu pengeluaran hari ini. Kurang dari 10 detik.</p>
+<a class="btn" href="Home.dc.html">Mulai dari sini</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":940}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

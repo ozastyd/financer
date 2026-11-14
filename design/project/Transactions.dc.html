@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Transaksi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 960px">
+<div class="scr" style="gap: 14px; padding-bottom: 36px">
+
+<div class="row">
+<h1 class="h1 sp" style="font-size: 24px">Transaksi</h1>
+<button class="chip" type="button">Nov 2026<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<a class="ibtn" href="#impor" aria-label="Impor dari CSV" style="border-radius: 50%"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M4 20h16"/></svg></a>
+</div>
+
+<div style="position: relative">
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="position: absolute; left: 16px; top: 14px; color: var(--mut)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<input class="inp" type="search" aria-label="Cari transaksi" placeholder="Cari nama, catatan, atau jumlah" style="height: 48px; padding-left: 46px; font-size: 15px; border-radius: 999px">
+</div>
+
+<div class="wrap" role="group" aria-label="Filter">
+<button class="chip f on" type="button" aria-pressed="true">Semua</button>
+<button class="chip f" type="button" aria-pressed="false">Keluar</button>
+<button class="chip f" type="button" aria-pressed="false">Masuk</button>
+<button class="chip f" type="button" aria-pressed="false">Rutin</button>
+</div>
+
+<section class="col" style="gap: 8px; margin-top: 4px" aria-label="Hari ini">
+<div class="row"><p class="sec sp">Hari ini · Sab, 14 Nov</p><p class="s mut num">−Rp87.000</p></div>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 3c-2 2-3 4-3 7h3zm0 7v11"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Kopi susu</p><p class="s mut">Makan &amp; minum</p></div>
+<p class="t b num">−Rp35.000</p>
+</div>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 3c-2 2-3 4-3 7h3zm0 7v11"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Makan siang warteg</p><p class="s mut">Makan &amp; minum</p></div>
+<p class="t b num">−Rp30.000</p>
+</div>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h4l4 8M10 9 8 6H5"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Ojek ke kantor</p><p class="s mut">Transport</p></div>
+<p class="t b num">−Rp22.000</p>
+</div>
+</section>
+
+<section class="col" style="gap: 8px; margin-top: 4px" aria-label="Kemarin">
+<div class="row"><p class="sec sp">Kemarin · Jum, 13 Nov</p><p class="s mut num">+Rp80.500</p></div>
+<div class="rowc">
+<span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M16 17H7V8"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Proyek desain logo</p><p class="s mut">Freelance · pemasukan</p></div>
+<p class="t b num pos">+Rp350.000</p>
+</div>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Belanja bulanan</p><p class="s mut">Belanja</p></div>
+<p class="t b num">−Rp214.500</p>
+</div>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Langganan musik</p><p class="s mut">Langganan · rutin tiap bulan</p></div>
+<p class="t b num">−Rp55.000</p>
+</div>
+</section>
+
+<section class="col" style="gap: 8px; margin-top: 4px" aria-label="Kamis, 12 November">
+<div class="row"><p class="sec sp">Kam, 12 Nov</p><p class="s mut num">−Rp400.000</p></div>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 10h16"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Cicilan PayLater</p><p class="s mut">Bayar utang · rutin tiap bulan</p></div>
+<p class="t b num">−Rp400.000</p>
+</div>
+</section>
+
+</div>
+
+<nav class="tab" aria-label="Navigasi utama">
+<a href="Home.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</a>
+<a class="on" href="Transactions.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Transaksi</a>
+<a class="plus" href="PlusMenu.dc.html" aria-label="Tambah transaksi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+<a href="Goals.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Tujuan</a>
+<a href="Coach.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg>AI Coach</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Menu tambah transaksi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div class="scr" aria-hidden="true">
+<div class="row">
+<div class="col sp" style="gap: 0">
+<p class="h2" style="font-size: 20px">Selamat malam, Andi</p>
+<p class="s mut">Yuk, bikin uangmu kerja lebih baik bulan ini.</p>
+</div>
+<span class="ava" style="width: 44px; height: 44px; font-size: 17px">A</span>
+</div>
+<div class="col" style="gap: 6px">
+<p class="sec">Arus kas bersih · November</p>
+<p class="big" style="font-size: 36px">Rp1.920.000</p>
+</div>
+<div class="g2">
+<div class="card" style="gap: 6px; padding: 14px"><p class="sec">Masuk</p><p class="h2 num">Rp4.850.000</p></div>
+<div class="card" style="gap: 6px; padding: 14px"><p class="sec">Keluar</p><p class="h2 num">Rp2.930.000</p></div>
+</div>
+<div class="card" style="height: 150px"></div>
+<div class="card" style="height: 120px"></div>
+</div>
+
+<div class="scrim"></div>
+
+<div class="dial" role="menu" aria-label="Cara mencatat transaksi">
+<p class="s b" style="color: #FFFFFF">Catat transaksi lewat</p>
+<a role="menuitem" href="AddTx.dc.html"><span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></svg></span>Input manual</a>
+<a role="menuitem" href="ScanCamera.dc.html"><span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/></svg></span>Ambil foto</a>
+<a role="menuitem" href="ScanCamera.dc.html"><span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><circle cx="9" cy="10" r="1.500"/><path d="m4 17 5-4 4 3 3-2 4 3"/></svg></span>Unggah gambar</a>
+</div>
+
+<nav class="tab" aria-label="Navigasi utama" style="z-index: 2">
+<a class="on" href="Home.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</a>
+<a href="Transactions.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Transaksi</a>
+<a class="plus" href="Home.dc.html" aria-label="Tutup menu" aria-expanded="true" style="background: var(--ink); color: var(--bg)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
+<a href="Goals.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Tujuan</a>
+<a href="Coach.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg>AI Coach</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

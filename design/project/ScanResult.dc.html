@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Hasil scan struk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 1150px">
+<div class="scr" style="gap: 14px; padding-bottom: 28px">
+
+<div class="row">
+<a class="ibtn" href="PlusMenu.dc.html" aria-label="Kembali" style="border-radius: 50%"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p class="h3 sp" style="text-align: center">Hasil scan struk</p>
+<span style="width: 44px"></span>
+</div>
+
+<div class="rowc" style="align-items: flex-start; padding: 14px; gap: 14px">
+<div aria-hidden="true" style="width: 64px; height: 84px; flex: none; border-radius: 8px; background: var(--sf2); border: 1px solid var(--line); padding: 10px 8px; display: flex; flex-direction: column; gap: 6px">
+<i style="height: 5px; width: 70%; border-radius: 3px; background: var(--ctl); align-self: center"></i>
+<i style="height: 3px; border-radius: 3px; background: var(--line)"></i>
+<i style="height: 3px; border-radius: 3px; background: var(--line)"></i>
+<i style="height: 3px; width: 80%; border-radius: 3px; background: var(--line)"></i>
+<i style="height: 3px; border-radius: 3px; background: var(--line)"></i>
+<i style="height: 5px; width: 55%; border-radius: 3px; background: var(--ctl); align-self: flex-end; margin-top: auto"></i>
+</div>
+<div class="col sp" style="gap: 6px; align-items: flex-start">
+<span class="tag blu"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Dibaca AI</span>
+<p class="t b">Cek dulu sebelum disimpan</p>
+<p class="s mut">Hasil baca bisa salah. Semua kolom di bawah bisa kamu ubah.</p>
+<a class="lnk" href="PlusMenu.dc.html" style="min-height: 44px">Ganti foto</a>
+</div>
+</div>
+
+<div class="col" style="align-items: center; gap: 2px; padding: 4px 0">
+<p class="sec">Total pengeluaran</p>
+<p class="big" style="font-size: 38px">Rp86.500</p>
+<p class="s mut">Sama dengan jumlah 4 barang di struk</p>
+</div>
+
+<form style="display: flex; flex-direction: column; gap: 12px">
+<div>
+<label class="lbl" for="toko">Toko</label>
+<input class="inp" id="toko" type="text" value="Minimarket Kemang">
+</div>
+<div>
+<label class="lbl" for="tgl">Tanggal</label>
+<input class="inp" id="tgl" type="text" value="14 Nov 2026" aria-describedby="tgl-hint" style="border-color: var(--amb); border-width: 2px">
+<p class="s" id="tgl-hint" style="color: var(--amb); font-weight: 600; margin-top: 6px; display: flex; gap: 6px; align-items: center"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Tanggal di struk kurang jelas. Pastikan sudah benar.</p>
+</div>
+</form>
+
+<div class="col" style="gap: 8px">
+<p class="sec">Kategori</p>
+<div class="wrap">
+<button class="chip on" type="button" aria-pressed="true"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Belanja</button>
+<button class="chip" type="button" aria-pressed="false">Makan</button>
+<button class="chip" type="button" aria-pressed="false">Lainnya</button>
+</div>
+<p class="s mut">Saran dari isi struk. Ganti kalau kurang pas.</p>
+</div>
+
+<section class="col" style="gap: 8px" aria-label="Barang di struk">
+<div class="row"><p class="sec sp">Barang di struk</p><p class="s mut">4 barang</p></div>
+<div class="card" style="gap: 0; padding: 4px 16px">
+<div class="item" style="min-height: 52px"><p class="t sp">Mi instan goreng <span class="mut">× 5</span></p><p class="t b num">Rp17.500</p></div>
+<hr class="div">
+<div class="item" style="min-height: 52px"><p class="t sp">Susu UHT 1 L</p><p class="t b num">Rp19.900</p></div>
+<hr class="div">
+<div class="item" style="min-height: 52px"><p class="t sp">Sabun cair</p><p class="t b num">Rp28.600</p></div>
+<hr class="div">
+<div class="item" style="min-height: 52px"><p class="t sp">Roti tawar</p><p class="t b num">Rp20.500</p></div>
+</div>
+<a class="lnk" href="ScanSplit.dc.html">Pisah jadi beberapa transaksi<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>
+</section>
+
+<div class="sp"></div>
+
+<div class="col" style="gap: 8px">
+<button class="btn" type="button" style="border-radius: 999px">Simpan transaksi</button>
+<a class="btn ghost" href="AddTx.dc.html" style="border-radius: 999px">Isi manual saja</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1150}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

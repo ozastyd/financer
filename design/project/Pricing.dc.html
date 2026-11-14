@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Paket</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 1180px">
+<div class="scr" style="gap: 14px; padding-bottom: 32px">
+
+<div class="hd">
+<a class="ibtn" href="Profile.dc.html" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p>Paket</p>
+<span class="gap"></span>
+</div>
+
+<div class="col" style="gap: 4px">
+<h1 class="h1" style="font-size: 24px">Pilih yang pas buat kamu</h1>
+<p class="s mut">Bisa ganti atau berhenti kapan saja. Datamu tetap milikmu.</p>
+</div>
+
+<div class="rowc" style="align-items: flex-start; padding: 14px; background: var(--ambs); border-color: var(--ambs)">
+<span class="icb" style="background: var(--sf); color: var(--amb)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+<p class="s sp"><span class="b">Mode uji coba.</span> Pembayaran belum aktif, jadi tidak ada tagihan sungguhan. Paket yang kamu pilih di sini hanya simulasi.</p>
+</div>
+
+<section class="card" aria-label="Paket Gratis">
+<div class="row"><p class="h2 sp">Gratis</p><span class="tag neu">Paket kamu sekarang</span></div>
+<p class="h1 num" style="font-size: 24px">Rp0</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Catat pemasukan dan pengeluaran</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>1 tujuan aktif dan skor finansial dasar</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>5 chat AI per hari, laporan dasar</p>
+</section>
+
+<section class="card" aria-label="Paket Pro" style="border: 2px solid var(--pri)">
+<div class="row"><p class="h2 sp">Pro</p><span class="tag">Paling pas buat mulai</span></div>
+<p class="h1 num" style="font-size: 24px">Rp29.000–59.000 <span class="s mut">/ bulan</span></p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Tujuan dan tantangan tanpa batas</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>AI Coach lanjutan dan "Mampu beli?"</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Simulasi keputusan dan rencana lunas utang</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Laporan bulanan lengkap dan insight pengeluaran</p>
+<button class="btn" type="button" style="border-radius: 999px; margin-top: 4px">Coba Pro (simulasi)</button>
+</section>
+
+<section class="card" aria-label="Paket Premium">
+<p class="h2">Premium</p>
+<p class="h1 num" style="font-size: 24px">Rp99.000–149.000 <span class="s mut">/ bulan</span></p>
+<p class="s mut">Semua yang ada di Pro, ditambah:</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Analisis banyak sumber pemasukan</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Proyeksi keuangan jangka panjang</p>
+<p class="ck"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Simulasi dan bantuan AI paling lengkap</p>
+<button class="btn ghost" type="button" style="border-radius: 999px; margin-top: 4px">Coba Premium (simulasi)</button>
+</section>
+
+<p class="s mut" style="text-align: center">Harga masih kisaran dan akan ditetapkan sebelum rilis.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

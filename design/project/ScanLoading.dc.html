@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Membaca struk</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div class="scr" style="gap: 20px; padding: 0 24px 32px">
+
+<div class="hd">
+<a class="ibtn" href="ScanCamera.dc.html" aria-label="Kembali"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
+<p>Membaca struk</p>
+<span class="gap"></span>
+</div>
+
+<div aria-hidden="true" style="align-self: center; margin-top: 12px; width: 168px; height: 220px; position: relative; border-radius: 14px; background: var(--sf); border: 1px solid var(--line); padding: 22px 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+<i style="height: 9px; width: 60%; border-radius: 5px; background: var(--ctl); align-self: center"></i>
+<i style="height: 6px; border-radius: 4px; background: var(--sf2)"></i>
+<i style="height: 6px; border-radius: 4px; background: var(--sf2)"></i>
+<i style="height: 6px; width: 78%; border-radius: 4px; background: var(--sf2)"></i>
+<i style="height: 6px; border-radius: 4px; background: var(--sf2)"></i>
+<i style="height: 6px; width: 64%; border-radius: 4px; background: var(--sf2)"></i>
+<i style="height: 9px; width: 50%; border-radius: 5px; background: var(--ctl); align-self: flex-end; margin-top: auto"></i>
+<i style="position: absolute; left: 0; right: 0; top: 96px; height: 3px; background: var(--pri)"></i>
+<i style="position: absolute; left: 0; right: 0; top: 0; height: 96px; background: var(--pris); opacity: .55"></i>
+</div>
+
+<div class="col" style="gap: 6px; text-align: center" role="status">
+<h1 class="h1" style="font-size: 24px">Sebentar, lagi dibaca</h1>
+<p class="t mut">Biasanya kurang dari 10 detik.</p>
+</div>
+
+<div class="card" style="gap: 14px">
+<div class="row"><span class="icb g" style="width: 32px; height: 32px; border-radius: 50%"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><p class="t sp">Foto diterima</p><span class="s mut">Selesai</span></div>
+<div class="row"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" style="flex: none"><circle cx="16" cy="16" r="12" fill="none" stroke-width="4" style="stroke: var(--sf2)"/><circle cx="16" cy="16" r="12" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="26 75.4" transform="rotate(-90 16 16)" style="stroke: var(--pri)"/></svg><p class="t b sp">Membaca tulisan dan angka</p><span class="s b pos">Berjalan</span></div>
+<div class="row"><span class="icb" style="width: 32px; height: 32px; border-radius: 50%; color: var(--mut)"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><path d="M7.5 8.5h.01"/></svg></span><p class="t mut sp">Mencocokkan kategori</p><span class="s mut">Menunggu</span></div>
+</div>
+
+<div class="sp"></div>
+<a class="btn ghost" href="AddTx.dc.html" style="border-radius: 999px">Batal, isi manual saja</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>
