@@ -85,3 +85,9 @@ export function statusAfterBalance(goal: Goal, balance: number): Pick<Goal, "sta
   }
   return { status: goal.status, completed_at: balance < goal.target_amount ? null : goal.completed_at };
 }
+
+/** Active first (by priority), then paused, then completed. */
+export function sortGoals(goals: Goal[]): Goal[] {
+  const rank = { active: 0, paused: 1, completed: 2 } as const;
+  return [...goals].sort((a, b) => rank[a.status] - rank[b.status] || a.priority - b.priority || (a.created_at < b.created_at ? -1 : 1));
+}

@@ -1,0 +1,87 @@
+"use client";
+
+import { Area, ComposedChart, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from "recharts";
+import { formatRupiah, formatShort } from "@/lib/money";
+import type { SeriesPoint } from "@/lib/finance";
+
+export const SLICE_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)"];
+
+interface TipProps {
+  active?: boolean;
+  payload?: { payload: SeriesPoint }[];
+  prevLabel: string;
+}
+
+function ChartTip({ active, payload, prevLabel }: TipProps) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div style={{ background: "var(--ink)", color: "var(--bg)", borderRadius: 12, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+      <div>
+        {p.label} · {p.current == null ? "—" : formatRupiah(p.current)}
+      </div>
+      {p.previous != null && (
+        <div style={{ fontWeight: 500, opacity: 0.85 }}>
+          {prevLabel}: {formatRupiah(p.previous)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function CashFlowChart({ series, prevLabel, ariaLabel }: { series: SeriesPoint[]; prevLabel: string; ariaLabel: string }) {
+  const ticks = [series[0]?.key, series[Math.floor(series.length / 2)]?.key, series[series.length - 1]?.key].filter(Boolean) as string[];
+  const labelOf = (k: string) => series.find((s) => s.key === k)?.label ?? "";
+  return (
+    <div role="img" aria-label={ariaLabel} style={{ width: "100%", height: 150, marginTop: 6 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={series} margin={{ top: 10, right: 6, bottom: 0, left: 6 }}>
+          <XAxis
+            dataKey="key"
+            ticks={ticks}
+            tickFormatter={labelOf}
+            interval={0}
+            axisLine={{ stroke: "var(--line)" }}
+            tickLine={false}
+            tick={{ fill: "var(--mut)", fontSize: 11.5, fontWeight: 600 }}
+          />
+          <YAxis hide domain={["auto", "auto"]} />
+          <Tooltip content={<ChartTip prevLabel={prevLabel} />} cursor={{ stroke: "var(--ctl)", strokeWidth: 1 }} />
+          <Line type="monotone" dataKey="previous" stroke="var(--ctl)" strokeWidth={1.5} strokeDasharray="4 5" dot={false} isAnimationActive={false} />
+          <Area
+            type="monotone"
+            dataKey="current"
+            stroke="var(--pri)"
+            strokeWidth={2.5}
+            fill="var(--pris)"
+            fillOpacity={1}
+            connectNulls={false}
+            dot={false}
+            activeDot={{ r: 5, stroke: "var(--pri)", strokeWidth: 2.5, fill: "var(--bg)" }}
+            isAnimationActive={false}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function CategoryDonut({ slices, total }: { slices: { name: string; amount: number }[]; total: number }) {
+  return (
+    <div style={{ width: 104, height: 104, position: "relative", flex: "none" }} aria-hidden="true">
+      <PieChart width={104} height={104}>
+        <Pie data={slices} dataKey="amount" nameKey="name" innerRadius={33} outerRadius={47} startAngle={90} endAngle={-270} stroke="var(--sf)" strokeWidth={2} isAnimationActive={false}>
+          {slices.map((s, i) => (
+            <Cell key={s.name} fill={SLICE_COLORS[i % SLICE_COLORS.length]} />
+          ))}
+        </Pie>
+      </PieChart>
+      <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", textAlign: "center", lineHeight: 1.2 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--mut)" }}>Keluar</div>
+          <div style={{ fontSize: 13, fontWeight: 800 }}>{formatShort(total)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
