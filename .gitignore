@@ -1,1 +1,10 @@
 financial_os_master_build_prompt.txt
+
+# local secrets
+.env
+.env.local
+.env*.local
+
+# build output
+node_modules/
+.next/
