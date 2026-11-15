@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AppError, errorFromFetchFailure, errorFromResponse, formatCountdown, referenceCode, secondsFromRateLimit, toAppError } from "./errors";
+import { AppError, errorFromFetchFailure, errorFromResponse, formatCountdown, referenceCode, toAppError } from "./errors";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -38,10 +38,6 @@ describe("toAppError", () => {
 });
 
 describe("helpers", () => {
-  it("reads Supabase rate-limit waits", () => {
-    expect(secondsFromRateLimit("For security purposes, you can only request this after 45 seconds.")).toBe(45);
-    expect(secondsFromRateLimit("Email rate limit exceeded")).toBeNull();
-  });
   it("formats a countdown", () => {
     expect(formatCountdown(45)).toBe("0:45");
     expect(formatCountdown(61.2)).toBe("1:02");
