@@ -13,7 +13,19 @@ interface Msg {
   content: string;
   source?: "ai" | "fallback";
   notice?: string;
+  sources?: { title: string; url: string }[];
 }
+
+/** The chat bubble shows plain text: drop markdown bold/italic markers and headings. */
+function plain(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1").replace(/^#{1,6}\s+/gm, "").replace(/\*\*$/, "");
+}
+
+type CoachEvent =
+  | { type: "status"; text: string }
+  | { type: "text"; text: string }
+  | { type: "reset" }
+  | { type: "done"; source: "ai" | "fallback"; reply?: string; notice?: string; sources?: { title: string; url: string }[] };
 
 const SUGGESTIONS = ["Gimana cara nabung lebih banyak bulan ini?", "Aku mampu beli HP Rp5 juta nggak?", "Ke mana uangku paling banyak keluar?"];
 
@@ -31,6 +43,8 @@ export default function CoachPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
+  const [streaming, setStreaming] = useState("");
   const [error, setError] = useState<string | null>(null);
   const limited = limitedUntil !== null && limitedUntil > now;
 
@@ -43,7 +57,7 @@ export default function CoachPage() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading]);
+  }, [messages, loading, streaming, status]);
 
   const send = async (text: string) => {
     const q = text.trim();
@@ -62,31 +76,60 @@ export default function CoachPage() {
           messages: next.slice(-12).map(({ role, content }) => ({ role, content })),
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as { reply?: string; source?: "ai" | "fallback"; notice?: string; error?: string; retry_after?: number };
-      if (res.status === 429) {
-        // E2: limit reached; keep the question so it can be sent later
-        const wait = Number(res.headers.get("retry-after") ?? json.retry_after ?? 3600);
-        const stamp = currentTime();
-        setLimitedUntil(stamp + wait * 1000);
-        setNow(stamp);
-        setLimitText(json.error ?? "Kuota pertanyaan sudah habis.");
+      if (!(res.headers.get("content-type") ?? "").includes("text/event-stream") || !res.body) {
+        const json = (await res.json().catch(() => ({}))) as { error?: string; retry_after?: number };
+        if (res.status === 429) {
+          // E2: limit reached; keep the question so it can be sent later
+          const wait = Number(res.headers.get("retry-after") ?? json.retry_after ?? 3600);
+          const stamp = currentTime();
+          setLimitedUntil(stamp + wait * 1000);
+          setNow(stamp);
+          setLimitText(json.error ?? "Kuota pertanyaan sudah habis.");
+        } else if (res.status === 401) {
+          notifySessionExpired();
+        } else {
+          setError(json.error ?? "Gagal menghubungi AI Coach. Coba lagi.");
+        }
         setMessages(next.slice(0, -1));
         setInput(q);
         return;
       }
-      if (res.status === 401) {
-        notifySessionExpired();
-        setMessages(next.slice(0, -1));
-        setInput(q);
-        return;
+
+      // Server-Sent Events: status lines, the answer as it is written, then "done".
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let done: Extract<CoachEvent, { type: "done" }> | null = null;
+      let text = "";
+      for (;;) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buf += decoder.decode(chunk.value, { stream: true });
+        let sep: number;
+        while ((sep = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, sep);
+          buf = buf.slice(sep + 2);
+          const line = block.split("\n").find((l) => l.startsWith("data:"));
+          if (!line) continue;
+          let e: CoachEvent;
+          try {
+            e = JSON.parse(line.slice(5));
+          } catch {
+            continue;
+          }
+          if (e.type === "status") setStatus(e.text);
+          else if (e.type === "text") {
+            text = e.text;
+            setStreaming(plain(text));
+          } else if (e.type === "reset") {
+            text = "";
+            setStreaming("");
+          } else if (e.type === "done") done = e;
+        }
       }
-      if (!res.ok || !json.reply) {
-        setError(json.error ?? "Gagal menghubungi AI Coach. Coba lagi.");
-        setMessages(next.slice(0, -1));
-        setInput(q);
-        return;
-      }
-      setMessages([...next, { role: "assistant", content: json.reply, source: json.source, notice: json.notice }]);
+      const reply = done?.reply ?? text;
+      if (!done || !reply) throw new Error("stream ended early");
+      setMessages([...next, { role: "assistant", content: plain(reply).trim(), source: done.source, notice: done.notice, sources: done.sources }]);
     } catch {
       // network failure: answer locally from the totals already on screen, if any
       const dash = dashQuery.data;
@@ -100,6 +143,8 @@ export default function CoachPage() {
       }
     } finally {
       setLoading(false);
+      setStatus("");
+      setStreaming("");
     }
   };
 
@@ -108,7 +153,7 @@ export default function CoachPage() {
       <div className="row">
         <div className="col sp" style={{ gap: 0 }}>
           <h1 className="h1">AI Coach</h1>
-          <p className="s mut">Hanya membaca ringkasan angka dari catatanmu</p>
+          <p className="s mut">Membaca ringkasan angkamu dan bisa cek harga di internet</p>
         </div>
       </div>
 
@@ -132,6 +177,24 @@ export default function CoachPage() {
               <div className="bubble-ai">
                 <p className="t">{m.content}</p>
               </div>
+              {m.sources && m.sources.length > 0 && (
+                <div className="col" style={{ gap: 4, paddingInline: 4 }}>
+                  <p className="s mut">Sumber dari internet (harga bisa berubah):</p>
+                  {m.sources.map((src) => {
+                    let host = src.url;
+                    try {
+                      host = new URL(src.url).hostname.replace(/^www\./, "");
+                    } catch {
+                      // keep the raw URL
+                    }
+                    return (
+                      <a key={src.url} href={src.url} target="_blank" rel="noopener noreferrer" className="s" style={{ color: "var(--pri)", textDecoration: "underline", overflowWrap: "anywhere" }}>
+                        {host} · {src.title.length > 70 ? `${src.title.slice(0, 70)}…` : src.title}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
               {m.source === "fallback" && (
                 <p className="s mut row" style={{ gap: 6, alignItems: "flex-start" }}>
                   <Info size={14} aria-hidden="true" style={{ marginTop: 3, flex: "none" }} />
@@ -141,10 +204,17 @@ export default function CoachPage() {
             </div>
           ),
         )}
-        {loading && (
+        {loading && streaming && (
+          <div className="col" style={{ gap: 6, alignItems: "flex-start" }}>
+            <div className="bubble-ai">
+              <p className="t">{streaming}</p>
+            </div>
+          </div>
+        )}
+        {loading && !streaming && (
           <div className="bubble-ai row" style={{ gap: 8 }}>
             <Spinner label="AI Coach sedang menjawab" />
-            <span className="s mut">Lagi menghitung…</span>
+            <span className="s mut">{status || "Lagi mikir…"}</span>
           </div>
         )}
       </div>

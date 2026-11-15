@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { todayJakarta } from "@/lib/date";
 import { AppError, type ErrorKind, toAppError } from "@/lib/errors";
-import { createSupabaseAuth, createSupabaseStore } from "@/lib/store/supabase";
+import { createLocalAuth, createLocalStore } from "@/lib/store/local";
 import { type AppData, type AuthClient, type DataStore, EMPTY_DATA, type Session } from "@/lib/store/types";
 import { ToastProvider, useToast } from "./toast";
 
@@ -37,7 +37,9 @@ interface AppContextValue {
   refresh: () => Promise<void>;
   /** Retries everything after the stale-data banner or a reconnect. */
   retryAll: () => Promise<void>;
-  signIn: (email: string) => Promise<{ sent: boolean }>;
+  signIn: (password: string) => Promise<void>;
+  createPassword: (password: string) => Promise<void>;
+  needsSetup: () => Promise<boolean>;
   signOut: () => Promise<void>;
 }
 
@@ -95,8 +97,8 @@ function useOnline(onReconnect: () => void): boolean {
 
 function AppState({ children, queryClient }: { children: ReactNode; queryClient: QueryClient }) {
   const sessionRef = useRef<Session | null>(null);
-  const [auth] = useState<AuthClient>(() => createSupabaseAuth());
-  const [store] = useState<DataStore>(() => createSupabaseStore());
+  const [auth] = useState<AuthClient>(() => createLocalAuth());
+  const [store] = useState<DataStore>(() => createLocalStore());
   const [status, setStatus] = useState<Status>("loading");
   const [session, setSession] = useState<Session | null>(null);
   const [data, setData] = useState<AppData>(EMPTY_DATA);
@@ -225,7 +227,9 @@ function AppState({ children, queryClient }: { children: ReactNode; queryClient:
       mutate,
       refresh,
       retryAll,
-      signIn: (email) => auth.signIn(email),
+      signIn: (password) => auth.signIn(password),
+      createPassword: (password) => auth.createPassword(password),
+      needsSetup: () => auth.needsSetup(),
       signOut: async () => {
         await auth.signOut();
         await applySession(null);

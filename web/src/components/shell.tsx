@@ -111,10 +111,11 @@ function StatusBanner() {
   );
 }
 
-/** B1: the session expired. Keeps whatever is on screen and offers a new sign-in link. */
+/** B1: the session expired. Keeps whatever is on screen and asks for the password again. */
 function SessionExpiredSheet() {
-  const { sessionExpired, dismissSessionExpired, session, signIn } = useApp();
-  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  const { sessionExpired, dismissSessionExpired, signIn } = useApp();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wait, setWait] = useState(0);
 
@@ -124,18 +125,19 @@ function SessionExpiredSheet() {
     return () => window.clearTimeout(t);
   }, [wait]);
 
-  const email = session?.email ?? "";
-  const send = async () => {
-    setState("sending");
+  const submit = async () => {
+    setBusy(true);
     setError(null);
     try {
-      await signIn(email);
-      setState("sent");
+      await signIn(password);
+      setPassword("");
+      dismissSessionExpired();
     } catch (e) {
       const err = toAppError(e);
       if (err.kind === "limit" && err.retryAfter) setWait(err.retryAfter);
       setError(err.message);
-      setState("idle");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -145,7 +147,6 @@ function SessionExpiredSheet() {
       onOpenChange={(open) => {
         if (!open) {
           dismissSessionExpired();
-          setState("idle");
           setError(null);
         }
       }}
@@ -154,32 +155,31 @@ function SessionExpiredSheet() {
       <span className="icb bl" style={{ width: 56, height: 56, borderRadius: 18 }}>
         <LockKeyhole size={24} aria-hidden="true" />
       </span>
-      <p className="t mut">Demi keamanan, kamu perlu masuk lagi. Isian yang belum disimpan tetap ada di layar ini.</p>
-      {state === "sent" ? (
-        <div className="card soft" role="status">
-          <p className="t b">Tautan masuk sudah dikirim</p>
-          <p className="s">Buka email {email} lalu ketuk tautannya. Setelah itu kembali ke sini dan simpan lagi.</p>
-        </div>
-      ) : (
-        <>
-          {email && (
-            <div className="rowc" style={{ padding: "12px 14px" }}>
-              <div className="col sp" style={{ gap: 0 }}>
-                <p className="s mut">Tautan dikirim ke</p>
-                <p className="t b" style={{ overflowWrap: "anywhere" }}>
-                  {email}
-                </p>
-              </div>
-            </div>
-          )}
-          <InlineError message={error && wait > 0 ? `${error} Bisa kirim lagi dalam ${formatCountdown(wait)}.` : error} />
-          <button className="btn" type="button" style={{ borderRadius: 999 }} disabled={!email || state === "sending" || wait > 0} onClick={send}>
-            {state === "sending" ? <Spinner label="Mengirim" /> : wait > 0 ? `Kirim tautan masuk · ${formatCountdown(wait)}` : "Kirim tautan masuk"}
-          </button>
-        </>
-      )}
+      <p className="t mut">Masukkan kata sandi lagi. Isian yang belum disimpan tetap ada di layar ini.</p>
+      <form
+        className="col"
+        style={{ gap: 12 }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (password && !busy && wait <= 0) void submit();
+        }}
+      >
+        <input
+          className="inp"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Kata sandi"
+          aria-label="Kata sandi"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <InlineError message={error && wait > 0 ? `${error} Coba lagi dalam ${formatCountdown(wait)}.` : error} />
+        <button className="btn" type="submit" style={{ borderRadius: 999 }} disabled={!password || busy || wait > 0}>
+          {busy ? <Spinner label="Masuk" /> : wait > 0 ? `Masuk · ${formatCountdown(wait)}` : "Masuk"}
+        </button>
+      </form>
       <button className="lnk" type="button" style={{ alignSelf: "center", color: "var(--mut)" }} onClick={dismissSessionExpired}>
-        {state === "sent" ? "Tutup" : "Nanti saja"}
+        Nanti saja
       </button>
     </Sheet>
   );

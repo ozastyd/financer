@@ -1,44 +1,34 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, isConfigured, isProtectedPath } from "@/lib/config";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
-// Refreshes the Supabase session cookie and keeps signed-out visitors away
-// from app routes. Without configuration the layout shows the
-// "not configured" screen, so there is nothing to guard.
+// One shared password, created on first visit and entered on /masuk.
+// Everything except the sign-in page and its API needs a valid session cookie.
+const PUBLIC_PATHS = new Set(["/masuk", "/api/session", "/api/login", "/api/setup", "/api/logout"]);
+
 export async function proxy(request: NextRequest) {
-  if (!isConfigured) return NextResponse.next();
-
-  let response = NextResponse.next({ request });
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (list) => {
-        list.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
+  const signedIn = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
 
-  const redirectTo = (path: string) => {
+  const go = (path: string) => {
     const url = request.nextUrl.clone();
     url.pathname = path;
     url.search = "";
-    const res = NextResponse.redirect(url);
-    response.cookies.getAll().forEach((c) => res.cookies.set(c));
-    return res;
+    return NextResponse.redirect(url);
   };
 
-  if (!user && isProtectedPath(pathname)) return redirectTo("/masuk");
-  if (user && (pathname === "/masuk" || pathname === "/")) return redirectTo("/beranda");
-  return response;
+  if (PUBLIC_PATHS.has(pathname)) {
+    return signedIn && pathname === "/masuk" ? go("/beranda") : NextResponse.next();
+  }
+  if (!signedIn) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Sesi berakhir. Silakan masuk lagi." }, { status: 401 });
+    }
+    return go("/masuk");
+  }
+  if (pathname === "/") return go("/beranda");
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/|auth/).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
