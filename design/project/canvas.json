@@ -16,6 +16,10 @@
   {
    "id": "prototipe",
    "name": "Prototipe"
+  },
+  {
+   "id": "error",
+   "name": "Error & notifikasi"
   }
  ],
  "boards": {
@@ -351,6 +355,182 @@
    "title": "Prototipe (gelap)",
    "page": "prototipe",
    "is_interactive": true
+  },
+  "ErrNotFound.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E1 Halaman tidak ditemukan",
+   "page": "error"
+  },
+  "ErrNotFoundDark.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E1 Halaman tidak ditemukan (gelap)",
+   "page": "error"
+  },
+  "ErrCrash.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E2 Terjadi kesalahan",
+   "page": "error"
+  },
+  "ErrCrashDark.dc.html": {
+   "x": 470,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E2 Terjadi kesalahan (gelap)",
+   "page": "error"
+  },
+  "ErrServiceDown.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E3 Layanan sedang gangguan",
+   "page": "error"
+  },
+  "ErrServiceDownDark.dc.html": {
+   "x": 940,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E3 Layanan sedang gangguan (gelap)",
+   "page": "error"
+  },
+  "ErrOffline.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E4 Offline + data belum terbaru",
+   "page": "error"
+  },
+  "ErrOfflineDark.dc.html": {
+   "x": 1410,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E4 Offline + data belum terbaru (gelap)",
+   "page": "error"
+  },
+  "ErrToasts.dc.html": {
+   "x": 1880,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E5 Toast",
+   "page": "error"
+  },
+  "ErrToastsDark.dc.html": {
+   "x": 1880,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E5 Toast (gelap)",
+   "page": "error"
+  },
+  "ErrSession.dc.html": {
+   "x": 2350,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E6 Sesi berakhir",
+   "page": "error"
+  },
+  "ErrSessionDark.dc.html": {
+   "x": 2350,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E6 Sesi berakhir (gelap)",
+   "page": "error"
+  },
+  "ErrSignin.dc.html": {
+   "x": 2820,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E7 Masuk: tautan & batas kirim",
+   "page": "error"
+  },
+  "ErrSigninDark.dc.html": {
+   "x": 2820,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E7 Masuk: tautan & batas kirim (gelap)",
+   "page": "error"
+  },
+  "ErrLoadFailed.dc.html": {
+   "x": 3290,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E8 Gagal memuat",
+   "page": "error"
+  },
+  "ErrLoadFailedDark.dc.html": {
+   "x": 3290,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E8 Gagal memuat (gelap)",
+   "page": "error"
+  },
+  "ErrSaveFailed.dc.html": {
+   "x": 3760,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E9 Gagal menyimpan",
+   "page": "error"
+  },
+  "ErrSaveFailedDark.dc.html": {
+   "x": 3760,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E9 Gagal menyimpan (gelap)",
+   "page": "error"
+  },
+  "ErrLimits.dc.html": {
+   "x": 4230,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E10 Batas Paket Gratis",
+   "page": "error"
+  },
+  "ErrLimitsDark.dc.html": {
+   "x": 4230,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E10 Batas Paket Gratis (gelap)",
+   "page": "error"
+  },
+  "ErrCoachLimit.dc.html": {
+   "x": 4700,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "E11 AI Coach: kuota habis",
+   "page": "error"
+  },
+  "ErrCoachLimitDark.dc.html": {
+   "x": 4700,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "E11 AI Coach: kuota habis (gelap)",
+   "page": "error"
   }
  },
  "order": [
@@ -400,7 +580,29 @@
   "PricingDark.dc.html",
   "SettingsDark.dc.html",
   "Prototype.dc.html",
-  "PrototypeDark.dc.html"
+  "PrototypeDark.dc.html",
+  "ErrNotFound.dc.html",
+  "ErrNotFoundDark.dc.html",
+  "ErrCrash.dc.html",
+  "ErrCrashDark.dc.html",
+  "ErrServiceDown.dc.html",
+  "ErrServiceDownDark.dc.html",
+  "ErrOffline.dc.html",
+  "ErrOfflineDark.dc.html",
+  "ErrToasts.dc.html",
+  "ErrToastsDark.dc.html",
+  "ErrSession.dc.html",
+  "ErrSessionDark.dc.html",
+  "ErrSignin.dc.html",
+  "ErrSigninDark.dc.html",
+  "ErrLoadFailed.dc.html",
+  "ErrLoadFailedDark.dc.html",
+  "ErrSaveFailed.dc.html",
+  "ErrSaveFailedDark.dc.html",
+  "ErrLimits.dc.html",
+  "ErrLimitsDark.dc.html",
+  "ErrCoachLimit.dc.html",
+  "ErrCoachLimitDark.dc.html"
  ],
  "notes": {
   "light": {
@@ -438,6 +640,30 @@
    "page": "prototipe",
    "fill": "green",
    "text": "Tekan Play pada artboard untuk mencoba.\n\nPrototipe ini memuat file layar yang sama dengan halaman \"Layar\", jadi setiap perubahan di sana langsung terlihat di sini.\n\nLayar awal dan tema bisa diganti lewat Tweaks."
+  },
+  "err_light": {
+   "x": 0,
+   "y": -300,
+   "text": "Error & notifikasi · Terang",
+   "kind": "title1",
+   "maxW": 5090,
+   "page": "error"
+  },
+  "err_dark": {
+   "x": 0,
+   "y": 1000,
+   "text": "Error & notifikasi · Gelap",
+   "kind": "title1",
+   "maxW": 5090,
+   "page": "error"
+  },
+  "err_doc": {
+   "x": 5170,
+   "y": 0,
+   "w": 380,
+   "page": "error",
+   "fill": "orange",
+   "text": "Daftar lengkap semua error, teks, dan tindakan pemulihan ada di docs/architecture/error-catalogue.md di repo.\n\nKode di judul frame (E1–E10) adalah frame desain; kode di dokumen (A1, B2, C5…) adalah jenis error."
   }
  },
  "designSystems": []

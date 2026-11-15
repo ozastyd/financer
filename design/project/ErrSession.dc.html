@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Sesi berakhir</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo" data-theme="{{theme}}" style="width: 390px; height: 844px; background: var(--scrim)">
+<div style="height: 56px; flex: none"></div>
+<div aria-hidden="true" style="background: var(--bg); border-radius: 24px 24px 0 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; opacity: .55">
+<p class="h2">Input manual</p>
+<div class="seg"><button class="on" type="button" tabindex="-1">Pengeluaran</button><button type="button" tabindex="-1">Pemasukan</button></div>
+<p class="big" style="text-align: center; font-size: 40px">Rp35.000</p>
+<div class="wrap"><span class="chip on">Makan</span><span class="chip">Transport</span><span class="chip">Belanja</span></div>
+<div class="inp" style="display: flex; align-items: center">Kopi susu</div>
+</div>
+<div style="flex: 1; background: var(--bg); opacity: .55" aria-hidden="true"></div>
+
+<div role="dialog" aria-labelledby="sesi-judul" style="position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 24px 24px 0 0; padding: 10px 20px 32px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 -16px 40px rgba(0,0,0,.25)">
+<div style="width: 40px; height: 4px; border-radius: 99px; background: var(--ctl); align-self: center"></div>
+<span class="icb bl" style="width: 56px; height: 56px; border-radius: 18px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+<div class="col" style="gap: 6px">
+<h1 class="h2" id="sesi-judul">Sesi kamu berakhir</h1>
+<p class="t mut">Demi keamanan, kamu perlu masuk lagi. Isian yang belum disimpan tetap ada di layar ini.</p>
+</div>
+<div class="rowc" style="padding: 12px 14px">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="s mut">Tautan dikirim ke</p><p class="t b">andi@email.com</p></div>
+</div>
+<button class="btn" type="button" style="border-radius: 999px">Kirim tautan masuk</button>
+<button class="lnk" type="button" style="justify-content: center; color: var(--mut)">Nanti saja</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

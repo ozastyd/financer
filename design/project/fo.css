@@ -135,3 +135,30 @@
 .fo .tab a.on{color:var(--ink);font-weight:800}
 .fo .tab a.plus{width:58px;height:58px;min-height:58px;border-radius:50%;justify-self:center;margin-top:-24px;background:var(--pri);color:var(--onpri);box-shadow:0 0 0 5px var(--bg),0 10px 20px rgba(4,60,44,.28)}
 .fo .tab a.plus .ic{width:26px;height:26px;stroke-width:2.2}
+
+/* errors and notifications */
+.fo{--reds:#FDE7E4}
+.fo[data-theme="dark"]{--reds:#3A1D1A}
+.fo .state{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:0 28px 40px}
+.fo .state .icb{width:72px;height:72px;border-radius:24px}
+.fo .state .icb .ic{width:32px;height:32px}
+.fo .icb.rd{background:var(--reds);color:var(--red)}
+.fo .ref{font-size:12px;font-weight:700;color:var(--mut);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.fo .banner{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:700;line-height:1.4}
+.fo .banner.off{background:var(--ink);color:var(--bg)}
+.fo .banner.warn{background:var(--ambs);color:var(--amb)}
+.fo .banner .act{margin-left:auto;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;font-size:13px;font-weight:800}
+.fo .toast{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 8px 8px 14px;border-radius:16px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:600;line-height:1.4;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.fo .toast .ic{flex:none}
+.fo .toast.ok .ic{color:#5EE0B0}
+.fo[data-theme="dark"] .toast.ok .ic{color:#047857}
+.fo .toast.err{background:var(--reds);color:var(--ink);border:1px solid var(--red);box-shadow:0 12px 28px rgba(180,35,24,.16)}
+.fo .toast.err .ic{color:var(--red)}
+.fo .toast .act{margin-left:auto;flex:none;min-height:44px;padding:0 14px;border:0;border-radius:12px;background:transparent;color:inherit;font-size:14px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.fo .toast .x{flex:none;width:44px;height:44px;border:0;border-radius:12px;background:transparent;color:inherit;display:grid;place-items:center}
+.fo .inp.bad{border:2px solid var(--red)}
+.fo .err{display:flex;gap:6px;align-items:flex-start;margin-top:6px;color:var(--red);font-size:13px;font-weight:700;line-height:1.4}
+.fo .err .ic{margin-top:1px}
+.fo .dim{opacity:.45;pointer-events:none}
+.fo button.lnk{border:0;background:transparent;font-family:inherit;cursor:pointer;padding:0 8px}
+.fo .banner .act,.fo .toast .act{white-space:nowrap}

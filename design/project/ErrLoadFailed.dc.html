@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Transaksi: sebagian data gagal dimuat</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div style="height: 44px; flex: none"></div>
+<p class="banner warn" role="status">
+<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg>
+<span>Sebagian data belum bisa dimuat. Yang tampil mungkin belum terbaru.</span>
+<button class="act" type="button">Coba lagi</button>
+</p>
+<div class="scr" style="gap: 12px; padding-top: 16px">
+<div class="row">
+<h1 class="h1 sp" style="font-size: 24px">Transaksi</h1>
+<span class="s b num">Nov 2026</span>
+</div>
+
+<div class="card" style="gap: 10px">
+<div class="row" style="align-items: flex-start">
+<span class="icb am"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+<div class="col sp" style="gap: 2px">
+<p class="t b">Gagal memuat ringkasan bulan ini</p>
+<p class="s mut">Periksa koneksimu, lalu coba lagi.</p>
+</div>
+</div>
+<button class="btn sm ghost" type="button" style="align-self: flex-start; border-radius: 999px">Coba lagi</button>
+</div>
+
+<p class="sec">Kemarin · Jum, 14 Nov</p>
+<div class="rowc">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Belanja bulanan</p><p class="s mut">Belanja</p></div>
+<p class="t b num">−Rp214.500</p>
+</div>
+<div class="rowc">
+<span class="icb g"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M16 17H7V8"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Proyek desain logo</p><p class="s mut">Freelance · pemasukan</p></div>
+<p class="t b num pos">+Rp350.000</p>
+</div>
+
+<div class="col" style="gap: 8px; align-items: center; padding: 8px 0" role="status">
+<p class="s mut" style="display: flex; gap: 6px; align-items: center"><svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--amb)"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Gagal memuat transaksi berikutnya.</p>
+<button class="btn ghost sm" type="button" style="border-radius: 999px">Coba lagi</button>
+</div>
+</div>
+<nav class="tab" aria-label="Navigasi utama">
+<a href="Home.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</a>
+<a class="on" href="Transactions.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Transaksi</a>
+<a class="plus" href="PlusMenu.dc.html" aria-label="Tambah transaksi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+<a href="Goals.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Tujuan</a>
+<a href="Coach.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg>AI Coach</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

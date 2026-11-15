@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Layanan sedang gangguan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<main class="state">
+<span class="icb am"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14a8 8 0 0 1 16 0"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M12 18h.01"/><path d="M3 3l18 18"/></svg></span>
+<div class="col" style="gap: 8px">
+<h1 class="h1">Layanan sedang gangguan</h1>
+<p class="t mut">Kami tidak bisa menghubungi server sekarang. Datamu aman dan tidak hilang; ini biasanya pulih dalam beberapa menit.</p>
+</div>
+<button class="btn" type="button" style="border-radius: 999px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>Coba lagi</button>
+<div class="rowc" style="align-items: flex-start; padding: 14px">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01"/></svg></span>
+<div class="col sp" style="gap: 2px">
+<p class="t b">Koneksimu normal?</p>
+<p class="s mut">Kalau situs lain juga tidak terbuka, masalahnya ada di internetmu. Coba ganti Wi-Fi atau data seluler.</p>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

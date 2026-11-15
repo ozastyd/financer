@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>AI Coach: kuota harian habis</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo safe" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div class="scr" style="gap: 14px; padding-bottom: 16px">
+<div class="row">
+<div class="col sp" style="gap: 0">
+<h1 class="h1">AI Coach</h1>
+<p class="s mut">Hanya membaca ringkasan angka dari catatanmu</p>
+</div>
+<span class="tag amb">0 dari 5 chat tersisa</span>
+</div>
+
+<div style="align-self: flex-end; max-width: 82%; background: var(--pri); color: var(--onpri); border-radius: 18px 18px 4px 18px; padding: 12px 14px">
+<p class="t">Bulan ini aku boros di mana?</p>
+</div>
+<div style="align-self: flex-start; max-width: 92%; background: var(--sf); border: 1px solid var(--line); border-radius: 18px 18px 18px 4px; padding: 12px 14px">
+<p class="t">Paling banyak di Makan &amp; minum, Rp1.110.000 (38%). Pesan-antar naik 18% dari bulan lalu.</p>
+</div>
+
+<div class="card amb" role="status" style="gap: 10px; background: var(--ambs); border-color: var(--ambs)">
+<div class="row" style="align-items: flex-start">
+<span class="icb" style="background: var(--sf); color: var(--amb)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+<div class="col sp" style="gap: 2px">
+<p class="t b">Kuota chat hari ini sudah habis</p>
+<p class="s">Kamu sudah bertanya 5 kali hari ini. Kuota balik besok pukul 00.00 WIB.</p>
+</div>
+</div>
+<a class="lnk" href="Pricing.dc.html" style="color: var(--amb)">Pro: 50 chat per hari<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>
+</div>
+
+<div class="sp"></div>
+
+<div class="row" style="gap: 8px">
+<input class="inp" type="text" aria-label="Tulis pertanyaan" placeholder="Bisa bertanya lagi besok" disabled style="opacity: .6">
+<button class="ibtn" type="button" aria-label="Kirim" disabled style="width: 52px; height: 52px; opacity: .5"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+</div>
+</div>
+<nav class="tab" aria-label="Navigasi utama">
+<a href="Home.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</a>
+<a href="Transactions.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Transaksi</a>
+<a class="plus" href="PlusMenu.dc.html" aria-label="Tambah transaksi"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+<a href="Goals.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Tujuan</a>
+<a class="on" href="Coach.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg>AI Coach</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

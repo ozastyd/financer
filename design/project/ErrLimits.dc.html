@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Batas Paket Gratis: tujuan aktif</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo" data-theme="{{theme}}" style="width: 390px; height: 844px; background: var(--scrim)">
+<div class="safe" aria-hidden="true" style="background: var(--bg); opacity: .55; padding-left: 20px; padding-right: 20px; display: flex; flex-direction: column; gap: 14px; flex: 1">
+<p class="h1" style="font-size: 24px">Tujuan</p>
+<div class="rowc" style="padding: 14px"><div class="col sp" style="gap: 2px"><p class="h2">Rp10 Juta Pertamaku</p><p class="s mut">Rp4.250.000 dari Rp10.000.000</p></div></div>
+</div>
+
+<div role="dialog" aria-labelledby="batas-judul" style="position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 24px 24px 0 0; padding: 10px 20px 32px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 -16px 40px rgba(0,0,0,.25)">
+<div style="width: 40px; height: 4px; border-radius: 99px; background: var(--ctl); align-self: center"></div>
+<span class="icb g" style="width: 56px; height: 56px; border-radius: 18px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
+<div class="col" style="gap: 6px">
+<h1 class="h2" id="batas-judul">Paket Gratis: 1 tujuan aktif</h1>
+<p class="t mut">Kamu sudah punya satu tujuan yang sedang dikejar. Fokus dulu itu bagus. Kalau mau mengejar beberapa sekaligus, ada dua pilihan:</p>
+</div>
+<a class="rowc" href="Goals.dc.html" style="padding: 12px 14px">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></span>
+<div class="col sp" style="gap: 0"><p class="t b">Jeda tujuan yang ada</p><p class="s mut">Saldonya tetap aman, bisa dilanjutkan kapan saja.</p></div>
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--mut)"><path d="m9 6 6 6-6 6"/></svg>
+</a>
+<a class="btn" href="Pricing.dc.html" style="border-radius: 999px">Lihat paket Pro</a>
+<button class="lnk" type="button" style="justify-content: center; color: var(--mut)">Nanti saja</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>

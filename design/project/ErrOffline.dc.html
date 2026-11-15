@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Beranda saat offline</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./fo.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fo" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<div style="height: 44px; flex: none"></div>
+<p class="banner off" role="status">
+<svg class="ic sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 9.5-3M8.5 16a5 5 0 0 1 4.5-1.4M12 19.5h.01M3 3l18 18"/></svg>
+<span>Kamu sedang offline. Perubahan belum bisa disimpan.</span>
+</p>
+<div class="scr" style="padding-top: 16px">
+<div class="row">
+<div class="col sp" style="gap: 0">
+<h1 class="h2" style="font-size: 20px">Selamat pagi, Andi</h1>
+<p class="s mut">Yuk, bikin uangmu kerja lebih baik bulan ini.</p>
+</div>
+<span class="ava" style="width: 44px; height: 44px; font-size: 17px">A</span>
+</div>
+
+<section class="col" style="gap: 6px" aria-label="Arus kas bersih">
+<p class="sec">Arus kas bersih · November</p>
+<p class="big" style="font-size: 36px">Rp1.920.000</p>
+<p class="s mut">Angka terakhir yang tersimpan di perangkat ini, diperbarui pukul 09.12.</p>
+</section>
+
+<div class="g2">
+<div class="card" style="gap: 6px; padding: 14px"><p class="sec">Masuk</p><p class="h2 num">Rp4.850.000</p></div>
+<div class="card" style="gap: 6px; padding: 14px"><p class="sec">Keluar</p><p class="h2 num">Rp2.930.000</p></div>
+</div>
+
+<div class="card" style="gap: 10px">
+<div class="row">
+<span class="icb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></span>
+<div class="col sp" style="gap: 0">
+<p class="t b">Mau mencatat sekarang?</p>
+<p class="s mut">Tunggu sampai online lagi. Halaman ini diperbarui sendiri begitu koneksi kembali.</p>
+</div>
+</div>
+</div>
+</div>
+
+<nav class="tab" aria-label="Navigasi utama">
+<a class="on" href="Home.dc.html" aria-current="page"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</a>
+<a href="Transactions.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Transaksi</a>
+<span class="plus dim" aria-disabled="true" aria-label="Tambah transaksi, tidak tersedia saat offline" style="width: 58px; height: 58px; border-radius: 50%; justify-self: center; margin-top: -24px; background: var(--ctl); color: var(--onpri); display: grid; place-items: center; opacity: 1"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px"><path d="M12 5v14M5 12h14"/></svg></span>
+<a href="Goals.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Tujuan</a>
+<a href="Coach.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15v4M17 17h4"/></svg>AI Coach</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'light' };
+}
+}
+</script>
+</body>
+</html>
