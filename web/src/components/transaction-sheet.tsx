@@ -3,7 +3,9 @@
 import { Calendar, Delete, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "./app-provider";
+import { InlineError, useToast } from "./toast";
 import { Chip, ErrorNote, Segmented, Spinner } from "./ui/controls";
+import { toAppError } from "@/lib/errors";
 import { Sheet } from "./ui/sheet";
 import { relativeDayLabel } from "@/lib/date";
 import { MAX_AMOUNT, formatRupiah } from "@/lib/money";
@@ -26,7 +28,9 @@ export function TransactionSheet({ open, onOpenChange, initialType, edit }: Prop
 }
 
 function TransactionForm({ initialType, edit, onDone }: { initialType: TxType; edit?: Transaction; onDone: () => void }) {
-  const { data, today, mutate } = useApp();
+  const { data, today, mutate, online } = useApp();
+  const toast = useToast();
+  const [requestError, setRequestError] = useState<string | null>(null);
   const [type, setType] = useState<TxType>(edit?.type ?? initialType);
   const [amount, setAmount] = useState<string>(edit ? String(edit.amount) : "");
   const [categoryId, setCategoryId] = useState<string | null>(edit?.category_id ?? null);
@@ -61,11 +65,15 @@ function TransactionForm({ initialType, edit, onDone }: { initialType: TxType; e
     if (!parsed.success) return setError(firstError(parsed.error));
     setBusy(true);
     setError(null);
+    setRequestError(null);
     try {
       await mutate((s) => (edit ? s.updateTransaction(edit.id, parsed.data) : s.addTransaction(parsed.data)));
+      toast.success(edit ? "Perubahan tersimpan." : "Transaksi tersimpan.");
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan.");
+      const err = toAppError(e);
+      if (err.kind === "rejected") setError(err.message);
+      else if (err.kind !== "session") setRequestError(err.message);
     } finally {
       setBusy(false);
     }
@@ -74,11 +82,22 @@ function TransactionForm({ initialType, edit, onDone }: { initialType: TxType; e
   const remove = async () => {
     if (!edit) return;
     setBusy(true);
+    setRequestError(null);
+    const { type: t, category_id, amount: a, description, transaction_date } = edit;
     try {
       await mutate((s) => s.deleteTransaction(edit.id));
       onDone();
+      toast.success("Transaksi dihapus.", {
+        label: "Urungkan",
+        run: () => {
+          mutate((s) => s.addTransaction({ type: t, category_id, amount: a, description: description ?? "", transaction_date }))
+            .then(() => toast.success("Transaksi dikembalikan."))
+            .catch((e) => toast.error(toAppError(e).message));
+        },
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menghapus.");
+      const err = toAppError(e);
+      if (err.kind !== "session") setRequestError(err.kind === "rejected" ? err.message : "Gagal menghapus. Coba lagi.");
       setBusy(false);
     }
   };
@@ -166,7 +185,9 @@ function TransactionForm({ initialType, edit, onDone }: { initialType: TxType; e
       </div>
 
       <ErrorNote message={error} />
-      <button className="btn" type="submit" disabled={busy}>
+      <InlineError message={requestError} onRetry={requestError ? () => void submit() : undefined} />
+      {!online && <p className="s mut" style={{ textAlign: "center" }}>Kamu sedang offline. Isianmu tetap di sini; simpan setelah online lagi.</p>}
+      <button className="btn" type="submit" disabled={busy || !online}>
         {busy ? <Spinner label="Menyimpan" /> : edit ? "Simpan perubahan" : "Simpan"}
       </button>
 

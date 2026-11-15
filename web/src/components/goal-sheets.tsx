@@ -7,9 +7,11 @@ import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { useApp } from "./app-provider";
+import { useToast } from "./toast";
 import { AmountInput, Chip, ErrorNote, Field, Spinner } from "./ui/controls";
 import { Sheet } from "./ui/sheet";
 import { formatMonthYear, isValidDate } from "@/lib/date";
+import { toAppError } from "@/lib/errors";
 import { type RhythmOption, estimateCompletion, goalRemaining, rhythmOptions } from "@/lib/goals";
 import { MAX_AMOUNT, formatRupiah } from "@/lib/money";
 import { GOAL_ICONS, GOAL_TEMPLATES } from "@/lib/options";
@@ -41,8 +43,16 @@ export function GoalFormSheet({ open, onOpenChange, goal }: { open: boolean; onO
   );
 }
 
+/** Message for a failed save; null when the session-expired sheet already explains it. */
+function failMessage(e: unknown, fallback: string): string | null {
+  const err = toAppError(e, fallback);
+  if (err.kind === "session") return null;
+  return err.kind === "rejected" || err.kind === "offline" || err.kind === "limit" ? err.message : fallback;
+}
+
 function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) {
   const { mutate, today } = useApp();
+  const toast = useToast();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -81,14 +91,16 @@ function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) {
       if (goal) {
         const { title, target_amount, target_date, category: cat, description } = parsed.data;
         await mutate((s) => s.updateGoal(goal.id, { title, target_amount, target_date, category: cat, description }));
+        toast.success("Tujuan tersimpan.");
         onDone();
       } else {
         const id = await mutate((s) => s.addGoal(parsed.data));
+        toast.success("Tujuan baru dibuat.");
         onDone();
         router.push(`/tujuan/${id}`);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan.");
+      setError(failMessage(e, "Gagal menyimpan. Periksa koneksimu lalu coba lagi."));
     }
   };
 
@@ -98,9 +110,10 @@ function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) {
     setError(null);
     try {
       await mutate((s) => s.updateGoal(goal.id, { status }));
+      toast.success(status === "paused" ? "Tujuan dijeda. Saldonya tetap aman." : "Tujuan dilanjutkan.");
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan.");
+      setError(failMessage(e, "Gagal menyimpan. Periksa koneksimu lalu coba lagi."));
     } finally {
       setBusy(false);
     }
@@ -111,10 +124,11 @@ function GoalForm({ goal, onDone }: { goal?: Goal; onDone: () => void }) {
     setBusy(true);
     try {
       await mutate((s) => s.deleteGoal(goal.id));
+      toast.success("Tujuan dihapus.");
       onDone();
       router.replace("/tujuan");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menghapus.");
+      setError(failMessage(e, "Gagal menghapus. Coba lagi."));
       setBusy(false);
     }
   };
@@ -222,6 +236,7 @@ export function ContributionSheet({ open, onOpenChange, goal, kind }: { open: bo
 
 function ContributionForm({ goal, kind, onDone }: { goal: Goal; kind: "deposit" | "withdrawal"; onDone: () => void }) {
   const { mutate, today } = useApp();
+  const toast = useToast();
   const [amount, setAmount] = useState<number | null>(kind === "deposit" ? goal.monthly_plan : null);
   const [note, setNote] = useState("");
   const [date, setDate] = useState(today);
@@ -237,9 +252,11 @@ function ContributionForm({ goal, kind, onDone }: { goal: Goal; kind: "deposit" 
     setBusy(true);
     try {
       await mutate((s) => s.addContribution(goal.id, parsed.data));
+      const reached = kind === "deposit" && goal.current_amount + parsed.data.amount >= goal.target_amount;
+      toast.success(reached ? "Tujuan tercapai! Selamat." : `${kind === "deposit" ? "Setoran" : "Penarikan"} ${formatRupiah(parsed.data.amount)} tercatat.`);
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan.");
+      setError(failMessage(e, "Gagal menyimpan. Periksa koneksimu lalu coba lagi."));
     } finally {
       setBusy(false);
     }
@@ -284,6 +301,7 @@ export function RhythmSheet({ open, onOpenChange, goal }: { open: boolean; onOpe
 
 function RhythmForm({ goal, onDone }: { goal: Goal; onDone: () => void }) {
   const { mutate, today } = useApp();
+  const toast = useToast();
   const options = rhythmOptions(goal, today);
   const [selected, setSelected] = useState<number | null>(goal.monthly_plan ?? options[0]?.monthly ?? null);
   const [custom, setCustom] = useState<number | null>(null);
@@ -300,9 +318,10 @@ function RhythmForm({ goal, onDone }: { goal: Goal; onDone: () => void }) {
     setError(null);
     try {
       await mutate((s) => s.updateGoal(goal.id, { monthly_plan: chosen }));
+      toast.success(`Ritme nabung ${formatRupiah(chosen)} per bulan tersimpan.`);
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan.");
+      setError(failMessage(e, "Gagal menyimpan. Periksa koneksimu lalu coba lagi."));
     } finally {
       setBusy(false);
     }

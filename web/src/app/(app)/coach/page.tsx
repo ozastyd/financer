@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight, Clock, Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { Spinner } from "@/components/ui/controls";
 import { fallbackReply, summaryFromDashboard } from "@/lib/coach";
+import { MESSAGES, isOffline } from "@/lib/errors";
 import { useDashboard } from "@/lib/queries";
 
 interface Msg {
@@ -16,13 +17,28 @@ interface Msg {
 
 const SUGGESTIONS = ["Gimana cara nabung lebih banyak bulan ini?", "Aku mampu beli HP Rp5 juta nggak?", "Ke mana uangku paling banyak keluar?"];
 
+/** Wall-clock time, read only from event handlers and timers. */
+function currentTime(): number {
+  return Date.now();
+}
+
 export default function CoachPage() {
-  const { data, today } = useApp();
+  const { data, today, notifySessionExpired } = useApp();
+  const [limitedUntil, setLimitedUntil] = useState<number | null>(null);
+  const [limitText, setLimitText] = useState("");
+  const [now, setNow] = useState(0);
   const dashQuery = useDashboard("month", today);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const limited = limitedUntil !== null && limitedUntil > now;
+
+  useEffect(() => {
+    if (limitedUntil === null) return;
+    const t = window.setInterval(() => setNow(currentTime()), 30_000);
+    return () => window.clearInterval(t);
+  }, [limitedUntil]);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +47,7 @@ export default function CoachPage() {
 
   const send = async (text: string) => {
     const q = text.trim();
-    if (!q || loading) return;
+    if (!q || loading || limited) return;
     if (q.length > 2000) return setError("Pertanyaan terlalu panjang (maksimal 2000 karakter).");
     const next: Msg[] = [...messages, { role: "user", content: q }];
     setMessages(next);
@@ -46,7 +62,24 @@ export default function CoachPage() {
           messages: next.slice(-12).map(({ role, content }) => ({ role, content })),
         }),
       });
-      const json = (await res.json().catch(() => ({}))) as { reply?: string; source?: "ai" | "fallback"; notice?: string; error?: string };
+      const json = (await res.json().catch(() => ({}))) as { reply?: string; source?: "ai" | "fallback"; notice?: string; error?: string; retry_after?: number };
+      if (res.status === 429) {
+        // E2: limit reached; keep the question so it can be sent later
+        const wait = Number(res.headers.get("retry-after") ?? json.retry_after ?? 3600);
+        const stamp = currentTime();
+        setLimitedUntil(stamp + wait * 1000);
+        setNow(stamp);
+        setLimitText(json.error ?? "Kuota pertanyaan sudah habis.");
+        setMessages(next.slice(0, -1));
+        setInput(q);
+        return;
+      }
+      if (res.status === 401) {
+        notifySessionExpired();
+        setMessages(next.slice(0, -1));
+        setInput(q);
+        return;
+      }
       if (!res.ok || !json.reply) {
         setError(json.error ?? "Gagal menghubungi AI Coach. Coba lagi.");
         setMessages(next.slice(0, -1));
@@ -61,7 +94,7 @@ export default function CoachPage() {
         const summary = summaryFromDashboard(data, dash, today);
         setMessages([...next, { role: "assistant", content: fallbackReply(q, summary), source: "fallback", notice: "Tidak ada koneksi, jadi ini jawaban otomatis dari angkamu." }]);
       } else {
-        setError("Tidak ada koneksi. Coba lagi.");
+        setError(isOffline() ? MESSAGES.offline : "Tidak ada koneksi. Coba lagi.");
         setMessages(next.slice(0, -1));
         setInput(q);
       }
@@ -127,6 +160,22 @@ export default function CoachPage() {
       )}
 
       <div className="sp" />
+      {limited && limitedUntil && (
+        <div className="card note-amb" role="status" style={{ gap: 8 }}>
+          <div className="row" style={{ alignItems: "flex-start" }}>
+            <span className="icb" style={{ background: "var(--sf)", color: "var(--amb)" }}>
+              <Clock size={20} aria-hidden="true" />
+            </span>
+            <div className="col sp" style={{ gap: 2 }}>
+              <p className="t b">Kuota pertanyaan sudah habis</p>
+              <p className="s">
+                {limitText} Bisa bertanya lagi sekitar pukul{" "}
+                {new Date(limitedUntil).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })} WIB.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {error && (
         <p className="err" role="alert">
           {error}
@@ -148,7 +197,7 @@ export default function CoachPage() {
           className="ibtn"
           type="submit"
           aria-label="Kirim"
-          disabled={loading || !input.trim()}
+          disabled={loading || limited || !input.trim()}
           style={{ width: 52, height: 52, borderRadius: 14, background: "var(--pri)", color: "var(--onpri)", borderColor: "var(--pri)", opacity: loading || !input.trim() ? 0.6 : 1 }}
         >
           <ArrowRight size={20} aria-hidden="true" />

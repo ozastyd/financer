@@ -16,12 +16,17 @@ const MODEL = "claude-opus-5-5";
 const WINDOW_MS = 60 * 60 * 1000;
 const LIMIT = 30;
 const hits = new Map<string, number[]>();
-function rateLimited(key: string): boolean {
+/** Seconds until the user may ask again, or 0 when under the limit. */
+function rateLimited(key: string): number {
   const now = Date.now();
   const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (recent.length >= LIMIT) {
+    hits.set(key, recent);
+    return Math.max(1, Math.ceil((recent[0] + WINDOW_MS - now) / 1000));
+  }
   recent.push(now);
   hits.set(key, recent);
-  return recent.length > LIMIT;
+  return 0;
 }
 
 let client: Anthropic | null = null;
@@ -81,8 +86,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Gagal membaca datamu. Coba lagi." }, { status: 502 });
   }
 
-  if (rateLimited(userKey)) {
-    return NextResponse.json({ error: "Kamu sudah banyak bertanya dalam sejam terakhir. Coba lagi sebentar lagi." }, { status: 429 });
+  const wait = rateLimited(userKey);
+  if (wait > 0) {
+    return NextResponse.json(
+      { error: `Kamu sudah bertanya ${LIMIT} kali dalam sejam terakhir.`, retry_after: wait },
+      { status: 429, headers: { "retry-after": String(wait) } },
+    );
   }
 
   const last = body.messages[body.messages.length - 1];

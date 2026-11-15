@@ -20,6 +20,7 @@
   --amb: #92400e;
   --ambs: #fbebcf;
   --red: #b42318;
+  --reds: #fde7e4;
   --hero: #0b3d2e;
   --onhero: #ffffff;
   --heromut: #bfddd0;
@@ -51,6 +52,7 @@
   --amb: #f5c26b;
   --ambs: #3a2c12;
   --red: #ff9c8f;
+  --reds: #3a1d1a;
   --hero: #11382d;
   --onhero: #f1f5f4;
   --heromut: #a9cdbf;
@@ -83,6 +85,7 @@
     --amb: #f5c26b;
     --ambs: #3a2c12;
     --red: #ff9c8f;
+  --reds: #3a1d1a;
     --hero: #11382d;
     --onhero: #f1f5f4;
     --heromut: #a9cdbf;
@@ -851,3 +854,170 @@ a {
     animation: none !important;
   }
 }
+
+/* Errors and notifications (docs/architecture/error-catalogue.md) */
+.state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 0 28px 40px;
+}
+.state .icb {
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+}
+.icb.rd {
+  background: var(--reds);
+  color: var(--red);
+}
+.ref {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mut);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.banner {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 20px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.banner.off {
+  background: var(--ink);
+  color: var(--bg);
+}
+.banner.warn {
+  background: var(--ambs);
+  color: var(--amb);
+}
+.banner .act {
+  margin-left: auto;
+  flex: none;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.toasts {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  width: min(100% - 32px, 420px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  animation: toast-in 0.18s ease-out;
+}
+.toast > svg {
+  flex: none;
+}
+.toast.ok > svg {
+  color: #5ee0b0;
+}
+[data-theme="dark"] .toast.ok > svg {
+  color: #047857;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .toast.ok > svg {
+    color: #047857;
+  }
+}
+.toast.err {
+  background: var(--reds);
+  color: var(--ink);
+  border: 1px solid var(--red);
+  box-shadow: 0 12px 28px rgba(180, 35, 24, 0.16);
+}
+.toast.err > svg {
+  color: var(--red);
+}
+.toast.inline {
+  box-shadow: none;
+  animation: none;
+}
+.toast .act {
+  margin-left: auto;
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.toast .x {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+.note-amb {
+  background: var(--ambs);
+  border-color: var(--ambs);
+  color: var(--ink);
+}
+button.lnk {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+

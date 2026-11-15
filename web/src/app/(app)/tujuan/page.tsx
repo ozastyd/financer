@@ -8,7 +8,8 @@ import { useApp } from "@/components/app-provider";
 import { GoalFormSheet } from "@/components/goal-sheets";
 import { GoalIcon } from "@/components/ui/icons";
 import { ProgressRing } from "@/components/ui/progress";
-import { ErrorNote } from "@/components/ui/controls";
+import { toAppError } from "@/lib/errors";
+import { useToast } from "@/components/toast";
 import { formatMonthYear, formatMonthYearShort } from "@/lib/date";
 import { goalProgress, sortGoals } from "@/lib/goals";
 import { formatPercent, formatRupiah } from "@/lib/money";
@@ -33,8 +34,8 @@ function Ring({ goal }: { goal: Goal }) {
 
 function PausedRow({ goal }: { goal: Goal }) {
   const { mutate } = useApp();
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   return (
     <div className="rowc" style={{ padding: 14, gap: 14, flexWrap: "wrap" }}>
       <Link href={`/tujuan/${goal.id}`} className="row sp" style={{ gap: 14, textDecoration: "none", color: "var(--ink)", minWidth: 180 }}>
@@ -53,18 +54,18 @@ function PausedRow({ goal }: { goal: Goal }) {
         disabled={busy}
         onClick={async () => {
           setBusy(true);
-          setError(null);
           try {
             await mutate((s) => s.updateGoal(goal.id, { status: "active" }));
+            toast.success(`${goal.title} dilanjutkan.`);
           } catch (e) {
-            setError(e instanceof Error ? e.message : "Gagal.");
+            const err = toAppError(e, "Gagal melanjutkan tujuan. Coba lagi.");
+            if (err.kind !== "session") toast.error(err.kind === "rejected" || err.kind === "offline" ? err.message : "Gagal melanjutkan tujuan. Coba lagi.");
             setBusy(false);
           }
         }}
       >
         Lanjutkan
       </button>
-      <ErrorNote message={error} />
     </div>
   );
 }

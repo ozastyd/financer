@@ -1,14 +1,16 @@
 "use client";
 
+import { AppError, MESSAGES, errorFromFetchFailure, errorFromResponse, isOffline, secondsFromRateLimit } from "../errors";
 import { getBrowserSupabase } from "../supabase/client";
 import type { Category, FinancialProfile, Goal, UserProfile } from "../types";
-import { type AppData, type AuthClient, type DataStore, type Session, StoreError } from "./types";
+import type { AppData, AuthClient, DataStore, Session } from "./types";
 
 // Reads go straight to Postgres through RLS; writes go through the app's API
 // routes so they are validated on the server before reaching the database.
 // Larger reads (transactions, totals, goal history) live in src/lib/queries.ts.
 
 async function api<T = unknown>(path: string, method: string, body?: unknown): Promise<T> {
+  if (isOffline()) throw new AppError("offline", MESSAGES.offline);
   let res: Response;
   try {
     res = await fetch(path, {
@@ -17,10 +19,10 @@ async function api<T = unknown>(path: string, method: string, body?: unknown): P
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new StoreError("Tidak ada koneksi. Coba lagi.");
+    throw errorFromFetchFailure();
   }
   const json = (await res.json().catch(() => ({}))) as { error?: string } & T;
-  if (!res.ok) throw new StoreError(json.error ?? "Gagal menyimpan. Coba lagi.");
+  if (!res.ok) throw errorFromResponse(res.status, json.error, res.headers.get("retry-after"));
   return json;
 }
 
@@ -31,7 +33,12 @@ export function createSupabaseStore(): DataStore {
 
   async function q<T>(p: PromiseLike<{ data: T | null; error: { message: string } | null }>): Promise<T> {
     const { data, error } = await p;
-    if (error) throw new StoreError("Gagal memuat data. Coba muat ulang.");
+    if (error) {
+      if (isOffline()) throw new AppError("offline", MESSAGES.offline);
+      const status = (error as { status?: number }).status;
+      const expired = status === 401 || /jwt/i.test(error.message);
+      throw new AppError(expired ? "session" : "server", expired ? MESSAGES.session : MESSAGES.load);
+    }
     return data as T;
   }
 
@@ -41,7 +48,7 @@ export function createSupabaseStore(): DataStore {
       if (categories.length === 0) {
         // first sign-in: seed the default categories for this user
         const { error } = await sb.rpc("seed_default_categories");
-        if (error) throw new StoreError("Gagal menyiapkan kategori.");
+        if (error) throw new AppError("server", "Gagal menyiapkan kategori. Coba muat ulang.");
         categories = await q<Category[]>(sb.from("categories").select("id,name,type,icon,sort_order").order("sort_order"));
       }
       const [up, fp, goals] = await Promise.all([
@@ -114,10 +121,12 @@ export function createSupabaseAuth(): AuthClient {
         options: { emailRedirectTo: `${window.location.origin}/auth/callback`, shouldCreateUser: true },
       });
       if (error) {
-        const msg = /rate|seconds/i.test(error.message)
-          ? "Terlalu sering meminta tautan. Tunggu sebentar lalu coba lagi."
-          : "Gagal mengirim tautan masuk. Periksa emailmu lalu coba lagi.";
-        throw new StoreError(msg);
+        if (isOffline()) throw new AppError("offline", "Kamu sedang offline. Sambungkan internet dulu untuk menerima tautan.");
+        const wait = secondsFromRateLimit(error.message);
+        if (wait !== null || /rate|seconds|too many/i.test(error.message) || error.status === 429) {
+          throw new AppError("limit", "Terlalu sering meminta tautan.", wait ?? 60);
+        }
+        throw new AppError("server", "Gagal mengirim tautan masuk. Periksa emailmu lalu coba lagi.");
       }
       return { sent: true };
     },

@@ -143,7 +143,14 @@ export default function GoalDetailPage() {
           Riwayat
         </h2>
         {historyQuery.isPending && <p className="s mut" style={{ textAlign: "center" }}>Memuat riwayat…</p>}
-        {historyQuery.isError && <p className="s mut" style={{ textAlign: "center" }}>Gagal memuat riwayat. Coba muat ulang.</p>}
+        {historyQuery.isError && (
+          <div className="col" style={{ gap: 8, alignItems: "center" }} role="status">
+            <p className="s mut">Gagal memuat riwayat.</p>
+            <button className="btn ghost sm" type="button" style={{ borderRadius: 999 }} onClick={() => void historyQuery.refetch()}>
+              Coba lagi
+            </button>
+          </div>
+        )}
         {historyQuery.isSuccess && history.length === 0 && <p className="s mut" style={{ textAlign: "center" }}>Belum ada setoran. Tekan Setor untuk mencatat yang pertama.</p>}
         {[...byDate.entries()].map(([date, items], gi) => (
           <div key={date} className="col" style={{ gap: 0 }}>

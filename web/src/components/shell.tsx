@@ -1,12 +1,16 @@
 "use client";
 
-import { Camera, House, ImageUp, List, Pencil, Plus, Sparkles, Target, X } from "lucide-react";
+import { Camera, House, ImageUp, List, LockKeyhole, Pencil, Plus, Sparkles, Target, TriangleAlert, WifiOff, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useApp } from "./app-provider";
+import { ServiceDownState } from "./error-states";
+import { InlineError } from "./toast";
 import { TransactionSheet } from "./transaction-sheet";
 import { Spinner } from "./ui/controls";
+import { Sheet } from "./ui/sheet";
+import { formatCountdown, toAppError } from "@/lib/errors";
 import type { Transaction, TxType } from "@/lib/types";
 
 interface ShellContextValue {
@@ -73,8 +77,116 @@ function PlusMenu({ onClose, onManual }: { onClose: () => void; onManual: () => 
   );
 }
 
+/** A3 offline and C5b/A2b stale-data banners, at the top of every app screen. */
+function StatusBanner() {
+  const { online, stale, retryAll } = useApp();
+  const [busy, setBusy] = useState(false);
+  if (!online) {
+    return (
+      <p className="banner off" role="status">
+        <WifiOff size={16} aria-hidden="true" />
+        <span>Kamu sedang offline. Perubahan belum bisa disimpan.</span>
+      </p>
+    );
+  }
+  if (!stale) return null;
+  return (
+    <p className="banner warn" role="status">
+      <TriangleAlert size={16} aria-hidden="true" />
+      <span>Sebagian data belum bisa dimuat. Yang tampil mungkin belum terbaru.</span>
+      <button
+        type="button"
+        className="act"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          await retryAll();
+          setBusy(false);
+        }}
+      >
+        {busy ? "Memuat…" : "Coba lagi"}
+      </button>
+    </p>
+  );
+}
+
+/** B1: the session expired. Keeps whatever is on screen and offers a new sign-in link. */
+function SessionExpiredSheet() {
+  const { sessionExpired, dismissSessionExpired, session, signIn } = useApp();
+  const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [wait, setWait] = useState(0);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = window.setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [wait]);
+
+  const email = session?.email ?? "";
+  const send = async () => {
+    setState("sending");
+    setError(null);
+    try {
+      await signIn(email);
+      setState("sent");
+    } catch (e) {
+      const err = toAppError(e);
+      if (err.kind === "limit" && err.retryAfter) setWait(err.retryAfter);
+      setError(err.message);
+      setState("idle");
+    }
+  };
+
+  return (
+    <Sheet
+      open={sessionExpired}
+      onOpenChange={(open) => {
+        if (!open) {
+          dismissSessionExpired();
+          setState("idle");
+          setError(null);
+        }
+      }}
+      title="Sesi kamu berakhir"
+    >
+      <span className="icb bl" style={{ width: 56, height: 56, borderRadius: 18 }}>
+        <LockKeyhole size={24} aria-hidden="true" />
+      </span>
+      <p className="t mut">Demi keamanan, kamu perlu masuk lagi. Isian yang belum disimpan tetap ada di layar ini.</p>
+      {state === "sent" ? (
+        <div className="card soft" role="status">
+          <p className="t b">Tautan masuk sudah dikirim</p>
+          <p className="s">Buka email {email} lalu ketuk tautannya. Setelah itu kembali ke sini dan simpan lagi.</p>
+        </div>
+      ) : (
+        <>
+          {email && (
+            <div className="rowc" style={{ padding: "12px 14px" }}>
+              <div className="col sp" style={{ gap: 0 }}>
+                <p className="s mut">Tautan dikirim ke</p>
+                <p className="t b" style={{ overflowWrap: "anywhere" }}>
+                  {email}
+                </p>
+              </div>
+            </div>
+          )}
+          <InlineError message={error && wait > 0 ? `${error} Bisa kirim lagi dalam ${formatCountdown(wait)}.` : error} />
+          <button className="btn" type="button" style={{ borderRadius: 999 }} disabled={!email || state === "sending" || wait > 0} onClick={send}>
+            {state === "sending" ? <Spinner label="Mengirim" /> : wait > 0 ? `Kirim tautan masuk · ${formatCountdown(wait)}` : "Kirim tautan masuk"}
+          </button>
+        </>
+      )}
+      <button className="lnk" type="button" style={{ alignSelf: "center", color: "var(--mut)" }} onClick={dismissSessionExpired}>
+        {state === "sent" ? "Tutup" : "Nanti saja"}
+      </button>
+    </Sheet>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
-  const { status, data, loadError, refresh } = useApp();
+  const { status, data, loadErrorKind, refresh, online } = useApp();
+  const [retrying, setRetrying] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const [plusOpen, setPlusOpen] = useState(false);
@@ -94,15 +206,28 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const ctx = useMemo(() => ({ openAddTx }), [openAddTx]);
 
+  if (status === "error" && loadErrorKind !== "session") {
+    return (
+      <ServiceDownState
+        offline={!online || loadErrorKind === "offline"}
+        busy={retrying}
+        onRetry={async () => {
+          setRetrying(true);
+          await refresh();
+          setRetrying(false);
+        }}
+      />
+    );
+  }
+
   if (status === "error") {
     return (
-      <main className="scr safe" style={{ justifyContent: "center", alignItems: "center", textAlign: "center" }}>
-        <p className="h2">Data belum bisa dimuat</p>
-        <p className="s mut">{loadError}</p>
-        <button className="btn sm" type="button" onClick={() => void refresh()}>
-          Coba lagi
-        </button>
-      </main>
+      <>
+        <main className="scr safe" style={{ justifyContent: "center", alignItems: "center" }}>
+          <p className="t mut">Sesi kamu berakhir.</p>
+        </main>
+        <SessionExpiredSheet />
+      </>
     );
   }
 
@@ -116,6 +241,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <ShellContext.Provider value={ctx}>
+      <StatusBanner />
       {children}
       <div className="tab-spacer" aria-hidden="true" />
       {plusOpen && <PlusMenu onClose={() => setPlusOpen(false)} onManual={() => openAddTx()} />}
@@ -127,9 +253,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key="plus"
                 type="button"
                 className={`plus${plusOpen ? " open" : ""}`}
-                aria-label={plusOpen ? "Tutup menu" : "Tambah transaksi"}
+                aria-label={!online ? "Tambah transaksi, tidak tersedia saat offline" : plusOpen ? "Tutup menu" : "Tambah transaksi"}
                 aria-expanded={plusOpen}
                 aria-controls="plus-menu"
+                disabled={!online}
+                style={!online ? { background: "var(--ctl)", cursor: "not-allowed" } : undefined}
                 onClick={() => setPlusOpen((o) => !o)}
               >
                 {plusOpen ? <X size={26} strokeWidth={2.2} aria-hidden="true" /> : <Plus size={26} strokeWidth={2.2} aria-hidden="true" />}
@@ -151,6 +279,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         edit={sheet.edit}
         onOpenChange={(open) => setSheet((s) => ({ ...s, open }))}
       />
+      <SessionExpiredSheet />
     </ShellContext.Provider>
   );
 }

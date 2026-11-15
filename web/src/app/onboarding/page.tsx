@@ -4,9 +4,11 @@ import { Check, ChevronLeft, Plus, TrendingUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
+import { useToast } from "@/components/toast";
 import { AmountInput, Chip, ErrorNote, Field, Spinner } from "@/components/ui/controls";
 import { GoalIcon } from "@/components/ui/icons";
 import { formatMonthYear } from "@/lib/date";
+import { toAppError } from "@/lib/errors";
 import { formatRupiah } from "@/lib/money";
 import {
   AGE_RANGES,
@@ -87,6 +89,7 @@ const n0 = (v: Amount) => v ?? 0;
 
 export default function OnboardingPage() {
   const { status, data, mutate, today, session } = useApp();
+  const toast = useToast();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -204,7 +207,7 @@ export default function OnboardingPage() {
       await mutate((s) => s.saveOnboarding(payload(nextStep, completed)));
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan.");
+      setError(toAppError(e, "Gagal menyimpan. Periksa koneksimu lalu coba lagi.").message);
       return false;
     } finally {
       setSaving(false);
@@ -249,9 +252,9 @@ export default function OnboardingPage() {
             monthly_plan: rec.monthly,
           }),
         );
-      } catch (e) {
-        setError(e instanceof Error ? `Profil tersimpan, tapi tujuan gagal dibuat: ${e.message}` : "Tujuan gagal dibuat.");
-        return;
+      } catch {
+        // C9: the profile is saved; the first goal can be made later
+        toast.info("Profilmu tersimpan. Tujuan pertama belum terbuat, kamu bisa bikin dari menu Tujuan.");
       }
     }
     router.replace("/beranda");

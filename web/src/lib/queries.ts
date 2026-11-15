@@ -4,6 +4,7 @@
 // for exactly what a screen shows: totals from SQL functions, transactions one
 // page at a time, a goal's history only when its page is open.
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { AppError, MESSAGES, isOffline } from "./errors";
 import { type Dashboard, type DashboardRaw, type MonthTotals, dashboardArgs, parseDashboard, parsePeriodTotals } from "./dashboard";
 import type { Period } from "./finance";
 import { getBrowserSupabase } from "./supabase/client";
@@ -19,7 +20,11 @@ export const QK = {
   contributions: ["contributions"] as const,
 };
 
-const LOAD_ERROR = "Gagal memuat data. Coba muat ulang.";
+function queryError(error: { message: string; status?: number }): AppError {
+  if (isOffline()) return new AppError("offline", MESSAGES.offline);
+  const expired = error.status === 401 || /jwt/i.test(error.message);
+  return new AppError(expired ? "session" : "server", expired ? MESSAGES.session : MESSAGES.load);
+}
 const num = (v: unknown) => (v == null ? 0 : Number(v));
 
 export function useDashboard(period: Period, today: string, enabled = true) {
@@ -28,7 +33,7 @@ export function useDashboard(period: Period, today: string, enabled = true) {
     enabled,
     queryFn: async () => {
       const { data, error } = await getBrowserSupabase().rpc("dashboard", dashboardArgs(period, today));
-      if (error) throw new Error(LOAD_ERROR);
+      if (error) throw queryError(error);
       return parseDashboard(data as DashboardRaw);
     },
   });
@@ -39,7 +44,7 @@ export function useMonthTotals(from: string, to: string) {
     queryKey: [...QK.monthTotals, from, to],
     queryFn: async () => {
       const { data, error } = await getBrowserSupabase().rpc("period_totals", { p_from: from, p_to: to });
-      if (error) throw new Error(LOAD_ERROR);
+      if (error) throw queryError(error);
       return parsePeriodTotals(data);
     },
   });
@@ -72,7 +77,7 @@ export function useTransactionPages(from: string, to: string, type: TxType | nul
         p_cursor_id: pageParam?.id ?? null,
         p_limit: PAGE_SIZE,
       });
-      if (error) throw new Error(LOAD_ERROR);
+      if (error) throw queryError(error);
       return ((data ?? []) as TxRow[]).map((t) => ({ ...t, amount: num(t.amount), day_net: num(t.day_net) }));
     },
     getNextPageParam: (last) => {
@@ -96,7 +101,7 @@ export function useGoalContributions(goalId: string | undefined) {
         .order("contribution_date", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(200);
-      if (error) throw new Error(LOAD_ERROR);
+      if (error) throw queryError(error);
       return (data ?? []).map((c) => ({ ...c, amount: num(c.amount) })) as Contribution[];
     },
   });

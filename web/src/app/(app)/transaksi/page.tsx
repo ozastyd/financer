@@ -175,7 +175,16 @@ export default function TransaksiPage() {
         </section>
       ))}
 
-      {pagesQuery.hasNextPage && (
+      {pagesQuery.isFetchNextPageError && (
+        <div className="col" style={{ gap: 8, alignItems: "center", padding: "8px 0" }} role="status">
+          <p className="s mut">Gagal memuat transaksi berikutnya.</p>
+          <button className="btn ghost sm" type="button" style={{ borderRadius: 999 }} onClick={() => void pagesQuery.fetchNextPage()}>
+            Coba lagi
+          </button>
+        </div>
+      )}
+
+      {pagesQuery.hasNextPage && !pagesQuery.isFetchNextPageError && (
         <button className="btn ghost" type="button" style={{ borderRadius: 999 }} disabled={pagesQuery.isFetchingNextPage} onClick={() => void pagesQuery.fetchNextPage()}>
           {pagesQuery.isFetchingNextPage ? "Memuat…" : "Muat lebih banyak"}
         </button>

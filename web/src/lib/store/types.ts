@@ -46,4 +46,3 @@ export interface AuthClient {
   onChange(cb: (s: Session | null) => void): () => void;
 }
 
-export class StoreError extends Error {}
