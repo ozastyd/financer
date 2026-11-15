@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { AppProvider } from "@/components/app-provider";
-import { LocalModeNotice } from "@/components/local-mode-notice";
+import { NotConfigured } from "@/components/not-configured";
+import { isConfigured } from "@/lib/config";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -35,12 +36,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <AppProvider>
+        {isConfigured ? (
+          <AppProvider>
+            <div className="app-col">{children}</div>
+          </AppProvider>
+        ) : (
           <div className="app-col">
-            <LocalModeNotice />
-            {children}
+            <NotConfigured />
           </div>
-        </AppProvider>
+        )}
       </body>
     </html>
   );

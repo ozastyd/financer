@@ -13,7 +13,7 @@ import { ErrorNote, Field, Spinner } from "@/components/ui/controls";
 const schema = z.object({ email: z.email("Masukkan alamat email yang valid") });
 
 function SignInForm() {
-  const { signIn, status, mode } = useApp();
+  const { signIn, status } = useApp();
   const router = useRouter();
   const params = useSearchParams();
   const isLogin = params.get("mode") === "masuk";
@@ -86,9 +86,7 @@ function SignInForm() {
           {isLogin ? "Masuk" : "Buat akun"}
         </h1>
         <p className="t mut">
-          {mode === "local"
-            ? "Mode lokal: cukup tulis email, kamu langsung masuk tanpa tautan. Data disimpan di browser ini saja."
-            : "Cukup pakai email. Kami kirim tautan masuk, jadi nggak perlu hafal kata sandi."}
+          Cukup pakai email. Kami kirim tautan masuk, jadi nggak perlu hafal kata sandi.
         </p>
       </div>
 

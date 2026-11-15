@@ -1,30 +1,31 @@
 import type { ContributionInput, GoalInput, GoalUpdate, OnboardingInput, TransactionInput, TransactionUpdate } from "../schemas";
-import type { Category, Contribution, FinancialProfile, Goal, Transaction, UserProfile } from "../types";
+import type { Category, FinancialProfile, Goal, UserProfile } from "../types";
 
 export interface Session {
   userId: string;
   email: string;
 }
 
+/**
+ * Small per-user data kept in memory for the whole session. Transactions and
+ * goal contributions are not here: they are read page by page, and totals come
+ * from database functions (see src/lib/queries.ts).
+ */
 export interface AppData {
   userProfile: UserProfile | null;
   financial: FinancialProfile | null;
   categories: Category[];
-  transactions: Transaction[];
   goals: Goal[];
-  contributions: Contribution[];
 }
 
 export const EMPTY_DATA: AppData = {
   userProfile: null,
   financial: null,
   categories: [],
-  transactions: [],
   goals: [],
-  contributions: [],
 };
 
-/** Everything the screens need; implemented by Supabase and by the local stand-in. */
+/** Session data and writes. Writes go through the app's API routes for server-side validation. */
 export interface DataStore {
   load(): Promise<AppData>;
   saveOnboarding(input: OnboardingInput): Promise<void>;
@@ -39,7 +40,7 @@ export interface DataStore {
 
 export interface AuthClient {
   getSession(): Promise<Session | null>;
-  /** Sends a magic link (Supabase) or starts a simulated session (local). */
+  /** Sends a magic link. */
   signIn(email: string): Promise<{ sent: boolean }>;
   signOut(): Promise<void>;
   onChange(cb: (s: Session | null) => void): () => void;

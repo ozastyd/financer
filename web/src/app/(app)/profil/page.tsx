@@ -13,7 +13,7 @@ import { type ThemeChoice, useTheme } from "@/lib/theme";
 const SOON = ["Skor kesehatan finansial", "Laporan bulanan", "Pengaturan & notifikasi", "Paket Pro", "Ekspor & hapus data"];
 
 export default function ProfilPage() {
-  const { data, session, signOut, mode } = useApp();
+  const { data, session, signOut } = useApp();
   const router = useRouter();
   const [theme, setTheme] = useTheme();
   const [busy, setBusy] = useState(false);
@@ -98,7 +98,7 @@ export default function ProfilPage() {
         ))}
       </section>
 
-      <p className="s mut">{mode === "local" ? "Mode lokal: data hanya tersimpan di browser ini." : "Datamu tersimpan aman dan hanya bisa dibaca oleh akunmu."}</p>
+      <p className="s mut">Datamu tersimpan aman dan hanya bisa dibaca oleh akunmu.</p>
 
       <button
         className="btn danger"

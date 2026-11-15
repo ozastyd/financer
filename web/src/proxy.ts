@@ -1,12 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, isProtectedPath, isSupabase } from "@/lib/config";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, isConfigured, isProtectedPath } from "@/lib/config";
 
 // Refreshes the Supabase session cookie and keeps signed-out visitors away
-// from app routes. In local mode there is no server session, so the client
-// guards routes instead.
+// from app routes. Without configuration the layout shows the
+// "not configured" screen, so there is nothing to guard.
 export async function proxy(request: NextRequest) {
-  if (!isSupabase) return NextResponse.next();
+  if (!isConfigured) return NextResponse.next();
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

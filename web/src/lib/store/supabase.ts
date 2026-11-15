@@ -1,11 +1,12 @@
 "use client";
 
 import { getBrowserSupabase } from "../supabase/client";
-import type { Category, Contribution, FinancialProfile, Goal, Transaction, UserProfile } from "../types";
+import type { Category, FinancialProfile, Goal, UserProfile } from "../types";
 import { type AppData, type AuthClient, type DataStore, type Session, StoreError } from "./types";
 
 // Reads go straight to Postgres through RLS; writes go through the app's API
 // routes so they are validated on the server before reaching the database.
+// Larger reads (transactions, totals, goal history) live in src/lib/queries.ts.
 
 async function api<T = unknown>(path: string, method: string, body?: unknown): Promise<T> {
   let res: Response;
@@ -43,24 +44,10 @@ export function createSupabaseStore(): DataStore {
         if (error) throw new StoreError("Gagal menyiapkan kategori.");
         categories = await q<Category[]>(sb.from("categories").select("id,name,type,icon,sort_order").order("sort_order"));
       }
-      const [up, fp, txs, goals, contribs] = await Promise.all([
+      const [up, fp, goals] = await Promise.all([
         q<UserProfile | null>(sb.from("user_profiles").select("display_name,age_range,occupation,financial_experience").maybeSingle()),
         q<FinancialProfile | null>(sb.from("financial_profiles").select("*").maybeSingle()),
-        q<Transaction[]>(
-          sb
-            .from("transactions")
-            .select("id,type,category_id,amount,description,transaction_date,created_at")
-            .order("transaction_date", { ascending: false })
-            .order("created_at", { ascending: false }),
-        ),
         q<Goal[]>(sb.from("financial_goals").select("*").order("created_at")),
-        q<Contribution[]>(
-          sb
-            .from("goal_contributions")
-            .select("id,goal_id,kind,amount,note,contribution_date,created_at")
-            .order("contribution_date", { ascending: false })
-            .order("created_at", { ascending: false }),
-        ),
       ]);
       return {
         userProfile: up,
@@ -76,14 +63,12 @@ export function createSupabaseStore(): DataStore {
             }
           : null,
         categories,
-        transactions: txs.map((t) => ({ ...t, amount: num(t.amount) })),
         goals: goals.map((g) => ({
           ...g,
           target_amount: num(g.target_amount),
           current_amount: num(g.current_amount),
           monthly_plan: g.monthly_plan == null ? null : num(g.monthly_plan),
         })),
-        contributions: contribs.map((c) => ({ ...c, amount: num(c.amount) })),
       };
     },
     async saveOnboarding(input) {

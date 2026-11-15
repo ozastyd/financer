@@ -93,12 +93,20 @@ export interface SeriesPoint {
  * previous period aligned by position for comparison. Points after today are null.
  */
 export function cumulativeSeries(txs: Transaction[], period: Period, today: string): SeriesPoint[] {
-  const r = periodRange(period, today);
   const netByDay = new Map<string, number>();
   for (const t of txs) {
     const v = t.type === "income" ? t.amount : -t.amount;
     netByDay.set(t.transaction_date, (netByDay.get(t.transaction_date) ?? 0) + v);
   }
+  return cumulativeSeriesFromNet(netByDay, period, today);
+}
+
+/**
+ * Same as cumulativeSeries, from net amounts already grouped by the database:
+ * keys are days (week/month views) or the first day of each month (year view).
+ */
+export function cumulativeSeriesFromNet(netByDay: Map<string, number>, period: Period, today: string): SeriesPoint[] {
+  const r = periodRange(period, today);
   const sumRange = (a: string, b: string) => {
     let s = 0;
     for (const [d, v] of netByDay) if (d >= a && d <= b) s += v;
@@ -154,12 +162,22 @@ export function categoryBreakdown(
   top = 4,
 ): CategorySlice[] {
   const byCat = new Map<string, number>();
-  let total = 0;
   for (const t of txs) {
     if (t.type !== type || !inRange(t.transaction_date, start, end)) continue;
     byCat.set(t.category_id, (byCat.get(t.category_id) ?? 0) + t.amount);
-    total += t.amount;
   }
+  return slicesFromAmounts([...byCat.entries()].map(([category_id, amount]) => ({ category_id, amount })), categories, top);
+}
+
+export interface CategoryAmount {
+  category_id: string;
+  amount: number;
+}
+
+/** Same as categoryBreakdown, from per-category totals already summed by the database. */
+export function slicesFromAmounts(amounts: CategoryAmount[], categories: Category[], top = 4): CategorySlice[] {
+  const byCat = new Map(amounts.map((a) => [a.category_id, a.amount]));
+  const total = amounts.reduce((sum, a) => sum + a.amount, 0);
   if (total === 0) return [];
   const names = new Map(categories.map((c) => [c.id, c.name]));
   const sorted = [...byCat.entries()]
@@ -218,7 +236,11 @@ export function groupByDay(txs: Transaction[]): DayGroup[] {
 }
 
 export function topCategoryNames(txs: Transaction[], categories: Category[], start: string, end: string, type: "income" | "expense", n = 2): string[] {
-  return categoryBreakdown(txs, categories, start, end, type, n)
+  return topNamesFromSlices(categoryBreakdown(txs, categories, start, end, type, n), n);
+}
+
+export function topNamesFromSlices(slices: CategorySlice[], n = 2): string[] {
+  return slices
     .filter((s) => s.name !== "Lainnya" || n === 0)
     .slice(0, n)
     .map((s) => s.name);

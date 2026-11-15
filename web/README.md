@@ -15,10 +15,9 @@ Other scripts: `npm run build`, `npm run lint`, `npm test` (Vitest), `npm run ty
 
 | Variable | Used for |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth (email magic link) and data. Without them the app runs in **mode lokal**: data in browser storage, simulated sign-in, with a visible notice. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Required. Auth (email magic link) and data. Without them the app shows a "Layanan belum dikonfigurasi" screen. |
 | `SUPABASE_DB_URL` | Only for `npm run db:migrate` and `npm run db:check-rls`. |
 | `ANTHROPIC_API_KEY` | AI Coach, read on the server only (`src/app/api/coach/route.ts`). Without a valid key the Coach answers with a deterministic summary of the user's own numbers and says so. |
-| `NEXT_PUBLIC_FORCE_LOCAL_MODE=1` | Optional: force mode lokal even when Supabase keys exist (handy for UI testing). |
 
 Magic links redirect to `/auth/callback`; add `http://localhost:3000/auth/callback` (and your deployed URL) to the Supabase Auth redirect allow-list.
 

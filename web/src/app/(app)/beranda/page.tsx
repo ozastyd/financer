@@ -10,19 +10,10 @@ import { Segmented } from "@/components/ui/controls";
 import { GoalIcon } from "@/components/ui/icons";
 import { ProgressBar, ProgressRing } from "@/components/ui/progress";
 import { formatMonthYearShort, greeting } from "@/lib/date";
-import {
-  type Period,
-  categoryBreakdown,
-  changePct,
-  cumulativeSeries,
-  periodRange,
-  recordedBalance,
-  roundedPercents,
-  topCategoryNames,
-  totals,
-} from "@/lib/finance";
+import { type Period, changePct, cumulativeSeriesFromNet, periodRange, roundedPercents, slicesFromAmounts, topNamesFromSlices } from "@/lib/finance";
 import { goalProgress, goalRemaining, sortGoals } from "@/lib/goals";
 import { formatPercent, formatRupiah, percent } from "@/lib/money";
+import { useDashboard } from "@/lib/queries";
 import type { Goal } from "@/lib/types";
 
 const PERIOD_LABEL: Record<Period, string> = { week: "Minggu", month: "Bulan", year: "Tahun" };
@@ -50,19 +41,21 @@ export default function BerandaPage() {
   const { openAddTx } = useShell();
   const [period, setPeriod] = useState<Period>("month");
 
-  const txs = data.transactions;
+  const dashQuery = useDashboard(period, today);
+  const dash = dashQuery.data;
   const r = useMemo(() => periodRange(period, today), [period, today]);
-  const cur = useMemo(() => totals(txs, r.start, r.end), [txs, r]);
-  const prev = useMemo(() => totals(txs, r.prevStart, r.prevEnd), [txs, r]);
-  const series = useMemo(() => cumulativeSeries(txs, period, today), [txs, period, today]);
-  const slices = useMemo(() => categoryBreakdown(txs, data.categories, r.start, r.end, "expense", 4), [txs, data.categories, r]);
+  const zero = { income: 0, expense: 0, net: 0, count: 0 };
+  const cur = dash?.current ?? zero;
+  const prev = dash?.previous ?? zero;
+  const series = useMemo(() => (dash ? cumulativeSeriesFromNet(dash.netByDay, period, today) : []), [dash, period, today]);
+  const slices = useMemo(() => (dash ? slicesFromAmounts(dash.expenseByCategory, data.categories, 4) : []), [dash, data.categories]);
   const pcts = roundedPercents(slices.map((s) => s.amount));
-  const balance = recordedBalance(data.financial?.current_savings ?? 0, txs);
+  const balance = dash?.recordedBalance ?? 0;
   const change = changePct(cur.net, prev.net);
-  const incomeNames = topCategoryNames(txs, data.categories, r.start, r.end, "income", 2);
+  const incomeNames = dash ? topNamesFromSlices(slicesFromAmounts(dash.incomeByCategory, data.categories, 2), 2) : [];
   const goals = sortGoals(data.goals);
   const primary = goals.find((g) => g.status === "active");
-  const todayCount = txs.filter((t) => t.transaction_date === today).length;
+  const todayCount = dash?.todayCount ?? 0;
   const name = data.userProfile?.display_name ?? session?.email.split("@")[0] ?? "";
   const periodName = period === "month" ? r.label : period === "week" ? "minggu ini" : `tahun ${r.label}`;
 
@@ -83,7 +76,21 @@ export default function BerandaPage() {
 
       <section className="col" style={{ gap: 6 }} aria-label="Arus kas bersih">
         <p className="sec">Arus kas bersih · {r.label}</p>
-        {cur.count === 0 ? (
+        {!dash ? (
+          <div className="card" style={{ marginTop: 4 }} aria-busy={dashQuery.isPending}>
+            {dashQuery.isError ? (
+              <>
+                <p className="h3">Gagal memuat ringkasan</p>
+                <p className="s mut">Periksa koneksimu, lalu coba lagi.</p>
+                <button className="btn sm" type="button" style={{ alignSelf: "flex-start" }} onClick={() => void dashQuery.refetch()}>
+                  Coba lagi
+                </button>
+              </>
+            ) : (
+              <p className="s mut">Memuat ringkasan…</p>
+            )}
+          </div>
+        ) : cur.count === 0 ? (
           <div className="card" style={{ marginTop: 4 }}>
             <p className="h3">Belum ada transaksi {periodName}</p>
             <p className="s mut">
@@ -132,6 +139,8 @@ export default function BerandaPage() {
         options={(["week", "month", "year"] as Period[]).map((p) => ({ value: p, label: PERIOD_LABEL[p] }))}
       />
 
+      {dash && (
+        <>
       <div className="g2">
         <div className="card" style={{ gap: 6, padding: 14 }}>
           <p className="sec">Masuk</p>
@@ -148,6 +157,8 @@ export default function BerandaPage() {
           </p>
         </div>
       </div>
+        </>
+      )}
 
       <section className="col" style={{ gap: 10 }} aria-label="Tujuan">
         <div className="row">
@@ -188,6 +199,8 @@ export default function BerandaPage() {
         )}
       </section>
 
+      {dash && (
+        <>
       <section className="card" aria-label="Pengeluaran per kategori">
         <p className="sec">Pengeluaran per kategori · {r.label}</p>
         {slices.length === 0 ? (
@@ -244,6 +257,8 @@ export default function BerandaPage() {
           </button>
         </div>
       </section>
+        </>
+      )}
     </main>
   );
 }

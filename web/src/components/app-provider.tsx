@@ -1,23 +1,21 @@
 "use client";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { DATA_MODE, type DataMode } from "@/lib/config";
 import { todayJakarta } from "@/lib/date";
-import { createLocalAuth, createLocalStore } from "@/lib/store/local";
 import { createSupabaseAuth, createSupabaseStore } from "@/lib/store/supabase";
 import { type AppData, type AuthClient, type DataStore, EMPTY_DATA, type Session } from "@/lib/store/types";
 
 type Status = "loading" | "signed_out" | "ready" | "error";
 
 interface AppContextValue {
-  mode: DataMode;
   status: Status;
   session: Session | null;
   data: AppData;
   loadError: string | null;
   today: string;
   store: DataStore;
-  /** Runs a write, then reloads data. Errors propagate to the caller's form. */
+  /** Runs a write, then refreshes session data and every cached query. Errors propagate to the caller's form. */
   mutate: <T>(fn: (store: DataStore) => Promise<T>) => Promise<T>;
   refresh: () => Promise<void>;
   signIn: (email: string) => Promise<{ sent: boolean }>;
@@ -26,12 +24,27 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true },
+    },
+  });
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  const sessionRef = useRef<Session | null>(null);
-  const [auth] = useState<AuthClient>(() => (DATA_MODE === "supabase" ? createSupabaseAuth() : createLocalAuth()));
-  const [store] = useState<DataStore>(() =>
-    DATA_MODE === "supabase" ? createSupabaseStore() : createLocalStore(),
+  const [queryClient] = useState(makeQueryClient);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppState queryClient={queryClient}>{children}</AppState>
+    </QueryClientProvider>
   );
+}
+
+function AppState({ children, queryClient }: { children: ReactNode; queryClient: QueryClient }) {
+  const sessionRef = useRef<Session | null>(null);
+  const [auth] = useState<AuthClient>(() => createSupabaseAuth());
+  const [store] = useState<DataStore>(() => createSupabaseStore());
   const [status, setStatus] = useState<Status>("loading");
   const [session, setSession] = useState<Session | null>(null);
   const [data, setData] = useState<AppData>(EMPTY_DATA);
@@ -57,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       sessionRef.current = s;
       setSession(s);
       if (!s) {
+        queryClient.clear();
         setData(EMPTY_DATA);
         setStatus("signed_out");
         return;
@@ -66,7 +80,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await refresh();
       }
     },
-    [refresh],
+    [refresh, queryClient],
   );
 
   useEffect(() => {
@@ -86,15 +100,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const mutate = useCallback(
     async <T,>(fn: (s: DataStore) => Promise<T>) => {
       const result = await fn(store);
-      await refresh();
+      await Promise.all([refresh(), queryClient.invalidateQueries()]);
       return result;
     },
-    [store, refresh],
+    [store, refresh, queryClient],
   );
 
   const value = useMemo<AppContextValue>(
     () => ({
-      mode: DATA_MODE,
       status,
       session,
       data,

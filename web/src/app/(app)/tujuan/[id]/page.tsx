@@ -11,11 +11,13 @@ import { ProgressRing } from "@/components/ui/progress";
 import { formatLongDate, formatMonthYear } from "@/lib/date";
 import { estimateCompletion, goalProgress, goalRemaining, monthsUntil, requiredMonthly } from "@/lib/goals";
 import { formatPercent, formatRupiah } from "@/lib/money";
+import { useGoalContributions } from "@/lib/queries";
 
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data, today } = useApp();
   const goal = data.goals.find((g) => g.id === id);
+  const historyQuery = useGoalContributions(goal?.id);
   const [editOpen, setEditOpen] = useState(false);
   const [rhythmOpen, setRhythmOpen] = useState(false);
   const [contrib, setContrib] = useState<{ open: boolean; kind: "deposit" | "withdrawal" }>({ open: false, kind: "deposit" });
@@ -41,7 +43,7 @@ export default function GoalDetailPage() {
   const remaining = goalRemaining(goal);
   const done = goal.status === "completed";
   const paused = goal.status === "paused";
-  const history = data.contributions.filter((c) => c.goal_id === goal.id);
+  const history = historyQuery.data ?? [];
   const byDate = new Map<string, typeof history>();
   for (const c of history) byDate.set(c.contribution_date, [...(byDate.get(c.contribution_date) ?? []), c]);
   const plan = goal.monthly_plan;
@@ -140,7 +142,9 @@ export default function GoalDetailPage() {
         <h2 className="sec" style={{ textAlign: "center" }}>
           Riwayat
         </h2>
-        {history.length === 0 && <p className="s mut" style={{ textAlign: "center" }}>Belum ada setoran. Tekan Setor untuk mencatat yang pertama.</p>}
+        {historyQuery.isPending && <p className="s mut" style={{ textAlign: "center" }}>Memuat riwayat…</p>}
+        {historyQuery.isError && <p className="s mut" style={{ textAlign: "center" }}>Gagal memuat riwayat. Coba muat ulang.</p>}
+        {historyQuery.isSuccess && history.length === 0 && <p className="s mut" style={{ textAlign: "center" }}>Belum ada setoran. Tekan Setor untuk mencatat yang pertama.</p>}
         {[...byDate.entries()].map(([date, items], gi) => (
           <div key={date} className="col" style={{ gap: 0 }}>
             <p className="sec" style={{ textAlign: "center", marginTop: gi ? 8 : 0 }}>

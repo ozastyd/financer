@@ -116,8 +116,6 @@ export const coachRequest = z.object({
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().trim().min(1).max(2000) }))
     .min(1)
     .max(20),
-  // Only used in local mode, where the server has no database to read from.
-  summary: z.record(z.string(), z.unknown()).optional(),
 });
 export type CoachRequest = z.infer<typeof coachRequest>;
 

@@ -4,7 +4,8 @@ import { ArrowRight, Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { Spinner } from "@/components/ui/controls";
-import { buildFinancialSummary, fallbackReply } from "@/lib/coach";
+import { fallbackReply, summaryFromDashboard } from "@/lib/coach";
+import { useDashboard } from "@/lib/queries";
 
 interface Msg {
   role: "user" | "assistant";
@@ -16,7 +17,8 @@ interface Msg {
 const SUGGESTIONS = ["Gimana cara nabung lebih banyak bulan ini?", "Aku mampu beli HP Rp5 juta nggak?", "Ke mana uangku paling banyak keluar?"];
 
 export default function CoachPage() {
-  const { data, today, mode } = useApp();
+  const { data, today } = useApp();
+  const dashQuery = useDashboard("month", today);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,14 +38,12 @@ export default function CoachPage() {
     setInput("");
     setError(null);
     setLoading(true);
-    const summary = buildFinancialSummary(data, today);
     try {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           messages: next.slice(-12).map(({ role, content }) => ({ role, content })),
-          summary: mode === "local" ? summary : undefined,
         }),
       });
       const json = (await res.json().catch(() => ({}))) as { reply?: string; source?: "ai" | "fallback"; notice?: string; error?: string };
@@ -55,8 +55,16 @@ export default function CoachPage() {
       }
       setMessages([...next, { role: "assistant", content: json.reply, source: json.source, notice: json.notice }]);
     } catch {
-      // network failure: answer locally from the user's own numbers
-      setMessages([...next, { role: "assistant", content: fallbackReply(q, summary), source: "fallback", notice: "Tidak ada koneksi, jadi ini jawaban otomatis dari angkamu." }]);
+      // network failure: answer locally from the totals already on screen, if any
+      const dash = dashQuery.data;
+      if (dash) {
+        const summary = summaryFromDashboard(data, dash, today);
+        setMessages([...next, { role: "assistant", content: fallbackReply(q, summary), source: "fallback", notice: "Tidak ada koneksi, jadi ini jawaban otomatis dari angkamu." }]);
+      } else {
+        setError("Tidak ada koneksi. Coba lagi.");
+        setMessages(next.slice(0, -1));
+        setInput(q);
+      }
     } finally {
       setLoading(false);
     }
@@ -75,7 +83,7 @@ export default function CoachPage() {
         <div className="bubble-ai">
           <p className="t">
             Halo! Tanya apa saja soal uangmu. Aku jawab pakai angka dari catatanmu sendiri
-            {data.transactions.length === 0 ? ", jadi makin banyak yang kamu catat, makin tepat jawabanku." : "."}
+            {dashQuery.data && dashQuery.data.allTimeCount === 0 ? ", jadi makin banyak yang kamu catat, makin tepat jawabanku." : "."}
           </p>
         </div>
       )}

@@ -1,8 +1,9 @@
 import { formatMonthYear } from "./date";
-import { categoryBreakdown, periodRange, recordedBalance, totals } from "./finance";
+import type { Dashboard } from "./dashboard";
+import { type CategoryAmount, periodRange, recordedBalance, slicesFromAmounts, totals } from "./finance";
 import { estimateCompletion, goalProgress, goalRemaining } from "./goals";
 import { formatRupiah } from "./money";
-import type { AppData } from "./store/types";
+import type { Category, FinancialProfile, Goal, Transaction } from "./types";
 
 /**
  * Compact, structured summary of the user's own figures sent to the AI.
@@ -38,10 +39,34 @@ export interface FinancialSummary {
   }[];
 }
 
-export function buildFinancialSummary(data: Pick<AppData, "financial" | "transactions" | "categories" | "goals">, today: string): FinancialSummary {
+type SummaryInput = { financial: FinancialProfile | null; categories: Category[]; goals: Goal[] };
+
+/** Builds the summary from raw transactions (used by tests and as a reference). */
+export function buildFinancialSummary(data: SummaryInput & { transactions: Transaction[] }, today: string): FinancialSummary {
   const r = periodRange("month", today);
-  const cur = totals(data.transactions, r.start, r.end);
-  const prev = totals(data.transactions, r.prevStart, r.prevEnd);
+  const byCat = new Map<string, number>();
+  for (const t of data.transactions) {
+    if (t.type !== "expense" || t.transaction_date < r.start || t.transaction_date > r.end) continue;
+    byCat.set(t.category_id, (byCat.get(t.category_id) ?? 0) + t.amount);
+  }
+  const expenseByCategory: CategoryAmount[] = [...byCat.entries()].map(([category_id, amount]) => ({ category_id, amount }));
+  const dash: Pick<Dashboard, "current" | "previous" | "expenseByCategory" | "recordedBalance"> = {
+    current: totals(data.transactions, r.start, r.end),
+    previous: totals(data.transactions, r.prevStart, r.prevEnd),
+    expenseByCategory,
+    recordedBalance: recordedBalance(data.financial?.current_savings ?? 0, data.transactions),
+  };
+  return summaryFromDashboard(data, dash, today);
+}
+
+/** Builds the summary from the month dashboard computed by the database. */
+export function summaryFromDashboard(
+  data: SummaryInput,
+  dash: Pick<Dashboard, "current" | "previous" | "expenseByCategory" | "recordedBalance">,
+  today: string,
+): FinancialSummary {
+  const cur = dash.current;
+  const prev = dash.previous;
   const fp = data.financial;
   return {
     today,
@@ -64,10 +89,10 @@ export function buildFinancialSummary(data: Pick<AppData, "financial" | "transac
       expense: cur.expense,
       net: cur.net,
       transactions: cur.count,
-      top_expense_categories: categoryBreakdown(data.transactions, data.categories, r.start, r.end, "expense", 4).map((s) => ({ name: s.name, amount: s.amount })),
+      top_expense_categories: slicesFromAmounts(dash.expenseByCategory, data.categories, 4).map((s) => ({ name: s.name, amount: s.amount })),
     },
     last_month: { income: prev.income, expense: prev.expense, net: prev.net },
-    recorded_balance: recordedBalance(fp?.current_savings ?? 0, data.transactions),
+    recorded_balance: dash.recordedBalance,
     goals: data.goals.slice(0, 10).map((g) => {
       const est = g.monthly_plan ? estimateCompletion(goalRemaining(g), g.monthly_plan, today) : null;
       return {

@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, isSupabase } from "../config";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, isConfigured } from "../config";
 
 export async function getServerSupabase(): Promise<SupabaseClient> {
   const cookieStore = await cookies();
@@ -26,8 +26,8 @@ export type Authed = { supabase: SupabaseClient; user: User };
 
 /** Returns the signed-in user's client, or a ready-made error response. */
 export async function requireUser(): Promise<Authed | NextResponse> {
-  if (!isSupabase) {
-    return NextResponse.json({ error: "Mode lokal: layanan belum dikonfigurasi." }, { status: 503 });
+  if (!isConfigured) {
+    return NextResponse.json({ error: "Layanan belum dikonfigurasi." }, { status: 503 });
   }
   const supabase = await getServerSupabase();
   const { data, error } = await supabase.auth.getUser();

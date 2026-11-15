@@ -2,11 +2,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { parseBody } from "@/lib/api";
-import { COACH_SYSTEM_PROMPT, type FinancialSummary, buildFinancialSummary, fallbackReply } from "@/lib/coach";
-import { isSupabase } from "@/lib/config";
+import { COACH_SYSTEM_PROMPT, type FinancialSummary, fallbackReply, summaryFromDashboard } from "@/lib/coach";
+import { type DashboardRaw, dashboardArgs, parseDashboard } from "@/lib/dashboard";
 import { todayJakarta } from "@/lib/date";
 import { coachRequest } from "@/lib/schemas";
-import type { AppData } from "@/lib/store/types";
+import type { Category, FinancialProfile, Goal } from "@/lib/types";
 import { requireUser } from "@/lib/supabase/server";
 
 // Server-only: ANTHROPIC_API_KEY is read here and never sent to the browser.
@@ -31,36 +31,37 @@ function getClient(): Anthropic | null {
   return client;
 }
 
+// Reads only totals computed by the database (as this user, under RLS),
+// never the full transaction history.
 async function loadSummary(sb: SupabaseClient): Promise<FinancialSummary> {
-  const [fp, cats, txs, goals] = await Promise.all([
+  const today = todayJakarta();
+  const [fp, cats, goals, dash] = await Promise.all([
     sb.from("financial_profiles").select("*").maybeSingle(),
     sb.from("categories").select("id,name,type,icon,sort_order"),
-    sb.from("transactions").select("id,type,category_id,amount,description,transaction_date,created_at"),
-    sb.from("financial_goals").select("*"),
+    sb.from("financial_goals").select("*").order("created_at"),
+    sb.rpc("dashboard", dashboardArgs("month", today)),
   ]);
+  if (dash.error) throw new Error("dashboard query failed");
   const n = (v: unknown) => Number(v ?? 0);
-  const data: Pick<AppData, "financial" | "transactions" | "categories" | "goals"> = {
-    financial: fp.data
-      ? {
-          ...fp.data,
-          monthly_income: n(fp.data.monthly_income),
-          additional_income: n(fp.data.additional_income),
-          current_savings: n(fp.data.current_savings),
-          monthly_expenses: n(fp.data.monthly_expenses),
-          existing_debt: n(fp.data.existing_debt),
-          monthly_obligations: n(fp.data.monthly_obligations),
-        }
-      : null,
-    categories: cats.data ?? [],
-    transactions: (txs.data ?? []).map((t) => ({ ...t, amount: n(t.amount) })),
-    goals: (goals.data ?? []).map((g) => ({
-      ...g,
-      target_amount: n(g.target_amount),
-      current_amount: n(g.current_amount),
-      monthly_plan: g.monthly_plan == null ? null : n(g.monthly_plan),
-    })),
-  };
-  return buildFinancialSummary(data, todayJakarta());
+  const financial: FinancialProfile | null = fp.data
+    ? {
+        ...fp.data,
+        monthly_income: n(fp.data.monthly_income),
+        additional_income: n(fp.data.additional_income),
+        current_savings: n(fp.data.current_savings),
+        monthly_expenses: n(fp.data.monthly_expenses),
+        existing_debt: n(fp.data.existing_debt),
+        monthly_obligations: n(fp.data.monthly_obligations),
+      }
+    : null;
+  const goalList: Goal[] = (goals.data ?? []).map((g) => ({
+    ...g,
+    target_amount: n(g.target_amount),
+    current_amount: n(g.current_amount),
+    monthly_plan: g.monthly_plan == null ? null : n(g.monthly_plan),
+  }));
+  const categories: Category[] = cats.data ?? [];
+  return summaryFromDashboard({ financial, categories, goals: goalList }, parseDashboard(dash.data as DashboardRaw), today);
 }
 
 type Source = "ai" | "fallback";
@@ -70,18 +71,14 @@ export async function POST(req: Request) {
   const body = await parseBody(req, coachRequest);
   if (body instanceof NextResponse) return body;
 
+  const auth = await requireUser();
+  if (auth instanceof NextResponse) return auth;
+  const userKey = auth.user.id;
   let summary: FinancialSummary;
-  let userKey: string;
-  if (isSupabase) {
-    const auth = await requireUser();
-    if (auth instanceof NextResponse) return auth;
-    userKey = auth.user.id;
+  try {
     summary = await loadSummary(auth.supabase);
-  } else {
-    // Local mode has no server database; the browser sends its own computed summary.
-    if (!body.summary) return NextResponse.json({ error: "Ringkasan data tidak ada." }, { status: 400 });
-    summary = body.summary as unknown as FinancialSummary;
-    userKey = req.headers.get("x-forwarded-for") ?? "local";
+  } catch {
+    return NextResponse.json({ error: "Gagal membaca datamu. Coba lagi." }, { status: 502 });
   }
 
   if (rateLimited(userKey)) {

@@ -1,16 +1,33 @@
 "use client";
 
 import { ArrowDownLeft, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { useShell } from "@/components/shell";
 import { Chip } from "@/components/ui/controls";
 import { CategoryIcon } from "@/components/ui/icons";
 import { addMonths, endOfMonth, formatDayHeading, formatMonthYearShort, startOfMonth } from "@/lib/date";
-import { groupByDay, totals } from "@/lib/finance";
 import { formatRupiah, formatSigned } from "@/lib/money";
+import { type TxRow, useMonthTotals, useTransactionPages } from "@/lib/queries";
 
 type Filter = "all" | "expense" | "income";
+
+interface DayGroup {
+  date: string;
+  net: number;
+  items: TxRow[];
+}
+
+/** Rows arrive newest first; consecutive rows of the same day form one group. */
+function groupRows(rows: TxRow[]): DayGroup[] {
+  const groups: DayGroup[] = [];
+  for (const t of rows) {
+    const last = groups[groups.length - 1];
+    if (last && last.date === t.transaction_date) last.items.push(t);
+    else groups.push({ date: t.transaction_date, net: t.day_net, items: [t] });
+  }
+  return groups;
+}
 
 export default function TransaksiPage() {
   const { data, today } = useApp();
@@ -18,26 +35,19 @@ export default function TransaksiPage() {
   const [month, setMonth] = useState(() => startOfMonth(today));
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const search = useDeferredValue(query);
 
   const catById = useMemo(() => new Map(data.categories.map((c) => [c.id, c])), [data.categories]);
   const monthEnd = endOfMonth(month);
-  const inMonth = useMemo(() => data.transactions.filter((t) => t.transaction_date >= month && t.transaction_date <= monthEnd), [data.transactions, month, monthEnd]);
-  const sum = totals(inMonth);
+  const totalsQuery = useMonthTotals(month, monthEnd);
+  const pagesQuery = useTransactionPages(month, monthEnd, filter === "all" ? null : filter, search);
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const qDigits = q.replace(/\D/g, "");
-    return inMonth.filter((t) => {
-      if (filter !== "all" && t.type !== filter) return false;
-      if (!q) return true;
-      const cat = catById.get(t.category_id)?.name.toLowerCase() ?? "";
-      return (t.description ?? "").toLowerCase().includes(q) || cat.includes(q) || (qDigits.length > 0 && String(t.amount).includes(qDigits));
-    });
-  }, [inMonth, filter, query, catById]);
-
-  const groups = groupByDay(visible);
+  const rows = useMemo(() => pagesQuery.data?.pages.flat() ?? [], [pagesQuery.data]);
+  const groups = useMemo(() => groupRows(rows), [rows]);
+  const sum = totalsQuery.data;
   const isCurrentMonth = month === startOfMonth(today);
-  const hasAny = data.transactions.length > 0;
+  const loading = pagesQuery.isPending || totalsQuery.isPending;
+  const failed = pagesQuery.isError || totalsQuery.isError;
 
   return (
     <main className="scr safe" style={{ gap: 14 }}>
@@ -85,7 +95,7 @@ export default function TransaksiPage() {
         ))}
       </div>
 
-      {inMonth.length > 0 && (
+      {sum && sum.count > 0 && (
         <p className="s mut num">
           {formatMonthYearShort(month)}: masuk <span className="b pos">{formatRupiah(sum.income)}</span> · keluar{" "}
           <span className="b" style={{ color: "var(--ink)" }}>
@@ -94,9 +104,33 @@ export default function TransaksiPage() {
         </p>
       )}
 
-      {groups.length === 0 && (
+      {failed && (
         <div className="card" style={{ marginTop: 4 }}>
-          {!hasAny ? (
+          <p className="h3">Gagal memuat transaksi</p>
+          <p className="s mut">Periksa koneksimu, lalu coba lagi.</p>
+          <button
+            className="btn sm"
+            type="button"
+            style={{ alignSelf: "flex-start" }}
+            onClick={() => {
+              void totalsQuery.refetch();
+              void pagesQuery.refetch();
+            }}
+          >
+            Coba lagi
+          </button>
+        </div>
+      )}
+
+      {!failed && loading && (
+        <p className="s mut" aria-busy="true">
+          Memuat transaksi…
+        </p>
+      )}
+
+      {!failed && !loading && groups.length === 0 && (
+        <div className="card" style={{ marginTop: 4 }}>
+          {!sum?.hasAny ? (
             <>
               <p className="h3">Belum ada transaksi</p>
               <p className="s mut">Mulai dari yang kecil: kopi, ongkos ojek, atau uang masuk hari ini. Semua angka di aplikasi dihitung dari catatan ini.</p>
@@ -105,7 +139,7 @@ export default function TransaksiPage() {
                 Catat transaksi pertama
               </button>
             </>
-          ) : inMonth.length === 0 ? (
+          ) : sum.count === 0 ? (
             <p className="s mut">Tidak ada transaksi di {formatMonthYearShort(month)}.</p>
           ) : (
             <p className="s mut">Tidak ada transaksi yang cocok dengan pencarian atau filter ini.</p>
@@ -140,6 +174,12 @@ export default function TransaksiPage() {
           })}
         </section>
       ))}
+
+      {pagesQuery.hasNextPage && (
+        <button className="btn ghost" type="button" style={{ borderRadius: 999 }} disabled={pagesQuery.isFetchingNextPage} onClick={() => void pagesQuery.fetchNextPage()}>
+          {pagesQuery.isFetchingNextPage ? "Memuat…" : "Muat lebih banyak"}
+        </button>
+      )}
     </main>
   );
 }
