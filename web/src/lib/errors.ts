@@ -56,11 +56,6 @@ export function toAppError(e: unknown, fallback: string = MESSAGES.network): App
   return new AppError("network", fallback);
 }
 
-/** Seconds to wait from Supabase's rate-limit text, e.g. "...after 45 seconds". */
-export function secondsFromRateLimit(message: string): number | null {
-  const m = /(\d+)\s*(second|detik)/i.exec(message);
-  return m ? Number(m[1]) : null;
-}
 
 /** "0:45" style countdown label. */
 export function formatCountdown(seconds: number): string {

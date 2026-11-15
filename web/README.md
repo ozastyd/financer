@@ -34,7 +34,6 @@ Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm test` (Vitest)
 ## Database
 
 - Schema and queries: `src/lib/db.ts`. Tables are created on first start; default categories are seeded once. A trigger keeps goal balances in sync with deposits and withdrawals.
-- `supabase/` and `scripts/` hold the earlier Supabase schema and tooling; the app no longer uses them.
 
 ## AI Coach
 

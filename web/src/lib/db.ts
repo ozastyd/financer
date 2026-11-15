@@ -7,7 +7,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import type { DashboardArgs, DashboardRaw } from "./dashboard";
 import type { Category, Contribution, FinancialProfile, Goal, UserProfile } from "./types";
 
-// Single-user SQLite storage. Replaces Supabase for a personal deployment:
+// SQLite storage for a single self-hosted deployment:
 // there is one owner, so tables have no user_id and access is gated by the
 // password check in src/proxy.ts. Amounts are whole rupiah (INTEGER).
 
