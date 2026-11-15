@@ -7,6 +7,7 @@ import { useApp } from "@/components/app-provider";
 import { CashFlowChart, CategoryDonut, SLICE_COLORS } from "@/components/charts";
 import { useShell } from "@/components/shell";
 import { Segmented } from "@/components/ui/controls";
+import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { GoalIcon } from "@/components/ui/icons";
 import { ProgressBar, ProgressRing } from "@/components/ui/progress";
 import { formatMonthYearShort, greeting } from "@/lib/date";
@@ -104,9 +105,7 @@ export default function BerandaPage() {
         ) : (
           <>
             <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-              <p className="big" style={{ fontSize: 36 }}>
-                {formatRupiah(cur.net)}
-              </p>
+              <AnimatedRupiah className="big" style={{ fontSize: 36 }} value={cur.net} />
               {change !== null && (
                 <span className={`tag${change < 0 ? " amb" : ""}`}>
                   {change >= 0 ? <ArrowUpRight size={14} aria-hidden="true" /> : <ArrowDownRight size={14} aria-hidden="true" />}

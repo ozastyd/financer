@@ -3,6 +3,7 @@
 import { Area, ComposedChart, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from "recharts";
 import { formatRupiah, formatShort } from "@/lib/money";
 import type { SeriesPoint } from "@/lib/finance";
+import { useReducedMotion } from "@/lib/motion";
 
 export const SLICE_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)"];
 
@@ -30,6 +31,7 @@ function ChartTip({ active, payload, prevLabel }: TipProps) {
 }
 
 export function CashFlowChart({ series, prevLabel, ariaLabel, showPrevious }: { series: SeriesPoint[]; prevLabel: string; ariaLabel: string; showPrevious: boolean }) {
+  const reduceMotion = useReducedMotion();
   const ticks = [series[0]?.key, series[Math.floor(series.length / 2)]?.key, series[series.length - 1]?.key].filter(Boolean) as string[];
   const labelOf = (k: string) => series.find((s) => s.key === k)?.label ?? "";
   return (
@@ -58,7 +60,9 @@ export function CashFlowChart({ series, prevLabel, ariaLabel, showPrevious }: { 
             connectNulls={false}
             dot={false}
             activeDot={{ r: 5, stroke: "var(--pri)", strokeWidth: 2.5, fill: "var(--bg)" }}
-            isAnimationActive={false}
+            isAnimationActive={!reduceMotion}
+            animationDuration={1100}
+            animationEasing="ease-out"
           />
         </ComposedChart>
       </ResponsiveContainer>
@@ -67,10 +71,11 @@ export function CashFlowChart({ series, prevLabel, ariaLabel, showPrevious }: { 
 }
 
 export function CategoryDonut({ slices, total }: { slices: { name: string; amount: number }[]; total: number }) {
+  const reduceMotion = useReducedMotion();
   return (
     <div style={{ width: 104, height: 104, position: "relative", flex: "none" }} aria-hidden="true">
       <PieChart width={104} height={104}>
-        <Pie data={slices} dataKey="amount" nameKey="name" innerRadius={33} outerRadius={47} startAngle={90} endAngle={-270} stroke="var(--sf)" strokeWidth={2} isAnimationActive={false}>
+        <Pie data={slices} dataKey="amount" nameKey="name" innerRadius={33} outerRadius={47} startAngle={90} endAngle={-270} stroke="var(--sf)" strokeWidth={2} isAnimationActive={!reduceMotion} animationBegin={150} animationDuration={900} animationEasing="ease-out">
           {slices.map((s, i) => (
             <Cell key={s.name} fill={SLICE_COLORS[i % SLICE_COLORS.length]} />
           ))}

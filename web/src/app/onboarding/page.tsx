@@ -286,7 +286,7 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      <div className="col" style={{ gap: 6 }}>
+      <div className="col" style={{ gap: 6 }} key={`title-${step}`}>
         <h1 className="h1">{step === 6 && name ? `Ini titik awal kamu, ${name}` : STEP_TITLES[step - 1]}</h1>
         <p className="t mut">{STEP_SUBTITLES[step - 1]}</p>
       </div>

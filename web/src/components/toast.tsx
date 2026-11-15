@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleAlert, CircleCheck, Info, X } from "lucide-react";
+import { prefersReducedMotion } from "@/lib/motion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 // Result-of-an-action notifications (catalogue surface "Toast").
@@ -51,7 +52,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const dismiss = useCallback(() => setQueue((q) => q.slice(1)), []);
+  // Let the current toast play its exit before the next one takes its place.
+  const [leaving, setLeaving] = useState(false);
+  const leavingRef = useRef(false);
+  const dismiss = useCallback(() => {
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    setLeaving(true);
+    window.setTimeout(
+      () => {
+        setQueue((q) => q.slice(1));
+        setLeaving(false);
+        leavingRef.current = false;
+      },
+      prefersReducedMotion() ? 0 : 200,
+    );
+  }, []);
 
   useEffect(() => {
     if (!current || current.tone === "err") return;
@@ -76,7 +92,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="toasts" aria-live="polite">
         {current && Icon && (
-          <div key={current.id} className={`toast ${current.tone}`} role={current.tone === "err" ? "alert" : "status"}>
+          <div key={current.id} className={`toast ${current.tone}${leaving ? " leaving" : ""}`} role={current.tone === "err" ? "alert" : "status"}>
             <Icon size={20} aria-hidden="true" />
             <span className="sp">{current.message}</span>
             {current.action && (

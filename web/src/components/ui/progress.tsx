@@ -48,7 +48,8 @@ export function ProgressRing({ value, size = 64, stroke = 5, color = "var(--pri)
             strokeLinecap="round"
             strokeDasharray={`${dash} ${c}`}
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            style={{ stroke: color, transition: "stroke-dasharray .4s" }}
+            className="ring-arc"
+            style={{ stroke: color }}
           />
         )}
         {inner && <circle cx={size / 2} cy={size / 2} r={r - stroke * 2.2} style={{ fill: inner }} />}

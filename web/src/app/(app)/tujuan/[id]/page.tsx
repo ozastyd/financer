@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { ContributionSheet, GoalFormSheet, RhythmSheet } from "@/components/goal-sheets";
 import { GoalIcon } from "@/components/ui/icons";
+import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { ProgressRing } from "@/components/ui/progress";
 import { formatLongDate, formatMonthYear } from "@/lib/date";
 import { estimateCompletion, goalProgress, goalRemaining, monthsUntil, requiredMonthly } from "@/lib/goals";
@@ -81,9 +82,7 @@ export default function GoalDetailPage() {
               <GoalIcon icon={goal.category} size={60} />
             </span>
           </ProgressRing>
-          <p className="big" style={{ fontSize: 34 }}>
-            {formatRupiah(goal.current_amount)}
-          </p>
+          <AnimatedRupiah className="big" style={{ fontSize: 34 }} value={goal.current_amount} />
           <p className="s mut num" style={{ textAlign: "center" }}>
             dari {formatRupiah(goal.target_amount)} · {formatPercent(pct)}
             {goal.target_date ? ` · target ${formatMonthYear(goal.target_date)}` : ""}

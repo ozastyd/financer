@@ -344,7 +344,6 @@ a {
     justify-content: center;
     gap: 8px;
     text-decoration: none;
-    transition: filter 0.15s;
   }
   .btn:hover:not(:disabled) {
     filter: brightness(1.06);
@@ -488,7 +487,6 @@ a {
     font-weight: 700;
   }
   .seg button.on {
-    background: var(--ink);
     color: var(--bg);
   }
   .rowc {
@@ -667,13 +665,12 @@ a {
     height: 24px;
     border-radius: 50%;
     background: var(--sf);
-    transition: left 0.15s;
   }
   .tog.on {
     background: var(--pri);
   }
   .tog.on > i {
-    left: 24px;
+    translate: 20px 0;
   }
   .hd {
     display: flex;
@@ -848,12 +845,6 @@ a {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
-  }
-}
 
 /* Errors and notifications (docs/architecture/error-catalogue.md) */
 .state {
@@ -941,7 +932,6 @@ a {
   font-weight: 600;
   line-height: 1.4;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
-  animation: toast-in 0.18s ease-out;
 }
 .toast > svg {
   flex: none;
@@ -968,7 +958,6 @@ a {
 }
 .toast.inline {
   box-shadow: none;
-  animation: none;
 }
 .toast .act {
   margin-left: auto;
@@ -998,17 +987,6 @@ a {
   place-items: center;
   cursor: pointer;
 }
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .toast {
-    animation: none;
-  }
-}
 .note-amb {
   background: var(--ambs);
   border-color: var(--ambs);
@@ -1021,3 +999,405 @@ button.lnk {
   cursor: pointer;
 }
 
+/* Motion. Calm and iOS-like: content arrives already slowing down, exits
+   are quicker than entrances, presses answer at once. All travel reads from
+   the --m-* values, which drop to zero under prefers-reduced-motion; fades
+   and colour changes stay. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: var(--ease-out);
+  --m-rise: 14px;
+  --m-blur: 4px;
+  --m-pop: 0.94;
+  --m-press: 0.97;
+}
+@supports (animation-timing-function: linear(0, 1)) {
+  :root {
+    /* damped spring, about 2% overshoot, settles in ~0.55s */
+    --ease-spring: linear(0, 0.038 3.6%, 0.128 7.1%, 0.246 10.7%, 0.373 14.3%, 0.496 17.9%, 0.609 21.4%, 0.708 25%, 0.79 28.6%, 0.857 32.1%, 0.909 35.7%, 0.948 39.3%, 0.976 42.9%, 0.995 46.4%, 1.008 50%, 1.015 53.6%, 1.019 57.1%, 1.02 60.7%, 1.017 67.9%, 1.012 75%, 1.008 82.1%, 1.004 89.3%, 1.002 96.4%, 1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--m-rise);
+    filter: blur(var(--m-blur));
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    scale: var(--m-pop);
+    translate: 0 calc(var(--m-rise) * 0.8);
+    filter: blur(var(--m-blur));
+  }
+}
+@keyframes sink {
+  to {
+    opacity: 0;
+    scale: var(--m-pop);
+    translate: 0 calc(var(--m-rise) * 0.6);
+  }
+}
+
+/* Page arrival: each page's top-level blocks rise in, staggered and capped,
+   so the screen reads top to bottom. fill-mode backwards leaves no transform
+   behind once done, so sticky and fixed children keep working. */
+main > *,
+.state > * {
+  animation: rise 0.6s var(--ease-out) backwards;
+}
+main > :nth-child(2),
+.state > :nth-child(2) {
+  animation-delay: 40ms;
+}
+main > :nth-child(3),
+.state > :nth-child(3) {
+  animation-delay: 80ms;
+}
+main > :nth-child(4),
+.state > :nth-child(4) {
+  animation-delay: 120ms;
+}
+main > :nth-child(5),
+.state > :nth-child(5) {
+  animation-delay: 160ms;
+}
+main > :nth-child(6),
+.state > :nth-child(6) {
+  animation-delay: 200ms;
+}
+main > :nth-child(n + 7),
+.state > :nth-child(n + 7) {
+  animation-delay: 240ms;
+}
+.state > .icb {
+  animation-name: pop;
+  animation-duration: 0.7s;
+  animation-timing-function: var(--ease-spring);
+}
+
+/* Intro: the preview cards settle into place one after another. */
+main.intro > * {
+  animation: none;
+}
+.intro-stage {
+  animation: fade-in 0.8s var(--ease-out) backwards;
+}
+.intro-card {
+  animation: intro-card 1s var(--ease-spring) backwards;
+}
+.intro-card:nth-child(2) {
+  animation-delay: 120ms;
+}
+.intro-card:nth-child(3) {
+  animation-delay: 240ms;
+}
+.intro-card:nth-child(4) {
+  animation-delay: 360ms;
+}
+@keyframes intro-card {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--m-rise) * 3);
+    scale: calc(var(--m-pop) - 0.04);
+    filter: blur(calc(var(--m-blur) * 2));
+  }
+}
+main.intro .scr > * {
+  animation: rise 0.7s var(--ease-out) backwards;
+  animation-delay: 380ms;
+}
+main.intro .scr > :nth-child(2) {
+  animation-delay: 440ms;
+}
+main.intro .scr > :nth-child(n + 3) {
+  animation-delay: 500ms;
+}
+
+/* Press feedback: the control gives a little under the finger. */
+.btn,
+.ibtn,
+.chip,
+.tile,
+.key,
+.ava,
+.tog,
+.dial-item,
+.tab a,
+.tab button,
+a.rowc,
+button.rowc,
+.seg button,
+.toast button,
+.banner .act {
+  transition:
+    scale 0.35s var(--ease-spring),
+    background-color 0.25s var(--ease-out),
+    border-color 0.25s var(--ease-out),
+    color 0.25s var(--ease-out),
+    filter 0.15s var(--ease-out),
+    opacity 0.2s var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active:not(:disabled),
+.chip:active:not(:disabled),
+.tile:active:not(:disabled),
+.dial-item:active:not(:disabled),
+a.rowc:active,
+button.rowc:active:not(:disabled) {
+  scale: var(--m-press);
+  transition-duration: 0.1s;
+}
+.ibtn:active:not(:disabled),
+.key:active,
+.ava:active,
+.tab a:active,
+.toast button:active,
+.banner .act:active {
+  scale: 0.92;
+  transition-duration: 0.1s;
+}
+.tab .plus:active:not(:disabled) {
+  scale: 0.9;
+  transition-duration: 0.1s;
+}
+
+/* Tab bar: the "+" turns into a close mark; the newly active tab's icon pops. */
+.tab .plus svg {
+  transition: rotate 0.45s var(--ease-spring);
+}
+.tab .plus.open svg {
+  rotate: 135deg;
+}
+.tab a.on svg {
+  animation: tab-pop 0.5s var(--ease-spring);
+}
+@keyframes tab-pop {
+  from {
+    scale: 0.8;
+    translate: 0 3px;
+  }
+}
+
+/* "+" menu: options spring up out of the button, nearest first. */
+.plus-scrim {
+  animation: fade-in 0.3s var(--ease-out) backwards;
+}
+.plus-scrim.closing {
+  animation: fade-out 0.2s var(--ease-ios) forwards;
+}
+.dial > * {
+  animation: dial-in 0.55s var(--ease-spring) backwards;
+  transform-origin: 50% 100%;
+}
+.dial > :nth-last-child(2) {
+  animation-delay: 35ms;
+}
+.dial > :nth-last-child(3) {
+  animation-delay: 70ms;
+}
+.dial > :nth-last-child(4) {
+  animation-delay: 105ms;
+}
+.dial.closing > * {
+  animation: sink 0.18s var(--ease-ios) forwards;
+}
+@keyframes dial-in {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--m-rise) * 2);
+    scale: 0.86;
+  }
+}
+
+/* Bottom sheets. Radix keeps them mounted until the closing animation ends. */
+.scrim[data-state="open"] {
+  animation: fade-in 0.4s var(--ease-ios);
+}
+.scrim[data-state="closed"] {
+  animation: fade-out 0.26s var(--ease-ios) forwards;
+}
+.sheet[data-state="open"] {
+  animation: sheet-up 0.5s var(--ease-ios);
+}
+.sheet[data-state="closed"] {
+  animation: sheet-down 0.28s var(--ease-ios) forwards;
+}
+@keyframes sheet-up {
+  from {
+    translate: 0 100%;
+  }
+}
+@keyframes sheet-down {
+  to {
+    translate: 0 100%;
+  }
+}
+
+/* Segmented control: one pill slides to the chosen option. */
+.seg {
+  --n: 2;
+  position: relative;
+  isolation: isolate;
+}
+.seg.three {
+  --n: 3;
+}
+.seg::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--n));
+  border-radius: 999px;
+  background: var(--ink);
+  z-index: -1;
+  transition:
+    translate 0.5s var(--ease-spring),
+    opacity 0.2s var(--ease-out);
+}
+.seg:has(> button:nth-child(2).on)::before {
+  translate: 100% 0;
+}
+.seg:has(> button:nth-child(3).on)::before {
+  translate: 200% 0;
+}
+.seg:not(:has(> button.on))::before {
+  opacity: 0;
+}
+
+/* Toggle, onboarding steps, progress. */
+.tog > i {
+  transition: translate 0.45s var(--ease-spring);
+}
+.steps > i {
+  transition: background-color 0.4s var(--ease-out);
+}
+.bar > i {
+  animation: bar-fill 1s var(--ease-out) 0.15s backwards;
+}
+@keyframes bar-fill {
+  from {
+    clip-path: inset(0 100% 0 0 round 99px);
+  }
+}
+.ring-arc {
+  transition: stroke-dasharray 0.8s var(--ease-out);
+  animation: ring-draw 1.2s var(--ease-out) 0.1s backwards;
+}
+@keyframes ring-draw {
+  from {
+    stroke-dasharray: 0 1000;
+  }
+}
+
+/* Notifications. */
+.toast {
+  animation: pop 0.55s var(--ease-spring) backwards;
+}
+.toast.leaving {
+  animation: sink 0.2s var(--ease-ios) forwards;
+}
+.toast.inline,
+.err {
+  animation: nudge 0.45s var(--ease-out);
+}
+@keyframes nudge {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  20% {
+    opacity: 1;
+    translate: -6px 0;
+  }
+  45% {
+    translate: 5px 0;
+  }
+  70% {
+    translate: -2px 0;
+  }
+}
+.banner {
+  animation: banner-in 0.45s var(--ease-ios) backwards;
+}
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+}
+
+/* Coach conversation: each bubble grows out of its own corner. */
+.bubble-me,
+.bubble-ai {
+  animation: pop 0.5s var(--ease-spring) backwards;
+}
+.bubble-me {
+  transform-origin: 100% 100%;
+}
+.bubble-ai {
+  transform-origin: 0 100%;
+}
+
+/* Reduced motion: no travel, no scale, no blur. Fades and colour changes stay. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --m-rise: 0px;
+    --m-blur: 0px;
+    --m-pop: 1;
+    --m-press: 1;
+  }
+  .sheet[data-state="open"] {
+    animation: fade-in 0.2s linear;
+  }
+  .sheet[data-state="closed"] {
+    animation: fade-out 0.15s linear forwards;
+  }
+  .banner,
+  .toast.inline,
+  .err {
+    animation: fade-in 0.2s linear;
+  }
+  .tab a.on svg,
+  .dial > * {
+    animation-name: fade-in;
+  }
+  .ibtn:active,
+  .key:active,
+  .ava:active,
+  .tab a:active,
+  .tab .plus:active,
+  .toast button:active,
+  .banner .act:active {
+    scale: 1;
+  }
+  .seg::before,
+  .tog > i,
+  .tab .plus svg {
+    transition-duration: 0s;
+  }
+  .bar > i,
+  .ring-arc {
+    animation: none;
+    transition: none;
+  }
+  .toast.leaving,
+  .dial.closing > * {
+    animation-name: fade-out;
+  }
+}

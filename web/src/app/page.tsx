@@ -15,16 +15,17 @@ export default function IntroPage() {
   }, [status, router]);
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="intro flex flex-1 flex-col">
       {/* Illustration: a preview of the app's cards, clearly marked as an example */}
       <div
         aria-hidden="true"
+        className="intro-stage"
         style={{ position: "relative", height: 420, flex: "none", background: "var(--pris)", borderRadius: "0 0 36px 36px", overflow: "hidden" }}
       >
         <span className="tag neu" style={{ position: "absolute", left: 20, top: 20, background: "var(--sf)" }}>
           Contoh tampilan
         </span>
-        <div className="float hero" style={{ left: 22, top: 76, width: 232, transform: "rotate(-6deg)" }}>
+        <div className="intro-card float hero" style={{ left: 22, top: 76, width: 232, transform: "rotate(-6deg)" }}>
           <div className="row">
             <p className="s mut sp">Tujuan utama</p>
           </div>
@@ -34,7 +35,7 @@ export default function IntroPage() {
           </div>
           <p className="s mut">Naik tiap kamu setor</p>
         </div>
-        <div className="float" style={{ right: 18, top: 64, width: 136, alignItems: "center", transform: "rotate(7deg)" }}>
+        <div className="intro-card float" style={{ right: 18, top: 64, width: 136, alignItems: "center", transform: "rotate(7deg)" }}>
           <svg width="72" height="72" viewBox="0 0 88 88">
             <circle cx="44" cy="44" r="38" fill="none" strokeWidth="8" style={{ stroke: "var(--sf2)" }} />
             <circle cx="44" cy="44" r="38" fill="none" strokeWidth="8" strokeLinecap="round" strokeDasharray="150 238.8" transform="rotate(-90 44 44)" style={{ stroke: "var(--pri)" }} />
@@ -43,7 +44,7 @@ export default function IntroPage() {
             Progres tujuan
           </p>
         </div>
-        <div className="float" style={{ left: 50, top: 252, width: 276, transform: "rotate(3deg)" }}>
+        <div className="intro-card float" style={{ left: 50, top: 252, width: 276, transform: "rotate(3deg)" }}>
           <div className="row">
             <span className="icb bl" style={{ width: 32, height: 32, borderRadius: 10 }}>
               <Sparkles size={18} aria-hidden="true" />

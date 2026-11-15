@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, House, ImageUp, List, LockKeyhole, Pencil, Plus, Sparkles, Target, TriangleAlert, WifiOff, X } from "lucide-react";
+import { Camera, House, ImageUp, List, LockKeyhole, Pencil, Plus, Sparkles, Target, TriangleAlert, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -11,6 +11,7 @@ import { TransactionSheet } from "./transaction-sheet";
 import { Spinner } from "./ui/controls";
 import { Sheet } from "./ui/sheet";
 import { formatCountdown, toAppError } from "@/lib/errors";
+import { usePresence } from "@/lib/motion";
 import type { Transaction, TxType } from "@/lib/types";
 
 interface ShellContextValue {
@@ -33,7 +34,7 @@ const TABS = [
   { href: "/coach", label: "AI Coach", Icon: Sparkles },
 ] as const;
 
-function PlusMenu({ onClose, onManual }: { onClose: () => void; onManual: () => void }) {
+function PlusMenu({ onClose, onManual, closing }: { onClose: () => void; onManual: () => void; closing: boolean }) {
   const firstRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     firstRef.current?.focus();
@@ -43,8 +44,8 @@ function PlusMenu({ onClose, onManual }: { onClose: () => void; onManual: () => 
   }, [onClose]);
   return (
     <>
-      <div className="scrim" style={{ zIndex: 29 }} onClick={onClose} aria-hidden="true" />
-      <div className="dial" role="menu" aria-label="Cara mencatat transaksi" id="plus-menu">
+      <div className={`scrim plus-scrim${closing ? " closing" : ""}`} style={{ zIndex: 29 }} onClick={onClose} aria-hidden="true" />
+      <div className={`dial${closing ? " closing" : ""}`} role="menu" inert={closing} aria-label="Cara mencatat transaksi" id="plus-menu">
         <p className="s b" style={{ color: "#FFFFFF" }}>
           Catat transaksi lewat
         </p>
@@ -190,6 +191,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [plusOpen, setPlusOpen] = useState(false);
+  const plus = usePresence(plusOpen, 200);
   const [sheet, setSheet] = useState<{ open: boolean; type: TxType; edit?: Transaction }>({ open: false, type: "expense" });
 
   const needsOnboarding = status === "ready" && !data.financial?.onboarding_completed;
@@ -244,7 +246,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <StatusBanner />
       {children}
       <div className="tab-spacer" aria-hidden="true" />
-      {plusOpen && <PlusMenu onClose={() => setPlusOpen(false)} onManual={() => openAddTx()} />}
+      {plus.mounted && <PlusMenu closing={plus.closing} onClose={() => setPlusOpen(false)} onManual={() => openAddTx()} />}
       <nav className="tab" aria-label="Navigasi utama">
         {TABS.map((t) => {
           if (!t) {
@@ -260,7 +262,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 style={!online ? { background: "var(--ctl)", cursor: "not-allowed" } : undefined}
                 onClick={() => setPlusOpen((o) => !o)}
               >
-                {plusOpen ? <X size={26} strokeWidth={2.2} aria-hidden="true" /> : <Plus size={26} strokeWidth={2.2} aria-hidden="true" />}
+                <Plus size={26} strokeWidth={2.2} aria-hidden="true" />
               </button>
             );
           }
