@@ -1,5 +1,5 @@
 // Answer options for onboarding and goal forms. Values match the CHECK
-// constraints in supabase/migrations.
+// constraints in the database schema (src/lib/db.ts).
 
 export interface Option<T extends string = string> {
   value: T;

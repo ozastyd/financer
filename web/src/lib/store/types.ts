@@ -40,8 +40,12 @@ export interface DataStore {
 
 export interface AuthClient {
   getSession(): Promise<Session | null>;
-  /** Sends a magic link. */
-  signIn(email: string): Promise<{ sent: boolean }>;
+  /** Signs in with the app password; throws an AppError when it is wrong. */
+  signIn(password: string): Promise<void>;
+  /** First visit only: creates the app password and signs in. */
+  createPassword(password: string): Promise<void>;
+  /** True when no password has been created yet. */
+  needsSetup(): Promise<boolean>;
   signOut(): Promise<void>;
   onChange(cb: (s: Session | null) => void): () => void;
 }

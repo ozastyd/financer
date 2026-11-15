@@ -5,9 +5,9 @@
 // page at a time, a goal's history only when its page is open.
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { AppError, MESSAGES, isOffline } from "./errors";
+import { api } from "./store/local";
 import { type Dashboard, type DashboardRaw, type MonthTotals, dashboardArgs, parseDashboard, parsePeriodTotals } from "./dashboard";
 import type { Period } from "./finance";
-import { getBrowserSupabase } from "./supabase/client";
 import type { Contribution, Transaction, TxType } from "./types";
 
 export const PAGE_SIZE = 30;
@@ -20,10 +20,16 @@ export const QK = {
   contributions: ["contributions"] as const,
 };
 
-function queryError(error: { message: string; status?: number }): AppError {
-  if (isOffline()) return new AppError("offline", MESSAGES.offline);
-  const expired = error.status === 401 || /jwt/i.test(error.message);
-  return new AppError(expired ? "session" : "server", expired ? MESSAGES.session : MESSAGES.load);
+async function get<T>(path: string, params: Record<string, string | number | null | undefined>): Promise<T> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v != null && v !== "") qs.set(k, String(v));
+  try {
+    return await api<T>(`${path}?${qs}`);
+  } catch (e) {
+    if (isOffline()) throw new AppError("offline", MESSAGES.offline);
+    if (e instanceof AppError && e.kind === "session") throw e;
+    throw new AppError("server", MESSAGES.load);
+  }
 }
 const num = (v: unknown) => (v == null ? 0 : Number(v));
 
@@ -32,9 +38,8 @@ export function useDashboard(period: Period, today: string, enabled = true) {
     queryKey: [...QK.dashboard, period, today],
     enabled,
     queryFn: async () => {
-      const { data, error } = await getBrowserSupabase().rpc("dashboard", dashboardArgs(period, today));
-      if (error) throw queryError(error);
-      return parseDashboard(data as DashboardRaw);
+      const data = await get<DashboardRaw>("/api/dashboard", { ...dashboardArgs(period, today) });
+      return parseDashboard(data);
     },
   });
 }
@@ -43,8 +48,7 @@ export function useMonthTotals(from: string, to: string) {
   return useQuery<MonthTotals>({
     queryKey: [...QK.monthTotals, from, to],
     queryFn: async () => {
-      const { data, error } = await getBrowserSupabase().rpc("period_totals", { p_from: from, p_to: to });
-      if (error) throw queryError(error);
+      const data = await get<Parameters<typeof parsePeriodTotals>[0]>("/api/period-totals", { from, to });
       return parsePeriodTotals(data);
     },
   });
@@ -67,17 +71,16 @@ export function useTransactionPages(from: string, to: string, type: TxType | nul
     queryKey: [...QK.transactions, from, to, type, q],
     initialPageParam: null,
     queryFn: async ({ pageParam }) => {
-      const { data, error } = await getBrowserSupabase().rpc("transactions_page", {
-        p_from: from,
-        p_to: to,
-        p_type: type,
-        p_query: q || null,
-        p_cursor_date: pageParam?.date ?? null,
-        p_cursor_created: pageParam?.created ?? null,
-        p_cursor_id: pageParam?.id ?? null,
-        p_limit: PAGE_SIZE,
+      const data = await get<TxRow[]>("/api/transactions", {
+        from,
+        to,
+        type,
+        query: q || null,
+        cursor_date: pageParam?.date,
+        cursor_created: pageParam?.created,
+        cursor_id: pageParam?.id,
+        limit: PAGE_SIZE,
       });
-      if (error) throw queryError(error);
       return ((data ?? []) as TxRow[]).map((t) => ({ ...t, amount: num(t.amount), day_net: num(t.day_net) }));
     },
     getNextPageParam: (last) => {
@@ -94,14 +97,7 @@ export function useGoalContributions(goalId: string | undefined) {
     queryKey: [...QK.contributions, goalId],
     enabled: Boolean(goalId),
     queryFn: async () => {
-      const { data, error } = await getBrowserSupabase()
-        .from("goal_contributions")
-        .select("id,goal_id,kind,amount,note,contribution_date,created_at")
-        .eq("goal_id", goalId as string)
-        .order("contribution_date", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw queryError(error);
+      const data = await get<Contribution[]>(`/api/goals/${encodeURIComponent(goalId as string)}/contributions`, {});
       return (data ?? []).map((c) => ({ ...c, amount: num(c.amount) })) as Contribution[];
     },
   });
