@@ -29,6 +29,8 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Brand assets, icons, the web manifest and link-preview images stay public:
+// the sign-in page, browsers and chat apps load them without a session.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|brand/|favicon.ico|icon.png|apple-icon.png|manifest.webmanifest|opengraph-image|twitter-image).*)"],
 };

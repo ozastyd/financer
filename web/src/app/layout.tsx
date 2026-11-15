@@ -9,9 +9,18 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const DESCRIPTION = "Uangmu, tujuanmu, masa depanmu.";
+
+// Icons come from the file conventions in this folder (favicon.ico, icon.png,
+// apple-icon.png, opengraph-image.png, twitter-image.png) and manifest.ts.
 export const metadata: Metadata = {
-  title: "Financial OS",
-  description: "Uangmu, tujuanmu, masa depanmu.",
+  metadataBase: new URL(process.env.SITE_URL || "https://financer.my.id"),
+  title: "Financer",
+  applicationName: "Financer",
+  description: DESCRIPTION,
+  appleWebApp: { capable: true, title: "Financer", statusBarStyle: "default" },
+  openGraph: { title: "Financer", description: DESCRIPTION, siteName: "Financer", locale: "id_ID", type: "website" },
+  twitter: { card: "summary_large_image", title: "Financer", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {

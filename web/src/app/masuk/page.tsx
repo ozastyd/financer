@@ -1,9 +1,10 @@
 "use client";
 
-import { Clock, KeyRound, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Clock, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "@/components/app-provider";
+import { BrandMark } from "@/components/brand";
 import { ErrorNote, Field, Spinner } from "@/components/ui/controls";
 import { formatCountdown, toAppError } from "@/lib/errors";
 
@@ -75,17 +76,17 @@ export default function MasukPage() {
 
   return (
     <main className="scr safe" style={{ gap: 20, padding: "24px 24px 32px" }}>
-      <span className="icb g" style={{ width: 56, height: 56, borderRadius: 18, marginTop: 40 }}>
-        {setup ? <KeyRound size={26} aria-hidden="true" /> : <LockKeyhole size={26} aria-hidden="true" />}
-      </span>
+      <div style={{ marginTop: 40 }}>
+        <BrandMark size={48} />
+      </div>
       <div className="col" style={{ gap: 8 }}>
         <h1 className="h1" style={{ fontSize: 30 }}>
           {setup ? "Buat kata sandi" : "Masuk"}
         </h1>
         <p className="t mut">
           {setup
-            ? "Ini pertama kali Financial OS dibuka. Buat kata sandi untuk mengunci aplikasi; kata sandi ini dipakai setiap kali masuk."
-            : "Masukkan kata sandi untuk membuka Financial OS."}
+            ? "Ini pertama kali Financer dibuka. Buat kata sandi untuk mengunci aplikasi; kata sandi ini dipakai setiap kali masuk."
+            : "Masukkan kata sandi untuk membuka Financer."}
         </p>
       </div>
 

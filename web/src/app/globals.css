@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Financial OS design tokens, ported from design/project/fo.css.
+/* Financer design tokens, ported from design/project/fo.css.
    Light palette on :root; dark palette applies with data-theme="dark", or with
    the system preference when the user has not picked a theme. */
 :root {

@@ -110,7 +110,7 @@ export function summaryFromDashboard(
   };
 }
 
-export const COACH_SYSTEM_PROMPT = `Kamu adalah AI Coach di aplikasi Financial OS untuk anak muda Indonesia (18–30 tahun).
+export const COACH_SYSTEM_PROMPT = `Kamu adalah AI Coach di aplikasi Financer untuk anak muda Indonesia (18–30 tahun).
 Gaya: bahasa Indonesia santai dan ramah (pakai "kamu"), singkat, jelas, tanpa istilah perbankan yang kaku. Jangan pernah mempermalukan pengguna.
 
 Kamu menerima ringkasan data keuangan pengguna dalam JSON. Aturan angka:

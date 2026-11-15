@@ -25,13 +25,13 @@ export default function GlobalError({ error, retry }: { error: unknown; retry: (
   return (
     <html lang="id">
       <head>
-        <title>Financial OS gagal dibuka</title>
+        <title>Financer gagal dibuka</title>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <style dangerouslySetInnerHTML={{ __html: css }} />
       </head>
       <body>
         <main>
-          <h1>Financial OS gagal dibuka</h1>
+          <h1>Financer gagal dibuka</h1>
           <p>Ada masalah saat memuat aplikasi. Muat ulang halaman ini; datamu tidak hilang.</p>
           <button type="button" onClick={() => retry()}>
             Muat ulang
