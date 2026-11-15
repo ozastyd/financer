@@ -4,7 +4,7 @@
   "v": 1,
   "at": "2026-11-14T16:00:00Z"
  },
- "title": "Financial OS Screens",
+ "title": "Financer Screens",
  "launch": {
   "view": "canvas"
  },
@@ -608,14 +608,14 @@
   "light": {
    "x": 0,
    "y": -300,
-   "text": "Financial OS · Terang",
+   "text": "Financer · Terang",
    "kind": "title1",
    "maxW": 6030
   },
   "dark": {
    "x": 0,
    "y": 3680,
-   "text": "Financial OS · Gelap",
+   "text": "Financer · Gelap",
    "kind": "title1",
    "maxW": 6030
   },

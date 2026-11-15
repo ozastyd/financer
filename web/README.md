@@ -1,4 +1,4 @@
-# Financial OS — web
+# Financer — web
 
 Mobile-first personal finance app for Indonesian Gen-Z. Next.js 16 (App Router), TypeScript, Tailwind 4, SQLite (Node's built-in `node:sqlite`), Zod, React Hook Form, Recharts, Lucide.
 

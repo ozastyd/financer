@@ -1,6 +1,6 @@
-# Financial OS — Error Catalogue
+# Financer — Error Catalogue
 
-Status: for review · Date: 15 Nov 2026 · Designs: page "Error & notifikasi" on the Financial OS design canvas
+Status: for review · Date: 15 Nov 2026 · Designs: page "Error & notifikasi" on the Financer design canvas
 
 Every way the app can fail or interrupt the user, what they see, and how they recover. Copy is final draft in Bahasa Indonesia; codes (A1, B2…) are used in code comments and tests.
 
@@ -32,12 +32,12 @@ Legend for **Today**: ✅ handled well · 🟡 partly handled · ❌ not handled
 
 | Code | Situation | How it's detected | Surface | Copy | Action | Today |
 |---|---|---|---|---|---|---|
-| A1 | Supabase keys missing in this deployment | `isConfigured` false at build time | Full-screen | **Layanan belum dikonfigurasi** · Financial OS belum tersambung ke database, jadi belum bisa dipakai. Ini masalah pengaturan, bukan kesalahanmu. | — (admin note shown) | ✅ |
+| A1 | Supabase keys missing in this deployment | `isConfigured` false at build time | Full-screen | **Layanan belum dikonfigurasi** · Financer belum tersambung ke database, jadi belum bisa dipakai. Ini masalah pengaturan, bukan kesalahanmu. | — (admin note shown) | ✅ |
 | A2 | Supabase unreachable or answering 5xx on first load | Session/profile load throws a network or 5xx error | Full-screen | **Layanan sedang gangguan** · Kami tidak bisa menghubungi server sekarang. Datamu aman dan tidak hilang. | Coba lagi · Cek status koneksi | 🟡 generic "Data belum bisa dimuat" |
 | A2b | Same, after the app has loaded | A query fails with network/5xx while cached data exists | Banner (amber) | Sebagian data belum bisa dimuat. Yang tampil mungkin belum terbaru. | Coba lagi | ❌ |
 | A3 | Device goes offline | `navigator.onLine` false / `offline` event | Banner (neutral, persistent); save buttons disabled with hint | Kamu sedang offline. Perubahan belum bisa disimpan. | Auto-retries on reconnect; toast "Kembali online" | ❌ |
 | A4 | Unexpected crash while rendering a screen | Route `error.tsx` boundary | Full-screen inside the app shell (nav stays) | **Ada yang tidak beres** · Halaman ini gagal dimuat. Coba muat ulang; kalau masih gagal, kembali ke Beranda. · Kode: `ERR-xxxx` | Muat ulang · Ke Beranda | ❌ Next default (English) |
-| A5 | Crash in the root layout | `global-error.tsx` | Minimal full page (own styles, no app shell) | **Financial OS gagal dibuka** · Muat ulang halaman ini. | Muat ulang | ❌ |
+| A5 | Crash in the root layout | `global-error.tsx` | Minimal full page (own styles, no app shell) | **Financer gagal dibuka** · Muat ulang halaman ini. | Muat ulang | ❌ |
 | A6 | Unknown URL | `not-found.tsx` | Full-screen | **Halaman tidak ditemukan** · Mungkin tautannya salah atau halamannya sudah dipindah. | Ke Beranda | ❌ Next default (English) |
 | A7 | Slow network: a load takes over 8 s | Query pending timer | Hint under the loading state | Masih memuat… koneksimu sepertinya lambat. | Coba lagi (after 15 s) | ❌ |
 

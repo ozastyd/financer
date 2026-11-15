@@ -280,7 +280,7 @@ function ContributionForm({ goal, kind, onDone }: { goal: Goal; kind: "deposit" 
       <Field label="Catatan (opsional)" htmlFor="c-note">
         <input id="c-note" className="inp" maxLength={120} placeholder={kind === "deposit" ? "Misalnya: dari gaji" : "Misalnya: servis motor"} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
-      <p className="s mut">Ini hanya catatan. Financial OS tidak memindahkan uang sungguhan.</p>
+      <p className="s mut">Ini hanya catatan. Financer tidak memindahkan uang sungguhan.</p>
       <ErrorNote message={error} />
       <button className="btn" type="submit" disabled={busy}>
         {busy ? <Spinner label="Menyimpan" /> : kind === "deposit" ? "Catat setoran" : "Catat penarikan"}
