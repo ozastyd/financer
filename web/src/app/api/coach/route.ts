@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { parseBody } from "@/lib/api";
 import { COACH_SYSTEM_PROMPT, type FinancialSummary, fallbackReply, summaryFromDashboard } from "@/lib/coach";
 import { dashboardArgs, parseDashboard } from "@/lib/dashboard";
-import { todayJakarta } from "@/lib/date";
+import { startOfMonth, todayJakarta } from "@/lib/date";
 import { dashboard, getFinancialProfile, listCategories, listGoals } from "@/lib/db";
 import { coachRequest } from "@/lib/schemas";
 import { type SearchResult, searchEnabled, webSearch } from "@/lib/search";
@@ -369,7 +369,7 @@ async function converse(messages: ChatMessage[], send: (e: CoachEvent) => void, 
 function loadSummary(uid: string): FinancialSummary {
   const today = todayJakarta();
   return summaryFromDashboard(
-    { financial: getFinancialProfile(uid), categories: listCategories(uid), goals: listGoals(uid) },
+    { financial: getFinancialProfile(uid), categories: listCategories(uid), goals: listGoals(uid, startOfMonth(todayJakarta())) },
     parseDashboard(dashboard(uid, dashboardArgs("month", today))),
     today,
   );

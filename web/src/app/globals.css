@@ -2508,3 +2508,152 @@ button.rowc:active:not(:disabled) {
   outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
   outline-offset: -3px;
 }
+
+/* ---- Goals (batch 2) ---------------------------------------------------- */
+.pretty {
+  text-wrap: pretty;
+}
+.danger-text {
+  color: var(--red);
+}
+.goal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-decoration: none;
+}
+.goal-row-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 12px;
+}
+.goal-row-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
+  outline-offset: 3px;
+}
+.goal-row-title {
+  overflow-wrap: anywhere;
+}
+.goal-row-act {
+  flex: none;
+  padding-inline: 12px;
+}
+.icon-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -4px;
+}
+.icon-pick .lnk {
+  min-height: 44px;
+}
+.switch-tile {
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+}
+.switch {
+  flex: none;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--ctl);
+  transition: background-color 0.2s var(--ease-out);
+}
+.switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 27, 23, 0.3);
+  transition: transform 0.2s var(--ease-out);
+}
+.switch-tile.on .switch {
+  background: var(--pri);
+}
+.switch-tile.on .switch i {
+  transform: translateX(18px);
+}
+.late-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--ambs);
+  color: var(--ink);
+}
+.late-note .lnk {
+  flex: none;
+  min-height: 44px;
+}
+.done-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 18px 18px;
+  border-radius: 24px;
+  background: var(--pris);
+  color: var(--onpris);
+  text-align: center;
+}
+.done-card .h2 {
+  color: var(--onpris);
+}
+.done-card .s {
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.history {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px 28px;
+  background: var(--sf2);
+  border-top: 1px solid var(--line);
+  border-radius: 28px 28px 0 0;
+}
+.hist-date {
+  margin: 10px 0 6px;
+}
+.aside-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 14px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+.aside-row .icb {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+.aside-row:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
+  outline-offset: 2px;
+}
+.nowrap {
+  white-space: nowrap;
+}

@@ -68,12 +68,23 @@ export const goalUpdate = z
 export type GoalUpdate = z.infer<typeof goalUpdate>;
 
 export const contributionInput = z.object({
-  kind: z.enum(["deposit", "withdrawal"]),
+  kind: z.enum(["deposit", "withdrawal", "spend"]),
   amount: amountSchema,
   note: optionalText(120),
   contribution_date: dateSchema,
+  /** Spend only: record it as an expense in this category. */
+  category_id: idSchema.nullable().optional(),
 });
 export type ContributionInput = z.infer<typeof contributionInput>;
+
+export const contributionUpdate = z
+  .object({
+    amount: amountSchema,
+    note: optionalText(120),
+    contribution_date: dateSchema,
+  })
+  .partial();
+export type ContributionUpdate = z.infer<typeof contributionUpdate>;
 
 const choice = <T extends [string, ...string[]]>(values: T) => z.enum(values).nullable().optional();
 

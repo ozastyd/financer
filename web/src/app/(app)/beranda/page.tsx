@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, CircleHelp, Pencil, Plus, Sparkles } from "lucide-react";
+import { Check, ChevronRight, CircleHelp, Pencil, PiggyBank, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
@@ -11,8 +11,8 @@ import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { GoalIcon } from "@/components/ui/icons";
 import { ProgressRing } from "@/components/ui/progress";
 import { formatLongDate, formatMonthYearShort, greeting } from "@/lib/date";
-import { type Period, cumulativeSeriesFromNet, periodRange, planCheck, roundedPercents, sameDayComparison, slicesFromAmounts, topNamesFromSlices } from "@/lib/finance";
-import { goalProgress, goalRemaining, sortGoals } from "@/lib/goals";
+import { type Period, cumulativeSeriesFromNet, flexiblePlan, periodRange, planCheck, roundedPercents, sameDayComparison, slicesFromAmounts, topNamesFromSlices } from "@/lib/finance";
+import { goalProgress, goalRemaining, monthStatus, sortGoals } from "@/lib/goals";
 import { formatPercent, formatRupiah } from "@/lib/money";
 import { useDashboard } from "@/lib/queries";
 import type { Goal } from "@/lib/types";
@@ -75,9 +75,19 @@ export default function BerandaPage() {
   const deltaWorth = delta !== null && Math.abs(delta) >= 10_000;
 
   // Month view: spending against the monthly plan from onboarding.
+  // Fixed costs (rent, bills, debt payments) and purchases paid from a goal are
+  // taken off the top, so paying rent early doesn't read as overspending.
   const fp = data.financial;
   const plan = fp ? fp.monthly_expenses + fp.monthly_obligations : 0;
-  const check = period === "month" ? planCheck(plan, cur.expense, today) : null;
+  const fixedPaid = dash?.fixedExpense ?? 0;
+  const dayToDay = fp ? flexiblePlan(plan, fp.monthly_obligations, fixedPaid) : 0;
+  const check = period === "month" ? planCheck(dayToDay, dash?.flexibleExpense ?? 0, today) : null;
+
+  // Money moved into goals is no longer free to spend.
+  const setAside = dash?.setAside ?? 0;
+  const sisa = cur.net - setAside;
+  const goalsBalance = dash?.goalsBalance ?? 0;
+  const primaryMonth = primary ? monthStatus(primary) : null;
 
   const headline = period === "month" ? `Sisa uang ${r.label}` : period === "week" ? "Sisa uang minggu ini" : `Sisa uang ${r.label}`;
 
@@ -127,9 +137,9 @@ export default function BerandaPage() {
           </div>
         ) : (
           <>
-            <AnimatedRupiah className="big" style={{ fontSize: 38 }} value={cur.net} />
+            <AnimatedRupiah className="big" style={{ fontSize: 38 }} value={sisa} />
             <p className="s mut">
-              Pemasukan dikurangi pengeluaran {periodName}.
+              Pemasukan dikurangi pengeluaran{setAside !== 0 ? " dan tabungan tujuan" : ""} {periodName}.
               {deltaWorth && delta !== null && (
                 <>
                   {" "}
@@ -142,21 +152,40 @@ export default function BerandaPage() {
             </p>
             {/* screen readers hear the new figure when the range changes */}
             <p className="sr-only" aria-live="polite">
-              {headline}: {formatRupiah(cur.net)}
+              {headline}: {formatRupiah(sisa)}
             </p>
+            {setAside !== 0 && (
+              <Link className="aside-row" href="/tujuan">
+                <span className="icb g" aria-hidden="true">
+                  <PiggyBank size={18} />
+                </span>
+                <span className="s sp">
+                  {setAside > 0 ? (
+                    <>
+                      <span className="b num">{formatRupiah(setAside)}</span> sudah disisihkan ke tujuan {periodName}
+                    </>
+                  ) : (
+                    <>
+                      <span className="b num">{formatRupiah(-setAside)}</span> diambil dari tujuan {periodName}
+                    </>
+                  )}
+                </span>
+                <ChevronRight size={18} aria-hidden="true" style={{ color: "var(--mut)" }} />
+              </Link>
+            )}
 
             {check && (
               <div className={`plan-check${check.aheadBy < 0 ? " over" : ""}`}>
                 <div className="row" style={{ justifyContent: "space-between", gap: 8 }}>
-                  <p className="s b">{check.aheadBy >= 0 ? "Pengeluaran masih sesuai rencana" : "Pengeluaran lewat dari rencana"}</p>
-                  <p className="s num mut">
+                  <p className="s b">{check.aheadBy >= 0 ? "Belanja harian aman" : "Belanja harian lewat rencana"}</p>
+                  <p className="s num mut nowrap">
                     {formatRupiah(check.spent)} / {formatRupiah(check.plan)}
                   </p>
                 </div>
                 <div
                   className="plan-bar"
                   role="img"
-                  aria-label={`Sudah dipakai ${formatRupiah(check.spent)} dari rencana ${formatRupiah(check.plan)}. Sampai hari ini rencananya ${formatRupiah(check.expectedByToday)}.`}
+                  aria-label={`Belanja harian ${formatRupiah(check.spent)} dari rencana ${formatRupiah(check.plan)}. Sampai hari ini rencananya ${formatRupiah(check.expectedByToday)}.`}
                 >
                   <i style={{ width: `${Math.min(100, (check.spent / check.plan) * 100)}%` }} />
                   <b style={{ left: `${check.elapsed * 100}%` }} title="Batas sampai hari ini" />
@@ -181,6 +210,11 @@ export default function BerandaPage() {
                     </>
                   )}
                 </p>
+                {fixedPaid > 0 && (
+                  <p className="s mut">
+                    Biaya tetap <span className="num">{formatRupiah(fixedPaid)}</span> (kos, tagihan, cicilan) sudah dibayar dan tidak dihitung di sini.
+                  </p>
+                )}
               </div>
             )}
 
@@ -198,7 +232,7 @@ export default function BerandaPage() {
               series={series}
               prevLabel={r.prevLabel}
               showPrevious={prev.count > 0}
-              ariaLabel={`Grafik sisa uang ${periodName}${prev.count > 0 ? ` dibanding ${r.prevLabel}` : ""}. Saat ini ${formatRupiah(cur.net)}.`}
+              ariaLabel={`Grafik sisa uang ${periodName}${prev.count > 0 ? ` dibanding ${r.prevLabel}` : ""}. Saat ini ${formatRupiah(sisa)}.`}
             />
           </>
         )}
@@ -207,6 +241,7 @@ export default function BerandaPage() {
           <div className="col sp" style={{ gap: 0 }}>
             <p className="s mut">Total uang tercatat</p>
             <p className="t b num">{formatRupiah(balance)}</p>
+            {goalsBalance > 0 && <p className="s mut num">termasuk {formatRupiah(goalsBalance)} di tujuan</p>}
           </div>
           <button type="button" className="ibtn" aria-expanded={explain} aria-controls="balance-why" aria-label="Apa itu total uang tercatat?" onClick={() => setExplain((v) => !v)}>
             <CircleHelp size={20} aria-hidden="true" />
@@ -214,7 +249,7 @@ export default function BerandaPage() {
         </div>
         {explain && (
           <p id="balance-why" className="s mut">
-            Tabungan awal yang kamu isi saat daftar, ditambah semua pemasukan dan dikurangi semua pengeluaran yang kamu catat. Bisa beda dengan saldo bank kalau ada yang belum dicatat.
+            Tabungan awal yang kamu isi saat daftar, ditambah semua pemasukan dan dikurangi semua pengeluaran yang kamu catat. Uang di tujuan tetap uangmu, jadi ikut dihitung. Bisa beda dengan saldo bank kalau ada yang belum dicatat.
           </p>
         )}
       </section>
@@ -306,7 +341,13 @@ export default function BerandaPage() {
               </p>
               <p className="s mut num">
                 {formatRupiah(primary.current_amount)} dari {formatRupiah(primary.target_amount)}
-                {primary.target_date ? ` · target ${formatMonthYearShort(primary.target_date)}` : ` · kurang ${formatRupiah(goalRemaining(primary))}`}
+                {primaryMonth
+                  ? primaryMonth.done
+                    ? " · bulan ini aman"
+                    : ` · bulan ini kurang ${shortRupiah(primaryMonth.left)}`
+                  : primary.target_date
+                    ? ` · target ${formatMonthYearShort(primary.target_date)}`
+                    : ` · kurang ${formatRupiah(goalRemaining(primary))}`}
               </p>
             </div>
             <ChevronRight size={20} aria-hidden="true" style={{ color: "var(--mut)" }} />

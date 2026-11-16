@@ -1,4 +1,4 @@
-import type { ContributionInput, GoalInput, GoalUpdate, OnboardingInput, TransactionInput, TransactionUpdate } from "../schemas";
+import type { ContributionInput, ContributionUpdate, GoalInput, GoalUpdate, OnboardingInput, TransactionInput, TransactionUpdate } from "../schemas";
 import type { Category, FinancialProfile, Goal, UserProfile } from "../types";
 
 export interface Session {
@@ -35,7 +35,11 @@ export interface DataStore {
   addGoal(input: GoalInput): Promise<string>;
   updateGoal(id: string, input: GoalUpdate): Promise<void>;
   deleteGoal(id: string): Promise<void>;
-  addContribution(goalId: string, input: ContributionInput): Promise<void>;
+  /** Returns the new entry's id (used to undo it). */
+  addContribution(goalId: string, input: ContributionInput): Promise<string>;
+  updateContribution(goalId: string, id: string, input: ContributionUpdate): Promise<void>;
+  /** Also removes the expense a spend was recorded as. */
+  deleteContribution(goalId: string, id: string): Promise<void>;
 }
 
 /** Onboarding answers given before the account existed, saved together with the sign-up. */

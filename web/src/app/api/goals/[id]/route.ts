@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { UUID_RE, bad, parseBody } from "@/lib/api";
-import { deleteOwned, getGoal, updateOwned } from "@/lib/db";
+import { deleteOwned, getGoal, goalSpent, updateOwned } from "@/lib/db";
 import { goalUpdate } from "@/lib/schemas";
 import { dbError, requireUser } from "@/lib/server";
 
@@ -24,7 +24,7 @@ export async function PATCH(req: Request, ctx: RouteContext<"/api/goals/[id]">) 
     if (current >= input.target_amount && goal.status !== "completed") {
       patch.status = "completed";
       patch.completed_at = new Date().toISOString();
-    } else if (current < input.target_amount && goal.status === "completed") {
+    } else if (current < input.target_amount && goal.status === "completed" && goalSpent(auth.uid, id) === 0) {
       patch.status = "active";
       patch.completed_at = null;
     }
