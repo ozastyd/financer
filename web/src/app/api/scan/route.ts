@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { todayJakarta } from "@/lib/date";
-import { hasSimilarTransaction, listCategories } from "@/lib/db";
+import { findSimilarTransaction, listCategories } from "@/lib/db";
 import { ScanError, scanEnabled, scanImage, scanPdf } from "@/lib/scan";
 import { makeLimiter, requireUser } from "@/lib/server";
 
@@ -11,6 +11,15 @@ import { makeLimiter, requireUser } from "@/lib/server";
 const MAX_BYTES = 10 * 1024 * 1024;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 // Each scan uses the shared free-tier vision quota; keep one account from using it all.
+// Rows that move money between the user's own pockets are not spending: an
+// e-wallet top-up is spent later (and recorded then), cash from an ATM too.
+const TRANSFER_RULES: { kind: "topup" | "atm" | "own"; re: RegExp }[] = [
+  { kind: "topup", re: /top\s?-?up|isi\s?saldo|reload\s?(saldo|wallet)/i },
+  { kind: "atm", re: /tarik\s?tunai|penarikan\s?tunai|\batm\b/i },
+  { kind: "own", re: /rek(ening)?\s?sendiri|pindah\s?(dana|buku)|own\s?account|tabungan\s?sendiri/i },
+];
+const transferKind = (description: string, type: string) => (type === "expense" ? (TRANSFER_RULES.find((r) => r.re.test(description))?.kind ?? null) : null);
+
 const perUser = makeLimiter(30, 60 * 60 * 1000);
 
 export async function POST(req: Request) {
@@ -44,11 +53,13 @@ export async function POST(req: Request) {
     const result = isPdf
       ? await scanPdf(buf, typeof password === "string" && password ? password : undefined, categories, today, Date.now() + 60_000)
       : await scanImage(buf, categories, today);
-    const transactions = result.transactions.map((t) => ({
-      ...t,
-      duplicate: Boolean(t.date && hasSimilarTransaction(auth.uid, t.date, t.type, t.amount)),
-    }));
-    return NextResponse.json({ ...result, transactions, source: isPdf ? "pdf" : "image" });
+    const transactions = result.transactions.map((t) => {
+      const match = t.date ? findSimilarTransaction(auth.uid, t.date, t.type, t.amount) ?? null : null;
+      return { ...t, duplicate: Boolean(match), match, transfer: transferKind(t.description, t.type) };
+    });
+    const receiptMatch =
+      result.kind === "receipt" && result.date && result.total ? (findSimilarTransaction(auth.uid, result.date, "expense", result.total) ?? null) : null;
+    return NextResponse.json({ ...result, transactions, receiptMatch, source: isPdf ? "pdf" : "image" });
   } catch (e) {
     if (e instanceof ScanError) {
       const status = e.code === "busy" ? 429 : e.code === "password" ? 422 : 422;

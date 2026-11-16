@@ -17,6 +17,7 @@ export interface TxPrefill {
   amount?: number;
   date?: string;
   note?: string;
+  categoryId?: string;
 }
 
 interface Props {
@@ -41,7 +42,7 @@ function TransactionForm({ initialType, edit, prefill, onDone }: { initialType: 
   const [requestError, setRequestError] = useState<string | null>(null);
   const [type, setType] = useState<TxType>(edit?.type ?? initialType);
   const [amount, setAmount] = useState<string>(edit ? String(edit.amount) : prefill?.amount ? String(prefill.amount) : "");
-  const [categoryId, setCategoryId] = useState<string | null>(edit?.category_id ?? null);
+  const [categoryId, setCategoryId] = useState<string | null>(edit?.category_id ?? prefill?.categoryId ?? null);
   const [date, setDate] = useState(edit?.transaction_date ?? prefill?.date ?? today);
   const [showDate, setShowDate] = useState(false);
   const [note, setNote] = useState(edit?.description ?? prefill?.note ?? "");

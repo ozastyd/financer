@@ -293,11 +293,26 @@ export function getCategory(uid: string, id: string) {
   return one("select id, type from categories where id = ? and user_id = ?", id, uid) as Pick<Category, "id" | "type"> | undefined;
 }
 
-/** Whether the user already has a transaction with this date, type and amount (possible duplicate of a scanned row). */
-export function hasSimilarTransaction(uid: string, date: string, type: string, amount: number): boolean {
-  return Boolean(
-    one("select 1 from transactions where user_id = ? and transaction_date = ? and type = ? and amount = ? limit 1", uid, date, type, amount),
-  );
+/** An existing transaction with the same date, type and amount (a scanned row may duplicate it). */
+export function findSimilarTransaction(uid: string, date: string, type: string, amount: number): { description: string | null; category: string } | undefined {
+  return one(
+    `select t.description as description, c.name as category from transactions t join categories c on c.id = t.category_id and c.user_id = t.user_id
+     where t.user_id = ? and t.transaction_date = ? and t.type = ? and t.amount = ? limit 1`,
+    uid,
+    date,
+    type,
+    amount,
+  ) as { description: string | null; category: string } | undefined;
+}
+
+/** Deletes several of the owner's transactions (undo of a batch save); returns how many were removed. */
+export function deleteOwnedTransactions(uid: string, ids: string[]): number {
+  let n = 0;
+  tx(() => {
+    const st = db().prepare("delete from transactions where id = ? and user_id = ?");
+    for (const id of ids) n += Number(st.run(id, uid).changes);
+  });
+  return n;
 }
 
 export function getTransaction(uid: string, id: string) {
