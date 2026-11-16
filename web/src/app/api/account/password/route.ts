@@ -5,6 +5,7 @@ import { MIN_PASSWORD } from "@/lib/credentials";
 import { getPasswordHash, setPasswordHash } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { makeLimiter, requireUser } from "@/lib/server";
+import { setSessionCookie } from "@/lib/session-cookie";
 
 const perUser = makeLimiter(5, 15 * 60 * 1000);
 
@@ -27,5 +28,6 @@ export async function POST(req: Request) {
   }
   setPasswordHash(auth.uid, await hashPassword(input.next));
   perUser.clear(auth.uid);
-  return NextResponse.json({ ok: true });
+  // Other devices are signed out by the new password; keep this one signed in.
+  return setSessionCookie(NextResponse.json({ ok: true }), auth.uid);
 }

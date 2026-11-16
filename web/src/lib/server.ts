@@ -2,8 +2,9 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { dbErrorMessage, getUser } from "./db";
-import { SESSION_COOKIE, verifySessionToken } from "./session";
+import { dbErrorMessage, getPasswordHash, getUser } from "./db";
+import { SESSION_COOKIE, type SessionClaims, passwordStamp, readSessionToken } from "./session";
+import { COOKIE_OPTIONS, sessionTokenFor } from "./session-cookie";
 
 export interface Authed {
   uid: string;
@@ -11,14 +12,36 @@ export interface Authed {
 }
 
 /**
+ * Whether a token still matches its account: the account exists and the
+ * password has not changed since the token was issued.
+ */
+export async function sessionUser(claims: SessionClaims | null) {
+  const user = claims ? getUser(claims.userId) : undefined;
+  if (!claims || !user) return null;
+  if (claims.stamp !== null && claims.stamp !== (await passwordStamp(getPasswordHash(user.id) ?? ""))) return null;
+  return user;
+}
+
+/**
  * The signed-in user for this request, or a ready-made 401. The proxy already
  * rejects requests without a valid cookie; this also checks the account still
- * exists and gives route handlers the id every query is scoped to.
+ * exists and its password hasn't changed since sign-in, and gives route
+ * handlers the id every query is scoped to.
  */
 export async function requireUser(): Promise<Authed | NextResponse> {
-  const uid = await verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
-  const user = uid ? getUser(uid) : undefined;
+  const jar = await cookies();
+  const claims = await readSessionToken(jar.get(SESSION_COOKIE)?.value);
+  const user = await sessionUser(claims);
   if (!user) return NextResponse.json({ error: "Sesi berakhir. Silakan masuk lagi." }, { status: 401 });
+  // A token from before password stamps: re-issue it stamped, so a later
+  // password change signs this device out too.
+  if (claims?.stamp === null) {
+    try {
+      jar.set(SESSION_COOKIE, await sessionTokenFor(user.id), COOKIE_OPTIONS);
+    } catch {
+      // read-only context; upgraded on the next write
+    }
+  }
   return { uid: user.id, email: user.email };
 }
 

@@ -66,7 +66,7 @@ Financer`;
 <tr><td style="font-size:18px;font-weight:700;padding-bottom:8px">Atur ulang kata sandi</td></tr>
 <tr><td style="font-size:15px;line-height:1.6;padding-bottom:20px">Ada permintaan untuk mengatur ulang kata sandi akun Financer dengan email ini. Tekan tombol di bawah untuk membuat kata sandi baru. Tautan berlaku ${minutes} menit dan hanya bisa dipakai sekali.</td></tr>
 <tr><td style="padding-bottom:20px"><a href="${esc(link)}" style="display:inline-block;background:#047857;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:999px">Buat kata sandi baru</a></td></tr>
-<tr><td style="font-size:13px;line-height:1.6;color:#4b5a54;padding-bottom:12px">Kalau tombolnya tidak bisa ditekan, salin tautan ini ke browser:<br><span style="word-break:break-all">${esc(link)}</span></td></tr>
+<tr><td style="font-size:13px;line-height:1.6;color:#4b5a54;padding-bottom:12px">Kalau tombolnya ga bisa ditekan, salin tautan ini ke browser:<br><span style="word-break:break-all">${esc(link)}</span></td></tr>
 <tr><td style="font-size:13px;line-height:1.6;color:#4b5a54">Kalau kamu tidak meminta ini, abaikan saja email ini. Kata sandimu tidak berubah.</td></tr>
 </table></td></tr></table></body></html>`;
   return { to, subject: "Atur ulang kata sandi Financer", html, text };
