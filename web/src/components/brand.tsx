@@ -1,18 +1,35 @@
-/* eslint-disable @next/next/no-img-element -- a small static logo; next/image adds nothing here */
+/* eslint-disable @next/next/no-img-element -- small static logo images; next/image adds nothing here */
+
+/** Width ÷ height of the logo lockup in public/brand/financer-lockup*.png. */
+const LOCKUP_RATIO = 1223 / 325;
 
 /**
- * The Financer mark next to the name. The name is live text in the app font so
- * it follows the light/dark theme; the mark itself works on both backgrounds.
+ * The Financer logo: the F mark with the wordmark in the logo's own typeface.
+ * Two images, one per theme (the wordmark is dark green on light, near-white
+ * on dark); CSS shows the right one.
  */
-export function BrandMark({ size = 40, showName = true }: { size?: number; showName?: boolean }) {
+export function BrandMark({ height = 32, alt = "Financer" }: { height?: number; alt?: string }) {
+  const width = Math.round(height * LOCKUP_RATIO);
+  const style = { height, width: "auto" } as const;
   return (
-    <span className="row" style={{ gap: Math.round(size * 0.3), alignItems: "center" }}>
-      <img src="/brand/financer-icon.png" alt={showName ? "" : "Financer"} width={size} height={size} style={{ width: size, height: size, flex: "none" }} />
-      {showName && (
-        <span className="b" style={{ fontSize: Math.round(size * 0.62), letterSpacing: "-0.02em", color: "var(--ink)", lineHeight: 1 }}>
-          Financer
-        </span>
-      )}
+    <span className="brand-lockup" role="img" aria-label={alt}>
+      <img className="logo-light" src="/brand/financer-lockup.png" alt="" width={width} height={height} style={style} />
+      <img className="logo-dark" src="/brand/financer-lockup-dark.png" alt="" width={width} height={height} style={style} />
     </span>
+  );
+}
+
+/**
+ * Shown the moment someone opens the app, while it loads: the logo floating
+ * over a soft shadow. Rendered on the server so it is in the first paint.
+ */
+export function SplashScreen({ leaving }: { leaving: boolean }) {
+  return (
+    <div className={`splash${leaving ? " done" : ""}`} aria-hidden="true">
+      <div className="splash-float">
+        <BrandMark height={56} alt="" />
+      </div>
+      <div className="splash-shadow" />
+    </div>
   );
 }

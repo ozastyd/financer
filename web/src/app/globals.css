@@ -1127,6 +1127,444 @@ main.intro .scr > :nth-child(n + 3) {
   animation-delay: 500ms;
 }
 
+/* Logo lockup: one image per theme (dark green wordmark on light, near-white on dark). */
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+.brand-lockup .logo-dark {
+  display: none;
+}
+:root[data-theme="dark"] .brand-lockup .logo-light {
+  display: none;
+}
+:root[data-theme="dark"] .brand-lockup .logo-dark {
+  display: block;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-lockup .logo-light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .brand-lockup .logo-dark {
+    display: block;
+  }
+}
+
+/* Splash: the logo floats over a soft shadow while the app loads.
+   If the app never starts (JS blocked), it still steps aside after 8 s. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: radial-gradient(120% 80% at 50% 40%, var(--sf) 0%, var(--pris) 100%);
+  animation: splash-failsafe 0.4s ease 8s forwards;
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.4s var(--ease-out);
+}
+.splash.done {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+.splash-float {
+  animation:
+    fade-in 0.6s var(--ease-out) backwards,
+    splash-float 2.4s ease-in-out infinite;
+}
+.splash-shadow {
+  width: 120px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(6, 46, 33, 0.22), transparent);
+  animation: splash-shadow 2.4s ease-in-out infinite;
+}
+@keyframes splash-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -14px;
+  }
+}
+@keyframes splash-shadow {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+  50% {
+    scale: 0.72;
+    opacity: 0.55;
+  }
+}
+@keyframes splash-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-float,
+  .splash-shadow {
+    animation: fade-in 0.3s ease backwards;
+  }
+}
+
+/* Welcome slides: swipe sideways, one slide per screen width. */
+main.welcome {
+  background: linear-gradient(180deg, var(--sf2) 0%, var(--bg) 55%);
+}
+.welcome-track {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  flex: none;
+}
+.welcome-track::-webkit-scrollbar {
+  display: none;
+}
+.welcome-slide {
+  flex: none;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* Cards settle in again each time their slide comes into view. */
+.welcome-slide:not(.on) .intro-card {
+  animation: none;
+  opacity: 0;
+}
+.welcome-stage {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 340px;
+  flex: none;
+}
+.welcome-copy {
+  padding: 8px 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+  align-items: center;
+}
+.welcome-copy .h1 {
+  font-size: 30px;
+  line-height: 1.15;
+}
+.welcome-card {
+  position: absolute;
+  background: var(--sf);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow:
+    0 18px 40px -18px rgba(16, 27, 23, 0.28),
+    0 2px 6px rgba(16, 27, 23, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+:root[data-theme="dark"] .welcome-card {
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--line);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .welcome-card {
+    box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--line);
+  }
+}
+.welcome-tag {
+  position: absolute;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--bg);
+  white-space: nowrap;
+}
+.welcome-tag.soft {
+  background: var(--sf);
+  color: var(--ink);
+  box-shadow: 0 8px 18px -10px rgba(16, 27, 23, 0.35);
+  border: 1px solid var(--line);
+}
+.orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+.orbit-node {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--sf);
+  color: var(--mut);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 12px 26px -14px rgba(16, 27, 23, 0.35);
+}
+.orbit-core {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--hero);
+  color: #5ee0b0;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 0 0 8px var(--sf),
+    0 20px 40px -16px rgba(6, 46, 33, 0.55);
+}
+.welcome-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+}
+.welcome-dots button {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ctl);
+  opacity: 0.5;
+  transition:
+    width 0.3s var(--ease-out),
+    background-color 0.3s var(--ease-out),
+    opacity 0.3s var(--ease-out);
+  cursor: pointer;
+}
+.welcome-dots button[aria-current="true"] {
+  width: 28px;
+  background: var(--ink);
+  opacity: 1;
+}
+
+/* Onboarding: step hero, icon answer cards, AI tip. */
+.ob-progress {
+  display: flex;
+  gap: 6px;
+}
+.ob-progress i {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background-color 0.3s var(--ease-out);
+}
+.ob-progress i.on {
+  background: var(--pri);
+}
+.ob-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+.ob-hero-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--pri);
+  color: var(--onpri);
+  box-shadow:
+    6px 6px 0 var(--pris),
+    0 14px 28px -14px rgba(4, 120, 87, 0.6);
+  margin-bottom: 8px;
+}
+.opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.opt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--sf);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease-out),
+    background-color 0.2s var(--ease-out);
+}
+.opt:hover {
+  border-color: var(--ctl);
+}
+.opt[aria-pressed="true"] {
+  border-color: var(--pri);
+  background: var(--pris);
+}
+.opt-icon {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+.opt-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.opt-label {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.opt-desc {
+  font-size: 13px;
+  color: var(--mut);
+  line-height: 1.35;
+}
+.opt-check {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pri);
+  color: var(--onpri);
+}
+.opt-grid .opt {
+  padding: 10px 12px;
+  gap: 10px;
+}
+.opt-grid .opt-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+.opt-grid .opt-label {
+  font-size: 14px;
+}
+.opt-grid.c3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.opt.stack {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 12px 6px;
+  min-height: 84px;
+}
+.opt.stack .opt-text {
+  align-items: center;
+}
+.opt.stack .opt-label {
+  font-size: 13px;
+}
+/* Scan: reading animation, spinner, large total input on the hero card. */
+.scan-pulse {
+  width: 76px;
+  height: 76px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  background: var(--pri);
+  color: var(--onpri);
+  animation: scan-pulse 1.6s ease-in-out infinite;
+}
+@keyframes scan-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(4, 120, 87, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(4, 120, 87, 0);
+  }
+}
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.card.hero .big-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--heroline);
+  border-radius: 0;
+  color: inherit;
+  font-size: 32px;
+  font-weight: 800;
+  padding: 2px 0 6px;
+  min-height: 0;
+}
+.card.hero .big-input:focus {
+  outline: none;
+  border-bottom-color: #5ee0b0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-pulse,
+  .spin {
+    animation: none;
+  }
+}
+.ob-tip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--hero);
+  color: #f1f5f4;
+}
+.ob-tip-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--pri);
+  color: var(--onpri);
+}
+.ob-tip b {
+  color: #5ee0b0;
+}
+
 /* Press feedback: the control gives a little under the finger. */
 .btn,
 .ibtn,

@@ -1,37 +1,36 @@
 import { NextResponse } from "next/server";
-import { checkPassword, passwordIsSet } from "@/lib/password";
+import { parseBody } from "@/lib/api";
+import { signInSchema } from "@/lib/credentials";
+import { findUserByEmail } from "@/lib/db";
+import { verifyPassword } from "@/lib/password";
+import { clientIp, makeLimiter } from "@/lib/server";
 import { authConfigured } from "@/lib/session";
 import { setSessionCookie } from "@/lib/session-cookie";
 
-// Slows down password guessing: 5 failed tries per 15 minutes per client.
+// Slows down password guessing: 5 failed tries per account per address, and
+// 20 per address overall, within 15 minutes.
 const WINDOW_MS = 15 * 60 * 1000;
-const MAX_FAILS = 5;
-const fails = new Map<string, number[]>();
-
-function clientKey(req: Request): string {
-  return req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-}
+const perAccount = makeLimiter(5, WINDOW_MS);
+const perAddress = makeLimiter(20, WINDOW_MS);
 
 export async function POST(req: Request) {
-  if (!authConfigured()) return NextResponse.json({ error: "Login belum dikonfigurasi di server." }, { status: 503 });
-  if (!passwordIsSet()) return NextResponse.json({ error: "Kata sandi belum dibuat.", needsSetup: true }, { status: 409 });
+  if (!authConfigured()) return NextResponse.json({ error: "Layanan sedang bermasalah. Coba lagi sebentar lagi." }, { status: 503 });
+  const input = await parseBody(req, signInSchema);
+  if (input instanceof NextResponse) return input;
 
-  const key = clientKey(req);
-  const now = Date.now();
-  const recent = (fails.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_FAILS) {
-    const wait = Math.ceil((recent[0] + WINDOW_MS - now) / 1000);
-    return NextResponse.json({ error: "Terlalu banyak percobaan." }, { status: 429, headers: { "retry-after": String(wait) } });
+  const ip = clientIp(req);
+  const accountKey = `${ip}|${input.email}`;
+  const wait = Math.max(perAccount.blocked(accountKey), perAddress.blocked(ip));
+  if (wait) return NextResponse.json({ error: "Terlalu banyak percobaan." }, { status: 429, headers: { "retry-after": String(wait) } });
+
+  const user = findUserByEmail(input.email);
+  // Same message (and same work) whether the email or the password is wrong.
+  if (!(await verifyPassword(input.password, user?.password_hash)) || !user) {
+    perAccount.hit(accountKey);
+    perAddress.hit(ip);
+    return NextResponse.json({ error: "Email atau kata sandi salah." }, { status: 400 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as { password?: unknown };
-  const password = typeof body.password === "string" ? body.password : "";
-  if (!password || !(await checkPassword(password))) {
-    recent.push(now);
-    fails.set(key, recent);
-    return NextResponse.json({ error: "Kata sandi salah." }, { status: 400 });
-  }
-
-  fails.delete(key);
-  return setSessionCookie(NextResponse.json({ ok: true }));
+  perAccount.clear(accountKey);
+  return setSessionCookie(NextResponse.json({ ok: true }), user.id);
 }

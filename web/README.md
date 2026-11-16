@@ -2,7 +2,7 @@
 
 Mobile-first personal finance app for Indonesian Gen-Z. Next.js 16 (App Router), TypeScript, Tailwind 4, SQLite (Node's built-in `node:sqlite`), Zod, React Hook Form, Recharts, Lucide.
 
-This build is self-hosted for a small group: one shared password, one data set, stored in a single SQLite file on the server.
+Self-hosted: each person has their own account (email + password) and private data, stored in a single SQLite file on the server.
 
 ## Run
 
@@ -23,17 +23,26 @@ Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm test` (Vitest)
 | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` | AI Coach through any OpenAI-compatible chat-completions API, server-side only. Without them the Coach answers with a deterministic summary of the user's own numbers and says so. |
 | `AI_REASONING_EFFORT` | Optional, default `low`. `none` omits the parameter for providers that reject it. |
 | `EXA_API_KEY` | Optional. Lets the Coach search the web (Exa) for current prices; sources are listed under the answer. |
+| `GROQ_API_KEY` | Optional. Receipt / bank-screenshot / statement-PDF scanning with Groq's vision model (`SCAN_MODEL`, default `qwen/qwen3.8-27b`). Without it the scan endpoint returns 503. |
 
-## Sign-in
+## New-user flow and accounts
 
-- No password exists on first start: `/masuk` asks the first visitor to create one (min. 8 characters). It is stored as a scrypt hash in the database (`app_settings`).
-- After that, everyone signs in with that password. Sessions last 30 days (httpOnly signed cookie); 5 wrong tries lock the sign-in for 15 minutes per client.
-- `src/proxy.ts` guards every page and API route except the sign-in endpoints.
-- To start over (new password, empty data): stop the app, move the database file away, start it again.
+- Welcome slides (`/`) → onboarding as a guest (`/onboarding`, answers kept in localStorage, `src/lib/pending-signup.ts`) → create account (`/masuk`; `POST /api/signup` saves the account, onboarding answers and first goal in one transaction) → Beranda. Returning users sign in at `/masuk?mode=masuk`.
+- Passwords are scrypt hashes (`src/lib/password.ts`). Sessions are signed httpOnly cookies carrying the user id, valid 30 days (`src/lib/session.ts`).
+- `src/proxy.ts` lets through only the welcome page, onboarding, sign-up/sign-in and brand assets without a session; route handlers call `requireUser()` (`src/lib/server.ts`) and scope every query to that user.
+- Limits: 5 failed sign-ins per account per address and 20 per address per 15 minutes; 10 sign-ups per address per hour.
+- A splash screen with the logo covers the first load (`SplashScreen` in `src/components/brand.tsx`).
 
 ## Database
 
-- Schema and queries: `src/lib/db.ts`. Tables are created on first start; default categories are seeded once. A trigger keeps goal balances in sync with deposits and withdrawals.
+- Schema and queries: `src/lib/db.ts`. Every table has `user_id`; composite foreign keys stop a transaction using another user's category or a deposit into another user's goal. Tables are created on first start (`pragma user_version` = 2); each new account gets the default categories. A trigger keeps goal balances in sync with deposits and withdrawals.
+
+## Scanning (receipts, bank screenshots, statement PDFs)
+
+- "+" menu → *Ambil foto* (camera) or *Unggah gambar* (image or PDF) → `/scan`.
+- `POST /api/scan` (`src/lib/scan.ts`): images are resized and read by the vision model into JSON; text PDFs (`unpdf`) are read in chunks; password-protected PDFs prompt for the password. Files are never stored. Rows matching an existing transaction (same date, type, amount) are flagged as possible duplicates.
+- The user reviews and edits before saving; a receipt can be split by category. `POST /api/transactions/batch` saves all rows in one transaction.
+- Groq free tier is about 4 scans per minute and 1,000 per day per key; each user is capped at 30 scans per hour.
 
 ## AI Coach
 
