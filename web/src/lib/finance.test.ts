@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryBreakdown, changePct, cumulativeSeries, groupByDay, periodRange, planCheck, recordedBalance, roundedPercents, sameDayComparison, totals } from "./finance";
+import { categoryBreakdown, changePct, cumulativeSeries, flexiblePlan, groupByDay, periodRange, planCheck, recordedBalance, roundedPercents, sameDayComparison, totals } from "./finance";
 import type { Category, Transaction } from "./types";
 
 const cats: Category[] = [
@@ -129,5 +129,13 @@ describe("planCheck", () => {
   });
   it("has no check without a plan", () => {
     expect(planCheck(0, 100, "2026-11-10")).toBeNull();
+  });
+});
+
+describe("flexible plan", () => {
+  it("takes fixed costs off the top, reserving obligations until they are paid", () => {
+    expect(flexiblePlan(4_900_000, 600_000, 0)).toBe(4_300_000);
+    expect(flexiblePlan(4_900_000, 600_000, 2_100_000)).toBe(2_800_000);
+    expect(flexiblePlan(1_000_000, 0, 2_000_000)).toBe(0);
   });
 });

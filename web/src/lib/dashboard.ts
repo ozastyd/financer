@@ -39,6 +39,14 @@ export interface DashboardRaw {
   all_time_count: number | string;
   today_count: number | string;
   starting_savings: number | string;
+  /** Net money moved into goals in the current / previous period. */
+  set_aside?: number | string;
+  prev_set_aside?: number | string;
+  /** Current period spending on fixed costs, and everything else (both without purchases paid from a goal). */
+  fixed_expense?: number | string;
+  flexible_expense?: number | string;
+  /** Money currently held in all goals. */
+  goals_balance?: number | string;
 }
 
 export interface Dashboard {
@@ -52,6 +60,12 @@ export interface Dashboard {
   recordedBalance: number;
   allTimeCount: number;
   todayCount: number;
+  /** Net money moved into goals this period (deposits minus withdrawals and money used). */
+  setAside: number;
+  prevSetAside: number;
+  fixedExpense: number;
+  flexibleExpense: number;
+  goalsBalance: number;
 }
 
 const n = (v: number | string | null | undefined) => (v == null ? 0 : Number(v));
@@ -72,6 +86,11 @@ export function parseDashboard(raw: DashboardRaw): Dashboard {
     recordedBalance: n(raw.starting_savings) + n(raw.all_time_net),
     allTimeCount: n(raw.all_time_count),
     todayCount: n(raw.today_count),
+    setAside: n(raw.set_aside),
+    prevSetAside: n(raw.prev_set_aside),
+    fixedExpense: n(raw.fixed_expense),
+    flexibleExpense: n(raw.flexible_expense),
+    goalsBalance: n(raw.goals_balance),
   };
 }
 

@@ -23,7 +23,7 @@ export interface FinancialSummary {
     uses_paylater: string | null;
     biggest_challenge: string | null;
   } | null;
-  this_month: { income: number; expense: number; net: number; transactions: number; top_expense_categories: { name: string; amount: number }[] };
+  this_month: { income: number; expense: number; net: number; set_aside_to_goals: number; free_to_spend: number; transactions: number; top_expense_categories: { name: string; amount: number }[] };
   last_month: { income: number; expense: number; net: number };
   recorded_balance: number;
   goals: {
@@ -50,7 +50,7 @@ export function buildFinancialSummary(data: SummaryInput & { transactions: Trans
     byCat.set(t.category_id, (byCat.get(t.category_id) ?? 0) + t.amount);
   }
   const expenseByCategory: CategoryAmount[] = [...byCat.entries()].map(([category_id, amount]) => ({ category_id, amount }));
-  const dash: Pick<Dashboard, "current" | "previous" | "expenseByCategory" | "recordedBalance"> = {
+  const dash: Pick<Dashboard, "current" | "previous" | "expenseByCategory" | "recordedBalance"> & Partial<Pick<Dashboard, "setAside">> = {
     current: totals(data.transactions, r.start, r.end),
     previous: totals(data.transactions, r.prevStart, r.prevEnd),
     expenseByCategory,
@@ -62,7 +62,7 @@ export function buildFinancialSummary(data: SummaryInput & { transactions: Trans
 /** Builds the summary from the month dashboard computed by the database. */
 export function summaryFromDashboard(
   data: SummaryInput,
-  dash: Pick<Dashboard, "current" | "previous" | "expenseByCategory" | "recordedBalance">,
+  dash: Pick<Dashboard, "current" | "previous" | "expenseByCategory" | "recordedBalance"> & Partial<Pick<Dashboard, "setAside">>,
   today: string,
 ): FinancialSummary {
   const cur = dash.current;
@@ -88,6 +88,8 @@ export function summaryFromDashboard(
       income: cur.income,
       expense: cur.expense,
       net: cur.net,
+      set_aside_to_goals: dash.setAside ?? 0,
+      free_to_spend: cur.net - (dash.setAside ?? 0),
       transactions: cur.count,
       top_expense_categories: slicesFromAmounts(dash.expenseByCategory, data.categories, 4).map((s) => ({ name: s.name, amount: s.amount })),
     },

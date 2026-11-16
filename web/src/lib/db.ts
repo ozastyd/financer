@@ -14,9 +14,66 @@ import type { Category, Contribution, FinancialProfile, Goal, UserProfile } from
 // else's goal. Amounts are whole rupiah (INTEGER).
 
 const DB_PATH = process.env.DATABASE_PATH || "./data/financer.db";
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const NOW = "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))";
+
+/**
+ * Money moved into a goal (deposit), back out of it (withdrawal), or used for
+ * what it was saved for (spend). A spend can be linked to the expense it was
+ * recorded as in Transaksi.
+ */
+function contributionsTable(name: string) {
+  return `create table if not exists ${name} (
+  id text primary key,
+  goal_id text not null,
+  user_id text not null references users (id) on delete cascade,
+  kind text not null check (kind in ('deposit','withdrawal','spend')),
+  amount integer not null check (amount > 0 and amount <= 1000000000000),
+  note text check (note is null or length(note) <= 120),
+  contribution_date text not null,
+  transaction_id text references transactions (id) on delete set null,
+  created_at text not null default ${NOW},
+  foreign key (goal_id, user_id) references financial_goals (id, user_id) on delete cascade
+);`;
+}
+
+function syncTrigger(name: string, event: "insert" | "update" | "delete", ref: "new" | "old") {
+  const goal = `${ref}.goal_id`;
+  const unspent = `not exists (select 1 from goal_contributions where goal_id = ${goal} and kind = 'spend')`;
+  return `create trigger if not exists ${name} after ${event} on goal_contributions
+begin
+  update financial_goals set
+    current_amount = (select coalesce(sum(case when kind = 'deposit' then amount else -amount end), 0) from goal_contributions where goal_id = ${goal})
+  where id = ${goal};
+  update financial_goals set
+    status = case
+      when current_amount >= target_amount and status <> 'completed' then 'completed'
+      when current_amount < target_amount and status = 'completed' and ${unspent} then 'active'
+      else status end,
+    completed_at = case
+      when current_amount >= target_amount and status <> 'completed' then ${NOW}
+      when current_amount < target_amount and status = 'completed' and ${unspent} then null
+      else completed_at end
+  where id = ${goal};
+end;`;
+}
+
+/** v2 -> v3: contributions gain the "spend" kind and a link to a transaction; triggers cover edits and deletes. */
+function migrateToV3(d: DatabaseSync) {
+  d.exec("begin immediate");
+  try {
+    d.exec(`${contributionsTable("goal_contributions_v3")}
+insert into goal_contributions_v3 (id, goal_id, user_id, kind, amount, note, contribution_date, transaction_id, created_at)
+  select id, goal_id, user_id, kind, amount, note, contribution_date, null, created_at from goal_contributions;
+drop table goal_contributions;
+alter table goal_contributions_v3 rename to goal_contributions;`);
+    d.exec("commit");
+  } catch (e) {
+    d.exec("rollback");
+    throw e;
+  }
+}
 
 const SCHEMA = `
 create table if not exists users (
@@ -106,37 +163,19 @@ create table if not exists financial_goals (
 );
 create index if not exists financial_goals_user_idx on financial_goals (user_id, created_at);
 
-create table if not exists goal_contributions (
-  id text primary key,
-  goal_id text not null,
-  user_id text not null references users (id) on delete cascade,
-  kind text not null check (kind in ('deposit','withdrawal')),
-  amount integer not null check (amount > 0 and amount <= 1000000000000),
-  note text check (note is null or length(note) <= 120),
-  contribution_date text not null,
-  created_at text not null default ${NOW},
-  foreign key (goal_id, user_id) references financial_goals (id, user_id) on delete cascade
-);
+${contributionsTable("goal_contributions")}
 create index if not exists goal_contributions_goal_idx on goal_contributions (goal_id, contribution_date desc, created_at desc);
+create index if not exists goal_contributions_user_date_idx on goal_contributions (user_id, contribution_date);
+create index if not exists goal_contributions_tx_idx on goal_contributions (transaction_id) where transaction_id is not null;
 
--- Keep financial_goals.current_amount equal to the sum of its contributions.
--- A withdrawal larger than the balance violates current_amount >= 0 and fails.
-create trigger if not exists goal_contributions_sync_ins after insert on goal_contributions
-begin
-  update financial_goals set
-    current_amount = (select coalesce(sum(case when kind = 'deposit' then amount else -amount end), 0) from goal_contributions where goal_id = new.goal_id)
-  where id = new.goal_id;
-  update financial_goals set
-    status = case
-      when current_amount >= target_amount and status <> 'completed' then 'completed'
-      when current_amount < target_amount and status = 'completed' then 'active'
-      else status end,
-    completed_at = case
-      when current_amount >= target_amount and status <> 'completed' then ${NOW}
-      when current_amount < target_amount then null
-      else completed_at end
-  where id = new.goal_id;
-end;
+-- Keep financial_goals.current_amount equal to deposits minus withdrawals and
+-- money spent. A change that would make the balance negative violates
+-- current_amount >= 0 and fails. A goal completes when the balance reaches
+-- the target; it only reopens when its money has not been spent (a correction),
+-- so using the money for what it was saved for keeps the goal completed.
+${syncTrigger("goal_contributions_sync_ins", "insert", "new")}
+${syncTrigger("goal_contributions_sync_upd", "update", "new")}
+${syncTrigger("goal_contributions_sync_del", "delete", "old")}
 `;
 
 const DEFAULT_CATEGORIES: [string, "income" | "expense", string, number][] = [
@@ -168,7 +207,8 @@ export function db(): DatabaseSync {
   d.exec("pragma journal_mode = wal; pragma foreign_keys = on; pragma busy_timeout = 5000;");
   const version = (d.prepare("pragma user_version").get() as { user_version: number }).user_version;
   const hasTables = Boolean(d.prepare("select 1 from sqlite_master where type = 'table' and name = 'categories'").get());
-  if (hasTables && version < SCHEMA_VERSION) {
+  if (hasTables && version === 2) migrateToV3(d);
+  else if (hasTables && version < SCHEMA_VERSION) {
     d.close();
     throw new Error(`${DB_PATH} uses the old single-user layout. Move it away and restart; a new database is created automatically.`);
   }
@@ -339,24 +379,102 @@ export function getFinancialProfile(uid: string): FinancialProfile | null {
   };
 }
 
+/** Category icons counted as fixed monthly costs. */
+const FIXED_ICONS = "'rumah','tagihan','utang'";
+
 const GOAL_COLUMNS =
   "id, title, target_amount, current_amount, target_date, priority, category, description, monthly_plan, status, paused_at, completed_at, created_at";
 
-export function listGoals(uid: string): Goal[] {
-  return all(`select ${GOAL_COLUMNS} from financial_goals where user_id = ? order by created_at`, uid) as unknown as Goal[];
+/**
+ * The owner's goals, each with what was saved into it since `monthStart`
+ * (deposits minus withdrawals) and how much of it was used (spent).
+ */
+export function listGoals(uid: string, monthStart: string): Goal[] {
+  return all(
+    `select ${GOAL_COLUMNS},
+       (select coalesce(sum(case c.kind when 'deposit' then c.amount when 'withdrawal' then -c.amount else 0 end), 0)
+          from goal_contributions c where c.goal_id = g.id and c.contribution_date >= ?) as month_saved,
+       (select coalesce(sum(c.amount), 0) from goal_contributions c where c.goal_id = g.id and c.kind = 'spend') as spent_amount
+     from financial_goals g where g.user_id = ? order by g.created_at`,
+    monthStart,
+    uid,
+  ) as unknown as Goal[];
 }
 
 export function getGoal(uid: string, id: string) {
   return one(`select ${GOAL_COLUMNS} from financial_goals where id = ? and user_id = ?`, id, uid) as unknown as Goal | undefined;
 }
 
+export function goalSpent(uid: string, id: string): number {
+  return Number((one("select coalesce(sum(amount), 0) as n from goal_contributions where goal_id = ? and user_id = ? and kind = 'spend'", id, uid)?.n as number) ?? 0);
+}
+
+const CONTRIBUTION_COLUMNS = "id, goal_id, kind, amount, note, contribution_date, transaction_id, created_at";
+
 export function listContributions(uid: string, goalId: string): Contribution[] {
   return all(
-    `select id, goal_id, kind, amount, note, contribution_date, created_at from goal_contributions
+    `select ${CONTRIBUTION_COLUMNS} from goal_contributions
      where goal_id = ? and user_id = ? order by contribution_date desc, created_at desc limit 200`,
     goalId,
     uid,
   ) as unknown as Contribution[];
+}
+
+export function getContribution(uid: string, goalId: string, id: string) {
+  return one(`select ${CONTRIBUTION_COLUMNS} from goal_contributions where id = ? and goal_id = ? and user_id = ?`, id, goalId, uid) as unknown as Contribution | undefined;
+}
+
+export function updateContribution(uid: string, id: string, values: { amount?: number; note?: string | null; contribution_date?: string }): number {
+  const keys = Object.keys(values).filter((k) => values[k as keyof typeof values] !== undefined) as (keyof typeof values)[];
+  if (!keys.length) return 1;
+  const r = db()
+    .prepare(`update goal_contributions set ${keys.map((k) => `${k} = ?`).join(",")} where id = ? and user_id = ?`)
+    .run(...keys.map((k) => toSql(values[k])), id, uid);
+  return Number(r.changes);
+}
+
+/** Deletes a contribution, and the expense it was recorded as when it was money spent. */
+export function deleteContribution(uid: string, id: string): number {
+  return tx(() => {
+    const row = one("select transaction_id from goal_contributions where id = ? and user_id = ?", id, uid) as { transaction_id: string | null } | undefined;
+    if (!row) return 0;
+    db().prepare("delete from goal_contributions where id = ? and user_id = ?").run(id, uid);
+    if (row.transaction_id) db().prepare("delete from transactions where id = ? and user_id = ?").run(row.transaction_id, uid);
+    return 1;
+  });
+}
+
+/** Records goal money being used; with a category it is also recorded as an expense in Transaksi. */
+export function spendFromGoal(
+  uid: string,
+  goalId: string,
+  input: { amount: number; note: string | null; contribution_date: string; category_id: string | null; description: string },
+): string {
+  const id = newId();
+  tx(() => {
+    let transactionId: string | null = null;
+    if (input.category_id) {
+      transactionId = newId();
+      insertOwned("transactions", uid, {
+        id: transactionId,
+        type: "expense",
+        category_id: input.category_id,
+        amount: input.amount,
+        description: input.description,
+        transaction_date: input.contribution_date,
+      });
+    }
+    insertOwned("goal_contributions", uid, {
+      id,
+      goal_id: goalId,
+      kind: "spend",
+      amount: input.amount,
+      note: input.note,
+      contribution_date: input.contribution_date,
+      transaction_id: transactionId,
+    });
+  });
+  return id;
 }
 
 export function dashboard(uid: string, a: DashboardArgs): DashboardRaw {
@@ -372,7 +490,31 @@ export function dashboard(uid: string, a: DashboardArgs): DashboardRaw {
       from,
       to,
     ) as { income: number; expense: number; count: number };
-  const bucket = a.p_bucket === "month" ? "substr(transaction_date,1,7) || '-01'" : "transaction_date";
+  const bucket = (col: string) => (a.p_bucket === "month" ? `substr(${col},1,7) || '-01'` : col);
+  // Money moved into goals is no longer free to spend; withdrawals and money
+  // used from a goal come back (a used amount recorded as an expense cancels out).
+  const setAside = (from: string, to: string) =>
+    Number(
+      (one(
+        `select coalesce(sum(case when kind = 'deposit' then amount else -amount end), 0) as n
+         from goal_contributions where user_id = ? and contribution_date between ? and ?`,
+        uid,
+        from,
+        to,
+      )?.n as number) ?? 0,
+    );
+  // Spending split for the monthly plan: fixed costs (rent, bills, debt payments)
+  // and purchases paid from a goal are left out of the day-to-day pace.
+  const split = one(
+    `select coalesce(sum(case when c.icon in (${FIXED_ICONS}) then t.amount end), 0) as fixed,
+            coalesce(sum(case when c.icon not in (${FIXED_ICONS}) or c.icon is null then t.amount end), 0) as flexible
+     from transactions t left join categories c on c.id = t.category_id and c.user_id = t.user_id
+     where t.user_id = ? and t.type = 'expense' and t.transaction_date between ? and ?
+       and not exists (select 1 from goal_contributions g where g.transaction_id = t.id)`,
+    uid,
+    a.p_start,
+    a.p_end,
+  ) as { fixed: number; flexible: number };
   const byCat = (type: string) =>
     all(
       `select category_id, sum(amount) as amount from transactions
@@ -390,12 +532,25 @@ export function dashboard(uid: string, a: DashboardArgs): DashboardRaw {
     current: totals(a.p_start, a.p_end),
     previous: totals(a.p_prev_start, a.p_prev_end),
     net_by_bucket: all(
-      `select ${bucket} as d, sum(case when type='income' then amount else -amount end) as net
-       from transactions where user_id = ? and transaction_date between ? and ? group by 1 order by 1`,
+      `select d, sum(net) as net from (
+         select ${bucket("transaction_date")} as d, case when type='income' then amount else -amount end as net
+         from transactions where user_id = ? and transaction_date between ? and ?
+         union all
+         select ${bucket("contribution_date")} as d, case when kind = 'deposit' then -amount else amount end as net
+         from goal_contributions where user_id = ? and contribution_date between ? and ?
+       ) group by d order by d`,
+      uid,
+      lo,
+      hi,
       uid,
       lo,
       hi,
     ) as { d: string; net: number }[],
+    set_aside: setAside(a.p_start, a.p_end),
+    prev_set_aside: setAside(a.p_prev_start, a.p_prev_end),
+    fixed_expense: split.fixed,
+    flexible_expense: split.flexible,
+    goals_balance: Number((one("select coalesce(sum(current_amount), 0) as n from financial_goals where user_id = ?", uid)?.n as number) ?? 0),
     expense_by_category: byCat("expense"),
     income_by_category: byCat("income"),
     all_time_net: allTime.net,

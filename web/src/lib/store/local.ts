@@ -57,7 +57,14 @@ export function createLocalStore(): DataStore {
       await api(`/api/goals/${encodeURIComponent(id)}`, "DELETE");
     },
     async addContribution(goalId, input) {
-      await api(`/api/goals/${encodeURIComponent(goalId)}/contributions`, "POST", input);
+      const r = await api<{ id: string }>(`/api/goals/${encodeURIComponent(goalId)}/contributions`, "POST", input);
+      return r.id;
+    },
+    async updateContribution(goalId, id, input) {
+      await api(`/api/goals/${encodeURIComponent(goalId)}/contributions/${encodeURIComponent(id)}`, "PATCH", input);
+    },
+    async deleteContribution(goalId, id) {
+      await api(`/api/goals/${encodeURIComponent(goalId)}/contributions/${encodeURIComponent(id)}`, "DELETE");
     },
   };
 }

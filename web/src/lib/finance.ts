@@ -292,3 +292,12 @@ export function planCheck(plan: number, spent: number, today: string): PlanCheck
   const daysLeft = days - day + 1;
   return { plan, spent, expectedByToday, aheadBy: expectedByToday - spent, left, daysLeft, perDay: Math.floor(left / daysLeft), elapsed };
 }
+
+/**
+ * The part of the monthly plan left for day-to-day spending once fixed costs
+ * (rent, bills, debt payments) are taken off the top. Until the fixed costs
+ * are paid, the obligations from onboarding are reserved instead.
+ */
+export function flexiblePlan(plan: number, obligations: number, fixedPaid: number): number {
+  return Math.max(0, plan - Math.max(fixedPaid, obligations));
+}

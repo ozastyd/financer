@@ -6,7 +6,9 @@ import type { Category, Goal } from "./types";
 export function contributionError(goal: Pick<Goal, "status" | "current_amount">, input: Pick<ContributionInput, "kind" | "amount">): string | null {
   if (input.kind === "deposit" && goal.status === "paused") return "Tujuan ini sedang dijeda. Lanjutkan dulu untuk setor.";
   if (input.kind === "deposit" && goal.status === "completed") return "Tujuan ini sudah tercapai.";
-  if (input.kind === "withdrawal" && input.amount > goal.current_amount) return "Jumlah melebihi saldo tujuan.";
+  if (input.kind === "withdrawal" && goal.status === "completed") return "Tujuan ini sudah tercapai. Untuk memakai uangnya, pilih Pakai uangnya.";
+  if (input.kind === "spend" && goal.status !== "completed") return "Uangnya bisa dipakai setelah tujuan tercapai.";
+  if (input.kind !== "deposit" && input.amount > goal.current_amount) return "Jumlah melebihi saldo tujuan.";
   return null;
 }
 

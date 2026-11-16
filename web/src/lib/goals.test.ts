@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceFromContributions, estimateCompletion, goalProgress, goalRemaining, requiredMonthly, rhythmOptions } from "./goals";
+import { balanceFromContributions, estimateCompletion, goalProgress, goalRemaining, milestoneCrossed, monthStatus, requiredMonthly, rhythmOptions, targetPassed } from "./goals";
 import type { Goal } from "./types";
 
 const goal = (over: Partial<Goal> = {}): Goal => ({
@@ -53,7 +53,7 @@ describe("required monthly and completion (matches the approved design)", () => 
   it("works without a target date or plan", () => {
     expect(rhythmOptions(goal({ target_date: null, monthly_plan: null }), today)).toEqual([]);
     const onlyDate = rhythmOptions(goal({ monthly_plan: null }), today);
-    expect(onlyDate[0]).toMatchObject({ kind: "on_time", monthly: 825_000 });
+    expect(onlyDate.find((o) => o.kind === "on_time")).toMatchObject({ monthly: 825_000 });
   });
 });
 
@@ -66,5 +66,44 @@ describe("contribution balance", () => {
         { kind: "deposit", amount: 700_000 },
       ]),
     ).toBe(1_200_000);
+  });
+});
+
+describe("faster rhythm", () => {
+  it("is offered only when it finishes sooner than every other option", () => {
+    const opts = rhythmOptions(goal({ target_date: null }), "2026-11-14");
+    expect(opts.map((o) => [o.kind, o.monthly, o.months])).toEqual([
+      ["faster", 900_000, 7],
+      ["current", 700_000, 9],
+      ["lighter", 550_000, 11],
+    ]);
+  });
+});
+
+describe("this month's saving", () => {
+  it("tracks the rhythm", () => {
+    expect(monthStatus(goal({ month_saved: 0 }))).toEqual({ plan: 700_000, saved: 0, left: 700_000, done: false });
+    expect(monthStatus(goal({ month_saved: 500_000 }))).toMatchObject({ left: 200_000, done: false });
+    expect(monthStatus(goal({ month_saved: 900_000 }))).toMatchObject({ left: 0, done: true });
+  });
+  it("asks only for what is left near the end", () => {
+    expect(monthStatus(goal({ current_amount: 9_800_000, month_saved: 0 }))).toMatchObject({ plan: 200_000, left: 200_000 });
+  });
+  it("is absent without a rhythm or when not active", () => {
+    expect(monthStatus(goal({ monthly_plan: null }))).toBeNull();
+    expect(monthStatus(goal({ status: "paused" }))).toBeNull();
+  });
+});
+
+describe("target date and milestones", () => {
+  it("flags a target month that is over", () => {
+    expect(targetPassed(goal({ target_date: "2026-10-31" }), "2026-11-14")).toBe(true);
+    expect(targetPassed(goal({ target_date: "2026-11-30" }), "2026-11-14")).toBe(false);
+    expect(targetPassed(goal({ target_date: "2026-10-31", status: "completed" }), "2026-11-14")).toBe(false);
+  });
+  it("reports the highest milestone a deposit crosses", () => {
+    expect(milestoneCrossed(1000, 200, 300)).toBe(25);
+    expect(milestoneCrossed(1000, 200, 800)).toBe(75);
+    expect(milestoneCrossed(1000, 300, 400)).toBeNull();
   });
 });

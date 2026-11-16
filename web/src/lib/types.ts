@@ -1,6 +1,6 @@
 export type TxType = "income" | "expense";
 export type GoalStatus = "active" | "paused" | "completed";
-export type ContributionKind = "deposit" | "withdrawal";
+export type ContributionKind = "deposit" | "withdrawal" | "spend";
 
 export interface Category {
   id: string;
@@ -34,6 +34,10 @@ export interface Goal {
   paused_at: string | null;
   completed_at: string | null;
   created_at: string;
+  /** Saved into the goal this month (deposits minus withdrawals). */
+  month_saved?: number;
+  /** Used for what it was saved for. */
+  spent_amount?: number;
 }
 
 export interface Contribution {
@@ -43,6 +47,8 @@ export interface Contribution {
   amount: number;
   note: string | null;
   contribution_date: string;
+  /** The expense in Transaksi this spend was recorded as. */
+  transaction_id?: string | null;
   created_at: string;
 }
 
