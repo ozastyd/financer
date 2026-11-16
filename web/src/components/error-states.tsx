@@ -24,8 +24,21 @@ function FullState({ icon, tone, title, children }: { icon: ReactNode; tone: "ne
   );
 }
 
-/** A4: a screen crashed while rendering. */
-export function CrashState({ error, onRetry, showHomeLink = true }: { error: unknown; onRetry: () => void; showHomeLink?: boolean }) {
+/** Where people can write for help (set NEXT_PUBLIC_SUPPORT_EMAIL at build time). */
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
+
+function HelpCode({ code }: { code: string }) {
+  if (!SUPPORT_EMAIL) return <p className="ref">Kode untuk bantuan: {code}</p>;
+  const href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Bantuan Financer (${code})`)}`;
+  return (
+    <p className="ref">
+      Masih gagal? <a href={href}>Hubungi kami</a> dan sebutkan kode {code}.
+    </p>
+  );
+}
+
+/** A4: a screen crashed while rendering. Inside the app the way out is Beranda; elsewhere, the start page. */
+export function CrashState({ error, onRetry, inApp = true }: { error: unknown; onRetry: () => void; inApp?: boolean }) {
   const digest = error instanceof Error && "digest" in error ? String((error as { digest?: string }).digest ?? "") : "";
   const code = referenceCode(digest || undefined);
   useEffect(() => {
@@ -34,18 +47,16 @@ export function CrashState({ error, onRetry, showHomeLink = true }: { error: unk
   return (
     <FullState icon={<TriangleAlert size={32} aria-hidden="true" />} tone="red" title="Ada yang tidak beres">
       <p className="t mut" style={{ marginTop: -8 }}>
-        Halaman ini gagal dimuat. Coba muat ulang; kalau masih gagal, kembali ke Beranda. Datamu tidak hilang.
+        Halaman ini gagal dimuat. Coba muat ulang; kalau masih gagal, kembali ke {inApp ? "Beranda" : "halaman awal"}. Datamu tidak hilang.
       </p>
       <button className="btn" type="button" style={{ borderRadius: 999 }} onClick={onRetry}>
         <RotateCw size={20} aria-hidden="true" />
         Muat ulang
       </button>
-      {showHomeLink && (
-        <Link className="btn ghost" href="/beranda" style={{ borderRadius: 999 }}>
-          Ke Beranda
-        </Link>
-      )}
-      <p className="ref">Kode untuk bantuan: {code}</p>
+      <Link className="btn ghost" href={inApp ? "/beranda" : "/"} style={{ borderRadius: 999 }}>
+        {inApp ? "Ke Beranda" : "Ke halaman awal"}
+      </Link>
+      <HelpCode code={code} />
     </FullState>
   );
 }
@@ -91,8 +102,9 @@ export function NotFoundState() {
       <p className="t mut" style={{ marginTop: -8 }}>
         Mungkin tautannya salah atau halamannya sudah dipindah. Datamu tetap aman.
       </p>
-      <Link className="btn" href="/beranda" style={{ borderRadius: 999 }}>
-        Ke Beranda
+      {/* "/" opens Beranda for signed-in visitors and the start page for everyone else. */}
+      <Link className="btn" href="/" style={{ borderRadius: 999 }}>
+        Ke halaman utama
       </Link>
     </FullState>
   );

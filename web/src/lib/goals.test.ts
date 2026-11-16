@@ -82,7 +82,7 @@ describe("faster rhythm", () => {
 
 describe("this month's saving", () => {
   it("tracks the rhythm", () => {
-    expect(monthStatus(goal({ month_saved: 0 }))).toEqual({ plan: 700_000, saved: 0, left: 700_000, done: false });
+    expect(monthStatus(goal({ month_saved: 0 }))).toEqual({ plan: 700_000, saved: 0, left: 700_000, done: false, first: false });
     expect(monthStatus(goal({ month_saved: 500_000 }))).toMatchObject({ left: 200_000, done: false });
     expect(monthStatus(goal({ month_saved: 900_000 }))).toMatchObject({ left: 0, done: true });
   });
@@ -105,5 +105,12 @@ describe("target date and milestones", () => {
     expect(milestoneCrossed(1000, 200, 300)).toBe(25);
     expect(milestoneCrossed(1000, 200, 800)).toBe(75);
     expect(milestoneCrossed(1000, 300, 400)).toBeNull();
+  });
+});
+
+describe("first month of a goal", () => {
+  it("is a first deposit, not a shortfall", () => {
+    expect(monthStatus(goal({ month_saved: 0, current_amount: 0, created_at: "2026-11-02T00:00:00Z" }), "2026-11-14")?.first).toBe(true);
+    expect(monthStatus(goal({ month_saved: 0, current_amount: 0, created_at: "2026-10-02T00:00:00Z" }), "2026-11-14")?.first).toBe(false);
   });
 });

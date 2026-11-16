@@ -4,7 +4,23 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 // Each person has their own account (email + password) created on /masuk.
 // Everything except the welcome page, sign-up/sign-in and their API needs a
 // valid session cookie; route handlers then scope every query to that user.
-const PUBLIC_PATHS = new Set(["/masuk", "/onboarding", "/api/session", "/api/login", "/api/signup", "/api/logout"]);
+const PUBLIC_PATHS = new Set([
+  "/masuk",
+  "/onboarding",
+  "/lupa-sandi",
+  "/atur-sandi",
+  "/api/session",
+  "/api/login",
+  "/api/signup",
+  "/api/logout",
+  "/api/password/status",
+  "/api/password/forgot",
+  "/api/password/reset",
+]);
+
+// Pages of the signed-in app. Any other unknown address shows the 404 page,
+// even to signed-out visitors, instead of a sign-in form.
+const APP_PREFIXES = ["/beranda", "/transaksi", "/tujuan", "/coach", "/profil", "/scan"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -27,7 +43,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.json({ error: "Sesi berakhir. Silakan masuk lagi." }, { status: 401 });
     }
     // Someone opening an app page without a session most likely has an account: show sign-in.
-    return go("/masuk", "?mode=masuk");
+    if (APP_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return go("/masuk", "?mode=masuk");
   }
   return NextResponse.next();
 }

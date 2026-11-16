@@ -66,7 +66,7 @@ export default function GoalDetailPage() {
   const pct = done ? 100 : goalProgress(goal);
   const remaining = goalRemaining(goal);
   const spent = goal.spent_amount ?? 0;
-  const month = monthStatus(goal);
+  const month = monthStatus(goal, today);
   const late = targetPassed(goal, today);
   const history = historyQuery.data ?? [];
   const byDate = new Map<string, Contribution[]>();
@@ -81,7 +81,7 @@ export default function GoalDetailPage() {
   if (plan) {
     rhythmTitle = `Ritme ${formatRupiah(plan)} / bulan`;
     const parts: string[] = [];
-    if (month) parts.push(month.done ? "Bulan ini sudah aman" : `Bulan ini kurang ${shortRupiah(month.left)}`);
+    if (month) parts.push(month.done ? "Bulan ini sudah aman" : month.first ? `Mulai dengan ${shortRupiah(month.left)} bulan ini` : `Bulan ini kurang ${shortRupiah(month.left)}`);
     if (estimate) parts.push(`selesai ${formatMonthYear(estimate.date)}`);
     rhythmSub = parts.join(" · ");
     if (parts.length) rhythmSub = rhythmSub.charAt(0).toUpperCase() + rhythmSub.slice(1) + ".";
@@ -214,7 +214,7 @@ export default function GoalDetailPage() {
 
         {!done && (
           <button className="rowc" type="button" onClick={() => setRhythmOpen(true)}>
-            <span className={`icb ${month && !month.done ? "am" : "g"}`}>
+            <span className={`icb ${month && !month.done && !month.first ? "am" : "g"}`}>
               <Calendar size={20} aria-hidden="true" />
             </span>
             <span className="col sp" style={{ gap: 0 }}>

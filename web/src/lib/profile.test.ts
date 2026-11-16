@@ -54,3 +54,11 @@ describe("schemas", () => {
     expect(coachRequest.safeParse({ messages: [{ role: "user", content: "Halo" }] }).success).toBe(true);
   });
 });
+
+describe("other chosen goals", () => {
+  it("lists picks other than the recommendation, including custom ones", () => {
+    const p = buildStartingProfile(fp({ monthly_income: 3_000_000, monthly_expenses: 2_000_000, current_savings: 500_000, goal_choices: ["rp1jt", "laptop", "lain:Nikah"] }), "2026-11-14");
+    expect(p.recommended?.key).toBe("rp1jt");
+    expect(p.alsoChosen).toEqual(["Beli laptop", "Nikah"]);
+  });
+});

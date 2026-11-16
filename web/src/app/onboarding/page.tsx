@@ -163,6 +163,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // A problem with the name is shown at the field, which also gets focus.
+  const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedNote, setSavedNote] = useState(false);
   const [customGoal, setCustomGoal] = useState("");
@@ -295,10 +297,19 @@ export default function OnboardingPage() {
     }
   };
 
+  /** Shows a step-1 problem at the name field and moves there. */
+  const flagName = (message: string) => {
+    setNameError(message);
+    const el = document.getElementById("ob-name");
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus({ preventScroll: true });
+  };
+
   const next = async () => {
     const v = validate();
     if (v) {
-      setError(v);
+      if (step === 1) flagName(v);
+      else setError(v);
       return;
     }
     setSavedNote(false);
@@ -311,10 +322,15 @@ export default function OnboardingPage() {
   const saveLater = async () => {
     const v = validate();
     if (v) {
-      setError(v);
+      if (step === 1) flagName(v);
+      else setError(v);
       return;
     }
-    if (await save(step)) setSavedNote(true);
+    if (await save(step)) {
+      // Saved: leave, and pick up from this step next time.
+      toast.success(guest ? "Tersimpan di perangkat ini. Nanti lanjut dari langkah ini." : "Tersimpan. Lanjutkan kapan saja dari Profil.");
+      router.replace(guest ? "/" : "/beranda");
+    }
   };
 
   const finish = async () => {
@@ -379,14 +395,9 @@ export default function OnboardingPage() {
         <div className="col sp" style={{ gap: 8 }}>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <p className="s b">Langkah {step} dari 6</p>
-            <p className="s mut">
-              <span className="b" style={{ color: "var(--ink)" }}>
-                {Math.round(((step - 1) / 5) * 100)}%
-              </span>{" "}
-              selesai
-            </p>
+            <p className="s mut">{step === 6 ? "Terakhir" : `${6 - step} lagi`}</p>
           </div>
-          <div className="ob-progress" role="progressbar" aria-label="Progres onboarding" aria-valuemin={1} aria-valuemax={6} aria-valuenow={step}>
+          <div className="ob-progress" role="progressbar" aria-label="Progres onboarding" aria-valuemin={1} aria-valuemax={6} aria-valuenow={step} aria-valuetext={`Langkah ${step} dari 6`}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <i key={i} className={i <= step ? "on" : ""} />
             ))}
@@ -404,8 +415,22 @@ export default function OnboardingPage() {
 
       {step === 1 && (
         <div className="col" style={{ gap: 18 }}>
-          <Field label="Nama panggilan" htmlFor="ob-name">
-            <input id="ob-name" className="inp" autoComplete="given-name" maxLength={60} value={draft.display_name} onChange={(e) => set("display_name", e.target.value)} placeholder="Misalnya: Andi" />
+          <Field label="Nama panggilan" htmlFor="ob-name" error={nameError ?? undefined}>
+            <input
+              id="ob-name"
+              className="inp"
+              autoComplete="given-name"
+              maxLength={60}
+              required
+              aria-required="true"
+              aria-invalid={!!nameError}
+              value={draft.display_name}
+              onChange={(e) => {
+                set("display_name", e.target.value);
+                if (e.target.value.trim()) setNameError(null);
+              }}
+              placeholder="Misalnya: Andi"
+            />
           </Field>
           <Question label="Umur">
             <OptionCards group="age" layout="grid" label="Umur" options={AGE_RANGES} value={draft.age_range} onChange={(v) => set("age_range", v)} />
@@ -610,6 +635,11 @@ export default function OnboardingPage() {
                   "Mulai dari setoran kecil saat ada uang lebih."
                 )}
               </p>
+              {profile.alsoChosen.length > 0 && (
+                <p className="s">
+                  Pilihanmu yang lain (<span className="b">{profile.alsoChosen.join(", ")}</span>) bisa kamu buat di tab Tujuan kapan saja. Kami sarankan mulai dari yang ini dulu.
+                </p>
+              )}
               <label className="row" style={{ minHeight: 44, cursor: "pointer" }}>
                 <input type="checkbox" checked={createGoal} onChange={(e) => setCreateGoal(e.target.checked)} style={{ width: 20, height: 20, accentColor: "var(--pri)" }} />
                 <span className="s b">Buat tujuan ini sekarang</span>

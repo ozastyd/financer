@@ -23,6 +23,8 @@ export interface StartingProfile {
   strengths: string[];
   improvements: string[];
   recommended: RecommendedGoal | null;
+  /** Goals picked in onboarding other than the recommended one (names to show). */
+  alsoChosen: string[];
   firstAction: string;
 }
 
@@ -94,12 +96,17 @@ export function buildStartingProfile(fp: FinancialProfile, today: string): Start
     recommended = pick("rp10jt", 10_000_000, "Langkah berikutnya setelah dana darurat aman.");
   }
 
+  const alsoChosen = fp.goal_choices
+    .filter((k) => k !== recommended?.key)
+    .map((k) => (k.startsWith("lain:") ? k.slice(5) : (GOAL_TEMPLATES.find((t) => t.key === k)?.label ?? "")))
+    .filter(Boolean);
+
   const firstAction =
     fp.tracks_expenses === "rutin"
       ? "Langkah pertama: catat pengeluaran hari ini di sini, supaya angkanya ikut terhitung."
       : "Langkah pertama: catat satu pengeluaran hari ini. Kurang dari 10 detik.";
 
-  return { income, outgoing, surplus, emergencyMonths, strengths, improvements, recommended, firstAction };
+  return { income, outgoing, surplus, emergencyMonths, strengths, improvements, recommended, alsoChosen, firstAction };
 }
 
 export function describeCompletion(goal: RecommendedGoal): string | null {

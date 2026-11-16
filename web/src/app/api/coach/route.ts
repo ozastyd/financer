@@ -95,6 +95,16 @@ function visibleText(raw: string): string {
   return (open >= 0 ? closed.slice(0, open) : closed).replace(/^\s+/, "");
 }
 
+/**
+ * A reply cut off by the token limit ends at its last full sentence, so the
+ * user never sees half a thought ("…(0 transaksi tercatat").
+ */
+function endAtSentence(text: string): string {
+  const m = text.match(/^[\s\S]*[.!?…](?=\s|$)/);
+  if (m && m[0].length >= text.length * 0.4) return m[0].trim();
+  return text ? `${text.replace(/[\s,;:(]+$/, "")}…` : text;
+}
+
 interface TurnResult {
   content: string;
   tool_calls: ToolCall[];
@@ -127,8 +137,9 @@ async function streamTurn(
       headers: { authorization: `Bearer ${AI_API_KEY}`, "content-type": "application/json" },
       body: JSON.stringify({
         model: AI_MODEL,
-        // Answers are ~120 words; the cap also bounds time on a slow stream.
-        max_tokens: 1000,
+        // Answers are ~120 words, but reasoning models spend part of the budget
+        // thinking; the cap also bounds time on a slow stream.
+        max_tokens: 1800,
         stream: true,
         ...(AI_REASONING_EFFORT !== "none" ? { reasoning_effort: AI_REASONING_EFFORT } : {}),
         messages,
@@ -139,6 +150,7 @@ async function streamTurn(
     if (!res.ok || !res.body) throw new AiError(res.status);
 
     let raw = "";
+    let finish = "";
     let chosen = false;
     const calls: ToolCall[] = [];
     let buf = "";
@@ -156,12 +168,13 @@ async function streamTurn(
         if (!line.startsWith("data:")) continue;
         const payload = line.slice(5).trim();
         if (payload === "[DONE]") continue;
-        let chunk: { choices?: { delta?: { content?: string | null; tool_calls?: { index?: number; id?: string; function?: { name?: string; arguments?: string } }[] } }[] };
+        let chunk: { choices?: { finish_reason?: string | null; delta?: { content?: string | null; tool_calls?: { index?: number; id?: string; function?: { name?: string; arguments?: string } }[] } }[] };
         try {
           chunk = JSON.parse(payload);
         } catch {
           continue;
         }
+        if (chunk.choices?.[0]?.finish_reason) finish = chunk.choices[0].finish_reason;
         const delta = chunk.choices?.[0]?.delta;
         if (!delta) continue;
         const hasOutput = Boolean(delta.content) || Boolean(delta.tool_calls?.length);
@@ -184,7 +197,9 @@ async function streamTurn(
       }
     }
     if (!chosen && !onOutput()) throw new DOMException("superseded", "AbortError");
-    return { content: visibleText(raw).trim(), tool_calls: calls.filter(Boolean).map((c, i) => ({ ...c, id: c.id || `call_${i}` })) };
+    const content = finish === "length" ? endAtSentence(visibleText(raw).trim()) : visibleText(raw).trim();
+    if (finish === "length") console.warn("coach: reply hit max_tokens, trimmed to the last full sentence");
+    return { content, tool_calls: calls.filter(Boolean).map((c, i) => ({ ...c, id: c.id || `call_${i}` })) };
   } finally {
     clearTimeout(idle);
     signal.removeEventListener("abort", stop);

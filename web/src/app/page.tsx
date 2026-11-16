@@ -181,7 +181,7 @@ export default function WelcomePage() {
         )}
         <p className="s" style={{ textAlign: "center" }}>
           Sudah punya akun?{" "}
-          <Link className="b" href="/masuk?mode=masuk" style={{ color: "var(--pri)", display: "inline-block", padding: "12px 4px" }}>
+          <Link className="b" href="/masuk?mode=masuk" style={{ color: "var(--pri)", display: "inline-block", padding: "12px 4px", minHeight: 44 }}>
             Masuk
           </Link>
         </p>

@@ -53,7 +53,7 @@ function Ring({ goal }: { goal: Goal }) {
 
 function ActiveRow({ goal, onDeposit }: { goal: Goal; onDeposit: () => void }) {
   const { today } = useApp();
-  const month = monthStatus(goal);
+  const month = monthStatus(goal, today);
   const late = targetPassed(goal, today);
   return (
     <div className="goal-row">
@@ -72,7 +72,7 @@ function ActiveRow({ goal, onDeposit }: { goal: Goal; onDeposit: () => void }) {
                   Bulan ini aman
                 </span>
               ) : (
-                <span className="tag neu">Bulan ini kurang {shortRupiah(month.left)}</span>
+                <span className="tag neu">{month.first ? `Setoran pertama ${shortRupiah(month.left)}` : `Bulan ini kurang ${shortRupiah(month.left)}`}</span>
               )
             ) : (
               <span className="tag">{formatPercent(goalProgress(goal))}</span>
@@ -151,7 +151,7 @@ function TujuanContent() {
   const paused = goals.filter((g) => g.status === "paused");
   const done = goals.filter((g) => g.status === "completed");
   const held = goals.reduce((s, g) => s + g.current_amount, 0);
-  const months = active.map(monthStatus).filter((m) => m !== null);
+  const months = active.map((g) => monthStatus(g)).filter((m) => m !== null);
   const monthPlan = months.reduce((s, m) => s + m.plan, 0);
   const monthSaved = months.reduce((s, m) => s + Math.min(m.saved, m.plan), 0);
   const depositGoal = goals.find((g) => g.id === depositId);
