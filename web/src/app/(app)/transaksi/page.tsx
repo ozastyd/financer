@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDownLeft, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { useShell } from "@/components/shell";
 import { Chip } from "@/components/ui/controls";
@@ -9,6 +9,7 @@ import { CategoryIcon } from "@/components/ui/icons";
 import { addMonths, endOfMonth, formatDayHeading, formatMonthYearShort, startOfMonth } from "@/lib/date";
 import { formatRupiah, formatSigned } from "@/lib/money";
 import { type TxRow, useMonthTotals, useTransactionPages } from "@/lib/queries";
+import { takeTransaksiJump } from "@/lib/scan-client";
 
 type Filter = "all" | "expense" | "income";
 
@@ -33,6 +34,17 @@ export default function TransaksiPage() {
   const { data, today } = useApp();
   const { openAddTx } = useShell();
   const [month, setMonth] = useState(() => startOfMonth(today));
+  // Rows just saved from a scan: open their month and highlight them briefly.
+  const [justSaved, setJustSaved] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    const jump = takeTransaksiJump();
+    if (!jump) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hand-off from the scan screen
+    setMonth(startOfMonth(jump.month));
+    setJustSaved(new Set(jump.ids));
+    const t = window.setTimeout(() => setJustSaved(new Set()), 4000);
+    return () => window.clearTimeout(t);
+  }, []);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const search = useDeferredValue(query);
@@ -157,7 +169,7 @@ export default function TransaksiPage() {
             const cat = catById.get(t.category_id);
             const income = t.type === "income";
             return (
-              <button key={t.id} type="button" className="rowc" onClick={() => openAddTx({ edit: t })} aria-label={`${t.description || cat?.name}, ${formatSigned(income ? t.amount : -t.amount)}. Ubah`}>
+              <button key={t.id} type="button" className={`rowc${justSaved.has(t.id) ? " just-saved" : ""}`} onClick={() => openAddTx({ edit: t })} aria-label={`${t.description || cat?.name}, ${formatSigned(income ? t.amount : -t.amount)}. Ubah`}>
                 <span className={`icb${income ? " g" : ""}`}>{income ? <ArrowDownLeft size={20} aria-hidden="true" /> : <CategoryIcon icon={cat?.icon ?? "lainnya"} />}</span>
                 <span className="col sp" style={{ gap: 0 }}>
                   <span className="t b" style={{ overflowWrap: "anywhere" }}>

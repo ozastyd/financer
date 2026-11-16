@@ -49,9 +49,7 @@ function PlusMenu({ onClose, onManual, onScan, closing }: { onClose: () => void;
     <>
       <div className={`scrim plus-scrim${closing ? " closing" : ""}`} style={{ zIndex: 29 }} onClick={onClose} aria-hidden="true" />
       <div className={`dial${closing ? " closing" : ""}`} role="menu" inert={closing} aria-label="Cara mencatat transaksi" id="plus-menu">
-        <p className="s b" style={{ color: "#FFFFFF" }}>
-          Catat transaksi lewat
-        </p>
+        <p className="dial-label">Catat transaksi lewat</p>
         <button ref={firstRef} type="button" role="menuitem" className="dial-item" onClick={onManual}>
           <span className="icb g">
             <Pencil size={20} aria-hidden="true" />
@@ -74,9 +72,9 @@ function PlusMenu({ onClose, onManual, onScan, closing }: { onClose: () => void;
             <ImageUp size={20} aria-hidden="true" />
           </span>
           <span className="sp" style={{ textAlign: "left" }}>
-            Unggah gambar
+            Unggah file
             <span className="s" style={{ display: "block", opacity: 0.7, fontWeight: 500 }}>
-              Struk, screenshot mutasi, atau PDF rekening
+              Struk, screenshot mutasi, atau PDF rekening koran
             </span>
           </span>
         </button>
@@ -204,6 +202,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const uploadInput = useRef<HTMLInputElement>(null);
 
   const needsOnboarding = status === "ready" && !data.financial?.onboarding_completed;
+  // Scanning is a focused task: no tab bar or "+" that could start another scan over the one being reviewed.
+  const focusTask = pathname === "/scan";
 
   useEffect(() => {
     if (status === "signed_out") router.replace("/masuk?mode=masuk");
@@ -268,12 +268,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     <ShellContext.Provider value={ctx}>
       <StatusBanner />
       {children}
-      <div className="tab-spacer" aria-hidden="true" />
+      {!focusTask && <div className="tab-spacer" aria-hidden="true" />}
       {plus.mounted && <PlusMenu closing={plus.closing} onClose={() => setPlusOpen(false)} onManual={() => openAddTx()} onScan={startScan} />}
       {/* Camera opens the back camera on phones; upload also takes bank-statement PDFs. */}
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
       <input ref={uploadInput} type="file" accept="image/*,application/pdf" hidden onChange={onFile} />
-      <nav className="tab" aria-label="Navigasi utama">
+      <nav className="tab" aria-label="Navigasi utama" hidden={focusTask}>
         {TABS.map((t) => {
           if (!t) {
             return (

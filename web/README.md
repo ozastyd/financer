@@ -41,7 +41,10 @@ Other scripts: `npm run build`, `npm start`, `npm run lint`, `npm test` (Vitest)
 
 - "+" menu → *Ambil foto* (camera) or *Unggah gambar* (image or PDF) → `/scan`.
 - `POST /api/scan` (`src/lib/scan.ts`): images are resized and read by the vision model into JSON; text PDFs (`unpdf`) are read in chunks; password-protected PDFs prompt for the password. Files are never stored. Rows matching an existing transaction (same date, type, amount) are flagged as possible duplicates.
-- The user reviews and edits before saving; a receipt can be split by category. `POST /api/transactions/batch` saves all rows in one transaction.
+- `/scan` is a focused task (tab bar hidden). The review is kept in sessionStorage so a reload restores it; leaving with edits asks first.
+- Receipts: a confirm card (photo, store, date, category, total checked against the items) with one *Simpan*; *Ubah* opens the fields, *Pisah per kategori* splits by category. A receipt matching an existing transaction is flagged.
+- Statements: compact rows grouped by day, filters (Semua / Perlu dicek / Keluar / Masuk), tap a row to edit amount, type, date, category and description, bulk category, sticky totals. E-wallet top-ups, ATM withdrawals and own transfers are detected and left unticked with a reason.
+- `POST /api/transactions/batch` saves all rows in one transaction and returns their ids; `DELETE` with those ids is the undo offered after saving.
 - Groq free tier is about 4 scans per minute and 1,000 per day per key; each user is capped at 30 scans per hour.
 
 ## AI Coach

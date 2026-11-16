@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { bad, parseBody } from "@/lib/api";
-import { getCategory, insertOwned, newId, tx } from "@/lib/db";
+import { deleteOwnedTransactions, getCategory, insertOwned, newId, tx } from "@/lib/db";
 import { categoryError } from "@/lib/rules";
 import { transactionInput } from "@/lib/schemas";
 import { dbError, requireUser } from "@/lib/server";
@@ -20,12 +20,28 @@ export async function POST(req: Request) {
     const err = categoryError(getCategory(auth.uid, item.category_id), item.type);
     if (err) return bad(err);
   }
+  const ids = input.items.map(() => newId());
   try {
     tx(() => {
-      for (const item of input.items) insertOwned("transactions", auth.uid, { id: newId(), ...item });
+      input.items.forEach((item, i) => insertOwned("transactions", auth.uid, { id: ids[i], ...item }));
     });
   } catch (e) {
     return dbError(e);
   }
-  return NextResponse.json({ saved: input.items.length }, { status: 201 });
+  return NextResponse.json({ saved: ids.length, ids }, { status: 201 });
+}
+
+/** Undo of a batch save: removes the given transactions (only the caller's own). */
+const undoBody = z.object({ ids: z.array(z.string().uuid()).min(1).max(300) });
+
+export async function DELETE(req: Request) {
+  const auth = await requireUser();
+  if (auth instanceof NextResponse) return auth;
+  const input = await parseBody(req, undoBody);
+  if (input instanceof NextResponse) return input;
+  try {
+    return NextResponse.json({ removed: deleteOwnedTransactions(auth.uid, input.ids) });
+  } catch (e) {
+    return dbError(e, "Gagal membatalkan. Coba lagi.");
+  }
 }
