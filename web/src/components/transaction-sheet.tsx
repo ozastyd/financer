@@ -12,31 +12,39 @@ import { MAX_AMOUNT, formatRupiah } from "@/lib/money";
 import { transactionInput, firstError } from "@/lib/schemas";
 import type { Transaction, TxType } from "@/lib/types";
 
+/** Values to start a new transaction with (e.g. what a scan managed to read). */
+export interface TxPrefill {
+  amount?: number;
+  date?: string;
+  note?: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialType: TxType;
   edit?: Transaction;
+  prefill?: TxPrefill;
 }
 
-export function TransactionSheet({ open, onOpenChange, initialType, edit }: Props) {
+export function TransactionSheet({ open, onOpenChange, initialType, edit, prefill }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={edit ? "Ubah transaksi" : "Input manual"}>
-      <TransactionForm initialType={initialType} edit={edit} onDone={() => onOpenChange(false)} />
+      <TransactionForm initialType={initialType} edit={edit} prefill={prefill} onDone={() => onOpenChange(false)} />
     </Sheet>
   );
 }
 
-function TransactionForm({ initialType, edit, onDone }: { initialType: TxType; edit?: Transaction; onDone: () => void }) {
+function TransactionForm({ initialType, edit, prefill, onDone }: { initialType: TxType; edit?: Transaction; prefill?: TxPrefill; onDone: () => void }) {
   const { data, today, mutate, online } = useApp();
   const toast = useToast();
   const [requestError, setRequestError] = useState<string | null>(null);
   const [type, setType] = useState<TxType>(edit?.type ?? initialType);
-  const [amount, setAmount] = useState<string>(edit ? String(edit.amount) : "");
+  const [amount, setAmount] = useState<string>(edit ? String(edit.amount) : prefill?.amount ? String(prefill.amount) : "");
   const [categoryId, setCategoryId] = useState<string | null>(edit?.category_id ?? null);
-  const [date, setDate] = useState(edit?.transaction_date ?? today);
+  const [date, setDate] = useState(edit?.transaction_date ?? prefill?.date ?? today);
   const [showDate, setShowDate] = useState(false);
-  const [note, setNote] = useState(edit?.description ?? "");
+  const [note, setNote] = useState(edit?.description ?? prefill?.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);

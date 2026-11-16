@@ -1,31 +1,34 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
-// One shared password, created on first visit and entered on /masuk.
-// Everything except the sign-in page and its API needs a valid session cookie.
-const PUBLIC_PATHS = new Set(["/masuk", "/api/session", "/api/login", "/api/setup", "/api/logout"]);
+// Each person has their own account (email + password) created on /masuk.
+// Everything except the welcome page, sign-up/sign-in and their API needs a
+// valid session cookie; route handlers then scope every query to that user.
+const PUBLIC_PATHS = new Set(["/masuk", "/onboarding", "/api/session", "/api/login", "/api/signup", "/api/logout"]);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const signedIn = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
+  const signedIn = Boolean(await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value));
 
-  const go = (path: string) => {
+  const go = (path: string, search = "") => {
     const url = request.nextUrl.clone();
     url.pathname = path;
-    url.search = "";
+    url.search = search;
     return NextResponse.redirect(url);
   };
 
-  if (PUBLIC_PATHS.has(pathname)) {
-    return signedIn && pathname === "/masuk" ? go("/beranda") : NextResponse.next();
+  // The welcome page (/) and sign-in are for signed-out visitors; signed-in
+  // users skip straight to the app.
+  if (pathname === "/" || PUBLIC_PATHS.has(pathname)) {
+    return signedIn && (pathname === "/" || pathname === "/masuk") ? go("/beranda") : NextResponse.next();
   }
   if (!signedIn) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Sesi berakhir. Silakan masuk lagi." }, { status: 401 });
     }
-    return go("/masuk");
+    // Someone opening an app page without a session most likely has an account: show sign-in.
+    return go("/masuk", "?mode=masuk");
   }
-  if (pathname === "/") return go("/beranda");
   return NextResponse.next();
 }
 

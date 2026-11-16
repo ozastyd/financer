@@ -3,9 +3,9 @@ import "server-only";
 import type { NextResponse } from "next/server";
 import { SESSION_COOKIE, SESSION_DAYS, createSessionToken } from "./session";
 
-/** Signs this browser in for SESSION_DAYS. */
-export async function setSessionCookie(res: NextResponse): Promise<NextResponse> {
-  res.cookies.set(SESSION_COOKIE, await createSessionToken(), {
+/** Signs this browser in as userId for SESSION_DAYS. */
+export async function setSessionCookie(res: NextResponse, userId: string): Promise<NextResponse> {
+  res.cookies.set(SESSION_COOKIE, await createSessionToken(userId), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

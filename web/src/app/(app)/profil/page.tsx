@@ -107,7 +107,7 @@ export default function ProfilPage() {
         onClick={async () => {
           setBusy(true);
           await signOut();
-          router.replace("/");
+          router.replace("/masuk?mode=masuk");
         }}
       >
         <LogOut size={18} aria-hidden="true" />

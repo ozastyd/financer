@@ -2,8 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { bad } from "@/lib/api";
 import { isValidDate } from "@/lib/date";
 import { dashboard } from "@/lib/db";
+import { requireUser } from "@/lib/server";
 
 export async function GET(req: NextRequest) {
+  const auth = await requireUser();
+  if (auth instanceof NextResponse) return auth;
   const q = req.nextUrl.searchParams;
   const args = {
     p_start: q.get("p_start") ?? "",
@@ -14,5 +17,5 @@ export async function GET(req: NextRequest) {
     p_today: q.get("p_today") ?? "",
   };
   if (![args.p_start, args.p_end, args.p_prev_start, args.p_prev_end, args.p_today].every(isValidDate)) return bad("Tanggal tidak valid.");
-  return NextResponse.json(dashboard(args));
+  return NextResponse.json(dashboard(auth.uid, args));
 }

@@ -62,32 +62,29 @@ export function createLocalStore(): DataStore {
   };
 }
 
-/** One owner who signs in with the app password; the session is an httpOnly cookie. */
-const OWNER_SESSION: Session = { userId: "owner", email: "" };
-
+/** Email + password accounts; the session is an httpOnly cookie set by the server. */
 export function createLocalAuth(): AuthClient {
   const listeners = new Set<(s: Session | null) => void>();
   const emit = (s: Session | null) => listeners.forEach((cb) => cb(s));
+  const current = async (): Promise<Session | null> => {
+    const r = await api<{ signedIn: boolean; user?: { id: string; email: string } }>("/api/session");
+    return r.signedIn && r.user ? { userId: r.user.id, email: r.user.email } : null;
+  };
   return {
     async getSession() {
       try {
-        const r = await api<{ signedIn: boolean }>("/api/session");
-        return r.signedIn ? OWNER_SESSION : null;
+        return await current();
       } catch {
         return null;
       }
     },
-    async signIn(password) {
-      await api("/api/login", "POST", { password });
-      emit(OWNER_SESSION);
+    async signIn(email, password) {
+      await api("/api/login", "POST", { email, password });
+      emit(await current());
     },
-    async createPassword(password) {
-      await api("/api/setup", "POST", { password });
-      emit(OWNER_SESSION);
-    },
-    async needsSetup() {
-      const r = await api<{ needsSetup: boolean }>("/api/session");
-      return r.needsSetup;
+    async signUp(email, password, extras) {
+      await api("/api/signup", "POST", { email, password, ...extras });
+      emit(await current());
     },
     async signOut() {
       await api("/api/logout", "POST").catch(() => undefined);

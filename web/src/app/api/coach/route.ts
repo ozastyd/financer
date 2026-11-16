@@ -6,7 +6,7 @@ import { todayJakarta } from "@/lib/date";
 import { dashboard, getFinancialProfile, listCategories, listGoals } from "@/lib/db";
 import { coachRequest } from "@/lib/schemas";
 import { type SearchResult, searchEnabled, webSearch } from "@/lib/search";
-import { OWNER } from "@/lib/server";
+import { requireUser } from "@/lib/server";
 
 // Server-only: the AI key is read here and never sent to the browser.
 // Any OpenAI-compatible chat-completions endpoint works (AI_BASE_URL + AI_API_KEY).
@@ -366,11 +366,11 @@ async function converse(messages: ChatMessage[], send: (e: CoachEvent) => void, 
 }
 
 // Reads only totals computed by the database, never the full transaction history.
-function loadSummary(): FinancialSummary {
+function loadSummary(uid: string): FinancialSummary {
   const today = todayJakarta();
   return summaryFromDashboard(
-    { financial: getFinancialProfile(), categories: listCategories(), goals: listGoals() },
-    parseDashboard(dashboard(dashboardArgs("month", today))),
+    { financial: getFinancialProfile(uid), categories: listCategories(uid), goals: listGoals(uid) },
+    parseDashboard(dashboard(uid, dashboardArgs("month", today))),
     today,
   );
 }
@@ -382,17 +382,19 @@ function loadSummary(): FinancialSummary {
  * Errors before streaming starts (validation, rate limit) are plain JSON.
  */
 export async function POST(req: Request) {
+  const auth = await requireUser();
+  if (auth instanceof NextResponse) return auth;
   const body = await parseBody(req, coachRequest);
   if (body instanceof NextResponse) return body;
 
   let summary: FinancialSummary;
   try {
-    summary = loadSummary();
+    summary = loadSummary(auth.uid);
   } catch {
     return NextResponse.json({ error: "Gagal membaca datamu. Coba lagi." }, { status: 502 });
   }
 
-  const wait = rateLimited(OWNER.id);
+  const wait = rateLimited(auth.uid);
   if (wait > 0) {
     return NextResponse.json(
       { error: `Kamu sudah bertanya ${LIMIT} kali dalam sejam terakhir.`, retry_after: wait },
@@ -439,7 +441,7 @@ export async function POST(req: Request) {
 
       try {
         if (!AI_BASE_URL || !AI_API_KEY) {
-          fallback("AI belum dikonfigurasi, jadi ini jawaban otomatis dari angkamu.");
+          fallback("AI Coach sedang tidak tersedia, jadi ini jawaban otomatis dari angkamu.");
         } else {
           send({ type: "status", text: "Lagi mikir…" });
           try {

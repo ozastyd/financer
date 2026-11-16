@@ -5,7 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { todayJakarta } from "@/lib/date";
 import { AppError, type ErrorKind, toAppError } from "@/lib/errors";
 import { createLocalAuth, createLocalStore } from "@/lib/store/local";
-import { type AppData, type AuthClient, type DataStore, EMPTY_DATA, type Session } from "@/lib/store/types";
+import { type AppData, type AuthClient, type DataStore, EMPTY_DATA, type Session, type SignUpExtras } from "@/lib/store/types";
+import { SplashScreen } from "./brand";
 import { ToastProvider, useToast } from "./toast";
 
 type Status = "loading" | "signed_out" | "ready" | "error";
@@ -37,9 +38,8 @@ interface AppContextValue {
   refresh: () => Promise<void>;
   /** Retries everything after the stale-data banner or a reconnect. */
   retryAll: () => Promise<void>;
-  signIn: (password: string) => Promise<void>;
-  createPassword: (password: string) => Promise<void>;
-  needsSetup: () => Promise<boolean>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, extras?: SignUpExtras) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -63,10 +63,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <AppState queryClient={queryClient}>{children}</AppState>
+        <AppState queryClient={queryClient}>
+          <Splash />
+          {children}
+        </AppState>
       </ToastProvider>
     </QueryClientProvider>
   );
+}
+
+/** The splash stays until the account check finishes (at least SPLASH_MIN_MS after page start), then fades out once. */
+const SPLASH_MIN_MS = 700;
+const SPLASH_FADE_MS = 400;
+
+function Splash() {
+  const { status } = useApp();
+  const [phase, setPhase] = useState<"show" | "leaving" | "gone">("show");
+
+  useEffect(() => {
+    if (status === "loading" || phase !== "show") return;
+    const wait = Math.max(0, SPLASH_MIN_MS - performance.now());
+    const t = window.setTimeout(() => setPhase("leaving"), wait);
+    return () => window.clearTimeout(t);
+  }, [status, phase]);
+
+  useEffect(() => {
+    if (phase !== "leaving") return;
+    const t = window.setTimeout(() => setPhase("gone"), SPLASH_FADE_MS);
+    return () => window.clearTimeout(t);
+  }, [phase]);
+
+  return phase === "gone" ? null : <SplashScreen leaving={phase === "leaving"} />;
 }
 
 /** Tracks the connection; calls onReconnect when it comes back after being lost. */
@@ -227,9 +254,8 @@ function AppState({ children, queryClient }: { children: ReactNode; queryClient:
       mutate,
       refresh,
       retryAll,
-      signIn: (password) => auth.signIn(password),
-      createPassword: (password) => auth.createPassword(password),
-      needsSetup: () => auth.needsSetup(),
+      signIn: (email, password) => auth.signIn(email, password),
+      signUp: (email, password, extras) => auth.signUp(email, password, extras),
       signOut: async () => {
         await auth.signOut();
         await applySession(null);

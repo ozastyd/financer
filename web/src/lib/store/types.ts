@@ -38,14 +38,18 @@ export interface DataStore {
   addContribution(goalId: string, input: ContributionInput): Promise<void>;
 }
 
+/** Onboarding answers given before the account existed, saved together with the sign-up. */
+export interface SignUpExtras {
+  onboarding?: OnboardingInput;
+  firstGoal?: GoalInput;
+}
+
 export interface AuthClient {
   getSession(): Promise<Session | null>;
-  /** Signs in with the app password; throws an AppError when it is wrong. */
-  signIn(password: string): Promise<void>;
-  /** First visit only: creates the app password and signs in. */
-  createPassword(password: string): Promise<void>;
-  /** True when no password has been created yet. */
-  needsSetup(): Promise<boolean>;
+  /** Signs in with email and password; throws an AppError when they are wrong. */
+  signIn(email: string, password: string): Promise<void>;
+  /** Creates an account (with any onboarding answers) and signs in. */
+  signUp(email: string, password: string, extras?: SignUpExtras): Promise<void>;
   signOut(): Promise<void>;
   onChange(cb: (s: Session | null) => void): () => void;
 }
