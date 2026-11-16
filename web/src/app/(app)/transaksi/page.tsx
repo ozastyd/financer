@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownLeft, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { useShell } from "@/components/shell";
@@ -46,15 +46,31 @@ export default function TransaksiPage() {
     return () => window.clearTimeout(t);
   }, []);
   const [query, setQuery] = useState("");
+  // Searching can widen from the selected month to everything recorded.
+  const [allMonths, setAllMonths] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const search = useDeferredValue(query);
 
   const catById = useMemo(() => new Map(data.categories.map((c) => [c.id, c])), [data.categories]);
   const monthEnd = endOfMonth(month);
-  const totalsQuery = useMonthTotals(month, monthEnd);
-  const pagesQuery = useTransactionPages(month, monthEnd, filter === "all" ? null : filter, search);
+  const from = allMonths ? "2000-01-01" : month;
+  const to = allMonths ? today : monthEnd;
+  const totalsQuery = useMonthTotals(from, to);
+  const pagesQuery = useTransactionPages(from, to, filter === "all" ? null : filter, search);
+  const narrowed = filter !== "all" || search.trim() !== "";
+  const scope = allMonths ? "semua bulan" : formatMonthYearShort(month);
 
   const rows = useMemo(() => pagesQuery.data?.pages.flat() ?? [], [pagesQuery.data]);
+  // Totals of what the filter/search shows (from the rows loaded so far).
+  const shownTotals = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    for (const t of rows) {
+      if (t.type === "income") income += t.amount;
+      else expense += t.amount;
+    }
+    return { income, expense, count: rows.length };
+  }, [rows]);
   const groups = useMemo(() => groupRows(rows), [rows]);
   const sum = totalsQuery.data;
   const isCurrentMonth = month === startOfMonth(today);
@@ -67,6 +83,11 @@ export default function TransaksiPage() {
         <h1 className="h1 sp" style={{ fontSize: 24 }}>
           Transaksi
         </h1>
+        {allMonths ? (
+          <button type="button" className="chip" onClick={() => setAllMonths(false)}>
+            Semua bulan · kembali
+          </button>
+        ) : (
         <div className="row" style={{ gap: 4 }} role="group" aria-label="Pilih bulan">
           <button type="button" className="ibtn" aria-label="Bulan sebelumnya" onClick={() => setMonth(addMonths(month, -1))}>
             <ChevronLeft size={18} aria-hidden="true" />
@@ -78,6 +99,7 @@ export default function TransaksiPage() {
             <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
+        )}
       </div>
 
       <div style={{ position: "relative" }}>
@@ -97,8 +119,8 @@ export default function TransaksiPage() {
         {(
           [
             ["all", "Semua"],
-            ["expense", "Keluar"],
-            ["income", "Masuk"],
+            ["expense", "Pengeluaran"],
+            ["income", "Pemasukan"],
           ] as [Filter, string][]
         ).map(([v, l]) => (
           <Chip key={v} filter on={filter === v} onClick={() => setFilter(v)}>
@@ -107,14 +129,38 @@ export default function TransaksiPage() {
         ))}
       </div>
 
-      {sum && sum.count > 0 && (
-        <p className="s mut num">
-          {formatMonthYearShort(month)}: masuk <span className="b pos">{formatRupiah(sum.income)}</span> · keluar{" "}
-          <span className="b" style={{ color: "var(--ink)" }}>
-            {formatRupiah(sum.expense)}
-          </span>
-        </p>
-      )}
+      {narrowed
+        ? shownTotals.count > 0 && (
+            <p className="s mut num" aria-live="polite">
+              {shownTotals.count}
+              {pagesQuery.hasNextPage ? "+" : ""} transaksi
+              {shownTotals.income > 0 && (
+                <>
+                  {" "}
+                  · masuk <span className="b pos">{formatRupiah(shownTotals.income)}</span>
+                </>
+              )}
+              {shownTotals.expense > 0 && (
+                <>
+                  {" "}
+                  · keluar{" "}
+                  <span className="b" style={{ color: "var(--ink)" }}>
+                    {formatRupiah(shownTotals.expense)}
+                  </span>
+                </>
+              )}
+              {pagesQuery.hasNextPage ? " (yang sudah termuat)" : ""}
+            </p>
+          )
+        : sum &&
+          sum.count > 0 && (
+            <p className="s mut num">
+              {scope}: masuk <span className="b pos">{formatRupiah(sum.income)}</span> · keluar{" "}
+              <span className="b" style={{ color: "var(--ink)" }}>
+                {formatRupiah(sum.expense)}
+              </span>
+            </p>
+          )}
 
       {failed && (
         <div className="card" style={{ marginTop: 4 }}>
@@ -151,10 +197,33 @@ export default function TransaksiPage() {
                 Catat transaksi pertama
               </button>
             </>
-          ) : sum.count === 0 ? (
-            <p className="s mut">Tidak ada transaksi di {formatMonthYearShort(month)}.</p>
+          ) : !narrowed ? (
+            <p className="s mut">Tidak ada transaksi di {scope}.</p>
           ) : (
-            <p className="s mut">Tidak ada transaksi yang cocok dengan pencarian atau filter ini.</p>
+            <>
+              <p className="t b">
+                {search.trim() ? <>Tidak ada yang cocok dengan “{search.trim()}”</> : "Tidak ada transaksi jenis ini"} di {scope}
+              </p>
+              <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                {(search.trim() || filter !== "all") && (
+                  <button
+                    className="btn ghost sm"
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("all");
+                    }}
+                  >
+                    Hapus pencarian
+                  </button>
+                )}
+                {!allMonths && search.trim() && (
+                  <button className="btn sm" type="button" onClick={() => setAllMonths(true)}>
+                    Cari di semua bulan
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -165,25 +234,34 @@ export default function TransaksiPage() {
             <h2 className="sec sp">{formatDayHeading(g.date, today)}</h2>
             <p className="s mut num">{formatSigned(g.net)}</p>
           </div>
-          {g.items.map((t) => {
-            const cat = catById.get(t.category_id);
-            const income = t.type === "income";
-            return (
-              <button key={t.id} type="button" className={`rowc${justSaved.has(t.id) ? " just-saved" : ""}`} onClick={() => openAddTx({ edit: t })} aria-label={`${t.description || cat?.name}, ${formatSigned(income ? t.amount : -t.amount)}. Ubah`}>
-                <span className={`icb${income ? " g" : ""}`}>{income ? <ArrowDownLeft size={20} aria-hidden="true" /> : <CategoryIcon icon={cat?.icon ?? "lainnya"} />}</span>
-                <span className="col sp" style={{ gap: 0 }}>
-                  <span className="t b" style={{ overflowWrap: "anywhere" }}>
-                    {t.description || cat?.name || "Transaksi"}
-                  </span>
-                  <span className="s mut">
-                    {cat?.name ?? "Tanpa kategori"}
-                    {income ? " · pemasukan" : ""}
-                  </span>
-                </span>
-                <span className={`t b num${income ? " pos" : ""}`}>{formatSigned(income ? t.amount : -t.amount)}</span>
-              </button>
-            );
-          })}
+          <ul className="day-list">
+            {g.items.map((t) => {
+              const cat = catById.get(t.category_id);
+              const income = t.type === "income";
+              const amount = formatSigned(income ? t.amount : -t.amount);
+              return (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    className={`tx-item${justSaved.has(t.id) ? " just-saved" : ""}`}
+                    onClick={() => openAddTx({ edit: t })}
+                    aria-label={`${t.description || cat?.name}, ${cat?.name ?? "tanpa kategori"}, ${amount}. Lihat detail`}
+                  >
+                    <span className={`icb${income ? " g" : ""}`}>
+                      <CategoryIcon icon={cat?.icon ?? "lainnya"} />
+                    </span>
+                    <span className="col sp" style={{ gap: 0, minWidth: 0 }}>
+                      <span className="t b" style={{ overflowWrap: "anywhere" }}>
+                        {t.description || cat?.name || "Transaksi"}
+                      </span>
+                      <span className="s mut">{cat?.name ?? "Tanpa kategori"}</span>
+                    </span>
+                    <span className={`t b num${income ? " pos" : ""}`}>{amount}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       ))}
 

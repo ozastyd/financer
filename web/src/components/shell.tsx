@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, House, ImageUp, List, LockKeyhole, Pencil, Plus, Sparkles, Target, TriangleAlert, WifiOff } from "lucide-react";
+import { House, List, LockKeyhole, Plus, Sparkles, Target, TriangleAlert, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -12,7 +12,6 @@ import { setPendingScan } from "@/lib/scan-client";
 import { Spinner } from "./ui/controls";
 import { Sheet } from "./ui/sheet";
 import { formatCountdown, toAppError } from "@/lib/errors";
-import { usePresence } from "@/lib/motion";
 import type { Transaction, TxType } from "@/lib/types";
 
 interface ShellContextValue {
@@ -37,51 +36,6 @@ const TABS = [
   { href: "/coach", label: "AI Coach", Icon: Sparkles },
 ] as const;
 
-function PlusMenu({ onClose, onManual, onScan, closing }: { onClose: () => void; onManual: () => void; onScan: (source: "camera" | "upload") => void; closing: boolean }) {
-  const firstRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    firstRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  return (
-    <>
-      <div className={`scrim plus-scrim${closing ? " closing" : ""}`} style={{ zIndex: 29 }} onClick={onClose} aria-hidden="true" />
-      <div className={`dial${closing ? " closing" : ""}`} role="menu" inert={closing} aria-label="Cara mencatat transaksi" id="plus-menu">
-        <p className="dial-label">Catat transaksi lewat</p>
-        <button ref={firstRef} type="button" role="menuitem" className="dial-item" onClick={onManual}>
-          <span className="icb g">
-            <Pencil size={20} aria-hidden="true" />
-          </span>
-          Input manual
-        </button>
-        <button type="button" role="menuitem" className="dial-item" onClick={() => onScan("camera")}>
-          <span className="icb">
-            <Camera size={20} aria-hidden="true" />
-          </span>
-          <span className="sp" style={{ textAlign: "left" }}>
-            Ambil foto
-            <span className="s" style={{ display: "block", opacity: 0.7, fontWeight: 500 }}>
-              Struk belanja
-            </span>
-          </span>
-        </button>
-        <button type="button" role="menuitem" className="dial-item" onClick={() => onScan("upload")}>
-          <span className="icb">
-            <ImageUp size={20} aria-hidden="true" />
-          </span>
-          <span className="sp" style={{ textAlign: "left" }}>
-            Unggah file
-            <span className="s" style={{ display: "block", opacity: 0.7, fontWeight: 500 }}>
-              Struk, screenshot mutasi, atau PDF rekening koran
-            </span>
-          </span>
-        </button>
-      </div>
-    </>
-  );
-}
 
 /** A3 offline and C5b/A2b stale-data banners, at the top of every app screen. */
 function StatusBanner() {
@@ -195,8 +149,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [retrying, setRetrying] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const [plusOpen, setPlusOpen] = useState(false);
-  const plus = usePresence(plusOpen, 200);
   const [sheet, setSheet] = useState<{ open: boolean; type: TxType; edit?: Transaction; prefill?: TxPrefill }>({ open: false, type: "expense" });
   const cameraInput = useRef<HTMLInputElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
@@ -211,12 +163,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [status, needsOnboarding, router]);
 
   const openAddTx = useCallback((opts?: { type?: TxType; edit?: Transaction; prefill?: TxPrefill }) => {
-    setPlusOpen(false);
     setSheet({ open: true, type: opts?.edit?.type ?? opts?.type ?? "expense", edit: opts?.edit, prefill: opts?.prefill });
   }, []);
 
   const startScan = useCallback((source: "camera" | "upload") => {
-    setPlusOpen(false);
     (source === "camera" ? cameraInput : uploadInput).current?.click();
   }, []);
 
@@ -269,7 +219,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       <StatusBanner />
       {children}
       {!focusTask && <div className="tab-spacer" aria-hidden="true" />}
-      {plus.mounted && <PlusMenu closing={plus.closing} onClose={() => setPlusOpen(false)} onManual={() => openAddTx()} onScan={startScan} />}
       {/* Camera opens the back camera on phones; upload also takes bank-statement PDFs. */}
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
       <input ref={uploadInput} type="file" accept="image/*,application/pdf" hidden onChange={onFile} />
@@ -280,13 +229,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <button
                 key="plus"
                 type="button"
-                className={`plus${plusOpen ? " open" : ""}`}
-                aria-label={!online ? "Tambah transaksi, tidak tersedia saat offline" : plusOpen ? "Tutup menu" : "Tambah transaksi"}
-                aria-expanded={plusOpen}
-                aria-controls="plus-menu"
+                className="plus"
+                aria-label={!online ? "Tambah transaksi, tidak tersedia saat offline" : "Tambah transaksi"}
                 disabled={!online}
                 style={!online ? { background: "var(--ctl)", cursor: "not-allowed" } : undefined}
-                onClick={() => setPlusOpen((o) => !o)}
+                onClick={() => openAddTx()}
               >
                 <Plus size={26} strokeWidth={2.2} aria-hidden="true" />
               </button>
@@ -294,7 +241,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           }
           const on = pathname === t.href || pathname.startsWith(`${t.href}/`);
           return (
-            <Link key={t.href} href={t.href} className={on ? "on" : ""} aria-current={on ? "page" : undefined} onClick={() => setPlusOpen(false)}>
+            <Link key={t.href} href={t.href} className={on ? "on" : ""} aria-current={on ? "page" : undefined}>
               <t.Icon size={20} strokeWidth={1.8} aria-hidden="true" />
               {t.label}
             </Link>
@@ -306,6 +253,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         initialType={sheet.type}
         edit={sheet.edit}
         prefill={sheet.prefill}
+        onScan={(source) => {
+          setSheet((s) => ({ ...s, open: false }));
+          startScan(source);
+        }}
         onOpenChange={(open) => setSheet((s) => ({ ...s, open }))}
       />
       <SessionExpiredSheet />

@@ -58,7 +58,8 @@ export function CashFlowChart({ series, prevLabel, ariaLabel, showPrevious }: { 
             fill="var(--pris)"
             fillOpacity={1}
             connectNulls={false}
-            dot={false}
+            // a single recorded point (e.g. Monday in the week view) is drawn as a dot so it is visible
+            dot={series.filter((p) => p.current !== null).length === 1 ? { r: 4, fill: "var(--pri)", stroke: "var(--bg)", strokeWidth: 2 } : false}
             activeDot={{ r: 5, stroke: "var(--pri)", strokeWidth: 2.5, fill: "var(--bg)" }}
             isAnimationActive={!reduceMotion}
             animationDuration={1100}

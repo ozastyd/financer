@@ -251,3 +251,44 @@ export function changePct(current: number, previous: number): number | null {
   if (previous === 0) return null;
   return Math.round(((current - previous) / Math.abs(previous)) * 100);
 }
+
+/**
+ * Like-for-like comparison from a cumulative series: the current running total
+ * at the latest recorded point, and the previous period's total at the same
+ * point (same day of the week/month, or same month of the year).
+ */
+export function sameDayComparison(series: SeriesPoint[]): { current: number; previous: number | null } | null {
+  let i = -1;
+  for (let k = 0; k < series.length; k++) if (series[k].current !== null) i = k;
+  if (i < 0) return null;
+  return { current: series[i].current ?? 0, previous: series[i].previous };
+}
+
+export interface PlanCheck {
+  /** Planned spending for the whole month. */
+  plan: number;
+  spent: number;
+  /** What the plan allows by today, spread evenly over the month. */
+  expectedByToday: number;
+  /** Positive: under plan so far; negative: over. */
+  aheadBy: number;
+  /** Plan left for the rest of the month (0 when already over). */
+  left: number;
+  daysLeft: number;
+  /** Plan left per remaining day, including today. */
+  perDay: number;
+  /** Share of the month elapsed, 0–1 (today counts as elapsed). */
+  elapsed: number;
+}
+
+/** Month-to-date spending against a monthly plan (e.g. the estimate from onboarding). */
+export function planCheck(plan: number, spent: number, today: string): PlanCheck | null {
+  if (!plan || plan <= 0) return null;
+  const days = daysInMonth(Number(today.slice(0, 4)), Number(today.slice(5, 7)));
+  const day = Number(today.slice(8, 10));
+  const elapsed = day / days;
+  const expectedByToday = Math.round(plan * elapsed);
+  const left = Math.max(0, plan - spent);
+  const daysLeft = days - day + 1;
+  return { plan, spent, expectedByToday, aheadBy: expectedByToday - spent, left, daysLeft, perDay: Math.floor(left / daysLeft), elapsed };
+}

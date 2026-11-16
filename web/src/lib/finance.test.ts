@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryBreakdown, changePct, cumulativeSeries, groupByDay, periodRange, recordedBalance, roundedPercents, totals } from "./finance";
+import { categoryBreakdown, changePct, cumulativeSeries, groupByDay, periodRange, planCheck, recordedBalance, roundedPercents, sameDayComparison, totals } from "./finance";
 import type { Category, Transaction } from "./types";
 
 const cats: Category[] = [
@@ -95,5 +95,39 @@ describe("changePct", () => {
   it("is null when the previous value is zero", () => {
     expect(changePct(100, 0)).toBeNull();
     expect(changePct(1_920_000, 1_760_000)).toBe(9);
+  });
+});
+
+describe("sameDayComparison", () => {
+  it("compares at the latest recorded point", () => {
+    const s = [
+      { key: "a", label: "1", current: 100, previous: 50 },
+      { key: "b", label: "2", current: 80, previous: 120 },
+      { key: "c", label: "3", current: null, previous: 90 },
+    ];
+    expect(sameDayComparison(s)).toEqual({ current: 80, previous: 120 });
+  });
+  it("returns null when nothing is recorded yet", () => {
+    expect(sameDayComparison([{ key: "a", label: "1", current: null, previous: 5 }])).toBeNull();
+  });
+});
+
+describe("planCheck", () => {
+  it("spreads the plan evenly over the month", () => {
+    const c = planCheck(3_000_000, 1_000_000, "2026-11-15")!;
+    expect(c.expectedByToday).toBe(1_500_000);
+    expect(c.aheadBy).toBe(500_000);
+    expect(c.left).toBe(2_000_000);
+    expect(c.daysLeft).toBe(16);
+    expect(c.perDay).toBe(125_000);
+  });
+  it("reports overspending and no allowance left", () => {
+    const c = planCheck(1_000_000, 1_200_000, "2026-11-10")!;
+    expect(c.aheadBy).toBeLessThan(0);
+    expect(c.left).toBe(0);
+    expect(c.perDay).toBe(0);
+  });
+  it("has no check without a plan", () => {
+    expect(planCheck(0, 100, "2026-11-10")).toBeNull();
   });
 });
