@@ -103,16 +103,22 @@ export interface MonthStatus {
   /** Still to save this month to keep the rhythm (0 when done). */
   left: number;
   done: boolean;
+  /** Made this month and nothing saved yet: the first deposit, not a shortfall. */
+  first: boolean;
 }
 
 /** This month's saving against the goal's monthly rhythm; null without a rhythm or when not active. */
-export function monthStatus(goal: Pick<Goal, "status" | "monthly_plan" | "month_saved" | "target_amount" | "current_amount">): MonthStatus | null {
+export function monthStatus(
+  goal: Pick<Goal, "status" | "monthly_plan" | "month_saved" | "target_amount" | "current_amount"> & Partial<Pick<Goal, "created_at">>,
+  today?: string,
+): MonthStatus | null {
   if (goal.status !== "active" || !goal.monthly_plan) return null;
   const saved = Math.max(0, goal.month_saved ?? 0);
   // Near the end the last deposit can be smaller than the rhythm.
   const plan = Math.min(goal.monthly_plan, saved + goalRemaining(goal));
   const left = Math.max(0, plan - saved);
-  return { plan, saved, left, done: left === 0 };
+  const first = Boolean(today && goal.created_at && goal.created_at.slice(0, 7) === today.slice(0, 7) && saved === 0 && goal.current_amount === 0);
+  return { plan, saved, left, done: left === 0, first };
 }
 
 /** True when the goal's target month is already over and it is not reached. */

@@ -1351,25 +1351,40 @@ main.welcome {
 }
 .welcome-dots {
   display: flex;
-  gap: 6px;
   justify-content: center;
   align-items: center;
 }
+/* The dot is drawn small; the button around it is a full 44px tap target. */
 .welcome-dots button {
-  width: 6px;
-  height: 6px;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin: 0 -10px;
   padding: 0;
   border: 0;
+  background: none;
+  cursor: pointer;
+}
+.welcome-dots button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   background: var(--ctl);
   opacity: 0.5;
+  transform: translate(-50%, -50%);
   transition:
     width 0.3s var(--ease-out),
     background-color 0.3s var(--ease-out),
     opacity 0.3s var(--ease-out);
-  cursor: pointer;
 }
 .welcome-dots button[aria-current="true"] {
+  width: 56px;
+}
+.welcome-dots button[aria-current="true"]::before {
   width: 28px;
   background: var(--ink);
   opacity: 1;
@@ -2656,4 +2671,92 @@ button.rowc:active:not(:disabled) {
 }
 .nowrap {
   white-space: nowrap;
+}
+.ref a {
+  color: var(--pri);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--mut);
+  cursor: pointer;
+}
+.pw-toggle:hover {
+  color: var(--ink);
+}
+.forgot-link {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: -6px;
+  color: var(--pri);
+}
+/* Profil: account rows and upcoming features. */
+.menu {
+  display: flex;
+  flex-direction: column;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease-out);
+}
+.menu-item + .menu-item {
+  border-top: 1px solid var(--line);
+}
+.menu-item:hover {
+  background: var(--sf2);
+}
+.menu-item:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
+  outline-offset: -3px;
+}
+.menu-item > svg {
+  color: var(--mut);
+  flex: none;
+}
+.soon-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.soon-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.soon-list li + li {
+  border-top: 1px solid var(--line);
+}
+.soon-list .chip {
+  flex: none;
 }

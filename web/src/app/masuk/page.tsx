@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { BrandMark } from "@/components/brand";
-import { ErrorNote, Field, Spinner } from "@/components/ui/controls";
+import { ErrorNote, Field, PasswordInput, Spinner } from "@/components/ui/controls";
 import { MIN_PASSWORD, emailSchema } from "@/lib/credentials";
 import { formatCountdown, toAppError } from "@/lib/errors";
 import { clearOnboardingDraft, loadPendingSignUp } from "@/lib/pending-signup";
@@ -22,11 +22,26 @@ function AccountForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [touched, setTouched] = useState(false);
+  // Email problems show after leaving the field; empty-field problems only after pressing the button.
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailTaken, setEmailTaken] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [resetOn, setResetOn] = useState(false);
+
+  // "Lupa kata sandi" only shows when this server can send the email.
+  useEffect(() => {
+    let live = true;
+    fetch("/api/password/status")
+      .then((r) => r.json())
+      .then((j: { reset?: boolean }) => live && setResetOn(Boolean(j.reset)))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (status === "ready" || status === "error") router.replace("/beranda");
@@ -52,9 +67,13 @@ function AccountForm() {
   }, [isLogin]);
 
   const emailOk = emailSchema.safeParse(email).success;
-  const emailError = touched && email && !emailOk ? "Masukkan alamat email yang valid" : undefined;
-  const tooShort = !isLogin && password.length > 0 && password.length < MIN_PASSWORD;
-  const mismatch = !isLogin && confirm.length > 0 && confirm !== password;
+  // Problems show once the user leaves the field or presses the button, never while typing the first time.
+  const emailError = !emailOk && (submitted || (emailTouched && email)) ? (email ? "Masukkan alamat email yang valid" : "Masukkan emailmu") : undefined;
+  let passwordError: string | undefined;
+  if (isLogin) passwordError = submitted && !password ? "Masukkan kata sandimu" : undefined;
+  else if (password.length > 0 && password.length < MIN_PASSWORD) passwordError = `Minimal ${MIN_PASSWORD} karakter (sekarang ${password.length})`;
+  else if (submitted && !password) passwordError = "Buat kata sandi dulu";
+  const mismatch = !isLogin && (confirm.length > 0 || submitted) && confirm !== password;
   const canSubmit = emailOk && (isLogin ? password.length > 0 : password.length >= MIN_PASSWORD && confirm === password);
   const locked = cooldown > 0;
   const name = pending?.onboarding?.profile?.display_name;
@@ -107,7 +126,7 @@ function AccountForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          setTouched(true);
+          setSubmitted(true);
           if (canSubmit && !busy && !locked) void submit();
         }}
       >
@@ -122,24 +141,27 @@ function AccountForm() {
             placeholder="nama@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setTouched(true)}
+            onBlur={() => setEmailTouched(true)}
             aria-invalid={!!emailError}
           />
         </Field>
-        <Field label="Kata sandi" htmlFor="password" error={tooShort ? `Minimal ${MIN_PASSWORD} karakter` : undefined} hint={isLogin ? undefined : `Minimal ${MIN_PASSWORD} karakter.`}>
-          <input
+        <Field label="Kata sandi" htmlFor="password" error={passwordError} hint={isLogin ? undefined : `Minimal ${MIN_PASSWORD} karakter.`}>
+          <PasswordInput
             id="password"
-            className="inp"
-            type="password"
             autoComplete={isLogin ? "current-password" : "new-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            aria-invalid={tooShort}
+            aria-invalid={!!passwordError}
           />
         </Field>
+        {isLogin && resetOn && (
+          <Link className="s b forgot-link" href={email && emailOk ? `/lupa-sandi?email=${encodeURIComponent(email.trim())}` : "/lupa-sandi"}>
+            Lupa kata sandi?
+          </Link>
+        )}
         {!isLogin && (
-          <Field label="Ulangi kata sandi" htmlFor="confirm" error={mismatch ? "Kata sandi belum sama" : undefined}>
-            <input id="confirm" className="inp" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-invalid={mismatch} />
+          <Field label="Ulangi kata sandi" htmlFor="confirm" error={mismatch ? (confirm ? "Kata sandi belum sama" : "Ketik ulang kata sandinya") : undefined}>
+            <PasswordInput id="confirm" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} aria-invalid={mismatch} />
           </Field>
         )}
         <ErrorNote message={error} />
@@ -154,14 +176,14 @@ function AccountForm() {
             Terlalu banyak percobaan. Coba lagi dalam {formatCountdown(cooldown)}.
           </p>
         )}
-        <button className="btn" type="submit" disabled={!canSubmit || busy || locked}>
+        <button className="btn" type="submit" disabled={busy || locked}>
           {busy ? <Spinner label={isLogin ? "Masuk" : "Membuat akun"} /> : isLogin ? "Masuk" : "Buat akun"}
         </button>
       </form>
 
       <p className="s" style={{ textAlign: "center" }}>
         {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
-        <Link className="b" href={isLogin ? (pending ? "/masuk" : "/onboarding") : "/masuk?mode=masuk"} style={{ color: "var(--pri)", display: "inline-block", padding: "12px 4px" }}>
+        <Link className="b" href={isLogin ? (pending ? "/masuk" : "/onboarding") : "/masuk?mode=masuk"} style={{ color: "var(--pri)", display: "inline-block", padding: "12px 4px", minHeight: 44 }}>
           {isLogin ? "Daftar" : "Masuk"}
         </Link>
       </p>

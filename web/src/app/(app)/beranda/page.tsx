@@ -87,7 +87,12 @@ export default function BerandaPage() {
   const setAside = dash?.setAside ?? 0;
   const sisa = cur.net - setAside;
   const goalsBalance = dash?.goalsBalance ?? 0;
-  const primaryMonth = primary ? monthStatus(primary) : null;
+  // Before the very first record, show what onboarding estimated instead of an empty card.
+  const estimate =
+    fp && dash && dash.allTimeCount === 0 && period === "month" && fp.monthly_income + fp.additional_income > 0
+      ? fp.monthly_income + fp.additional_income - fp.monthly_expenses - fp.monthly_obligations
+      : null;
+  const primaryMonth = primary ? monthStatus(primary, today) : null;
 
   const headline = period === "month" ? `Sisa uang ${r.label}` : period === "week" ? "Sisa uang minggu ini" : `Sisa uang ${r.label}`;
 
@@ -128,8 +133,27 @@ export default function BerandaPage() {
           </div>
         ) : empty ? (
           <div className="card">
-            <p className="h3">Belum ada catatan {periodName}</p>
-            <p className="s mut">Catat uang masuk dan keluarmu. Di sini nanti kelihatan sisa uangmu dan apakah pengeluaranmu masih sesuai rencana.</p>
+            {estimate !== null ? (
+              <>
+                <p className="s mut">Perkiraan dari jawabanmu saat daftar</p>
+                <p className="big num" style={{ fontSize: 30 }}>
+                  {estimate < 0 ? "−" : ""}
+                  {formatRupiah(Math.abs(estimate))}
+                  <span className="s mut" style={{ fontWeight: 600 }}>
+                    {" "}
+                    / bulan
+                  </span>
+                </p>
+                <p className="s mut pretty">
+                  {estimate >= 0 ? "Kira-kira segini sisa uangmu tiap bulan." : "Kira-kira segini kurangnya tiap bulan."} Catat uang masuk dan keluarmu, nanti angka aslinya muncul di sini.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="h3">Belum ada catatan {periodName}</p>
+                <p className="s mut">Catat uang masuk dan keluarmu. Di sini nanti kelihatan sisa uangmu dan apakah pengeluaranmu masih sesuai rencana.</p>
+              </>
+            )}
             <button className="btn sm" type="button" style={{ alignSelf: "flex-start" }} onClick={() => openAddTx()}>
               <Plus size={18} aria-hidden="true" />
               Catat transaksi
@@ -344,7 +368,9 @@ export default function BerandaPage() {
                 {primaryMonth
                   ? primaryMonth.done
                     ? " · bulan ini aman"
-                    : ` · bulan ini kurang ${shortRupiah(primaryMonth.left)}`
+                    : primaryMonth.first
+                      ? ` · setoran pertama ${shortRupiah(primaryMonth.left)}`
+                      : ` · bulan ini kurang ${shortRupiah(primaryMonth.left)}`
                   : primary.target_date
                     ? ` · target ${formatMonthYearShort(primary.target_date)}`
                     : ` · kurang ${formatRupiah(goalRemaining(primary))}`}

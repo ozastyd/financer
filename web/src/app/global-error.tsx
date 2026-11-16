@@ -22,6 +22,7 @@ export default function GlobalError({ error, retry }: { error: unknown; retry: (
     button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     small{color:var(--mut);font-size:12px;font-weight:700;text-align:center;letter-spacing:.04em}`;
 
+  const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
   return (
     <html lang="id">
       <head>
@@ -36,7 +37,13 @@ export default function GlobalError({ error, retry }: { error: unknown; retry: (
           <button type="button" onClick={() => retry()}>
             Muat ulang
           </button>
-          <small>Kode untuk bantuan: {code}</small>
+          {support ? (
+            <small>
+              Masih gagal? <a href={`mailto:${support}?subject=${encodeURIComponent(`Bantuan Financer (${code})`)}`}>Hubungi kami</a> dan sebutkan kode {code}.
+            </small>
+          ) : (
+            <small>Kode untuk bantuan: {code}</small>
+          )}
         </main>
       </body>
     </html>

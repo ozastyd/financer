@@ -176,6 +176,24 @@ create index if not exists goal_contributions_tx_idx on goal_contributions (tran
 ${syncTrigger("goal_contributions_sync_ins", "insert", "new")}
 ${syncTrigger("goal_contributions_sync_upd", "update", "new")}
 ${syncTrigger("goal_contributions_sync_del", "delete", "old")}
+
+-- One-time password reset links: only the SHA-256 of the token is stored.
+create table if not exists password_resets (
+  token_hash text primary key,
+  user_id text not null references users (id) on delete cascade,
+  expires_at text not null,
+  used_at text,
+  created_at text not null default ${NOW}
+);
+create index if not exists password_resets_user_idx on password_resets (user_id);
+
+-- "Kabari saya" on features that are still being built.
+create table if not exists feature_interest (
+  user_id text not null references users (id) on delete cascade,
+  feature text not null check (length(feature) between 1 and 40),
+  created_at text not null default ${NOW},
+  primary key (user_id, feature)
+);
 `;
 
 const DEFAULT_CATEGORIES: [string, "income" | "expense", string, number][] = [
@@ -625,3 +643,81 @@ export function dbErrorMessage(e: unknown): { message: string; status: number } 
   console.error("db error:", msg);
   return { message: "Gagal menyimpan. Coba lagi.", status: 500 };
 }
+
+// ---------------------------------------------------------------------------
+// account: password, reset links, export, deletion, feature interest
+// ---------------------------------------------------------------------------
+
+export function getPasswordHash(uid: string): string | undefined {
+  return (one("select password_hash from users where id = ?", uid) as { password_hash: string } | undefined)?.password_hash;
+}
+
+export function setPasswordHash(uid: string, hash: string) {
+  db().prepare("update users set password_hash = ? where id = ?").run(hash, uid);
+}
+
+export function createPasswordReset(uid: string, tokenHash: string, expiresAt: string) {
+  tx(() => {
+    // Only the newest link works.
+    db().prepare("delete from password_resets where user_id = ?").run(uid);
+    db().prepare("insert into password_resets (token_hash, user_id, expires_at) values (?, ?, ?)").run(tokenHash, uid, expiresAt);
+  });
+}
+
+/** The account a valid, unused, unexpired reset token belongs to. */
+export function findPasswordReset(tokenHash: string): string | undefined {
+  const row = one("select user_id, expires_at, used_at from password_resets where token_hash = ?", tokenHash) as
+    | { user_id: string; expires_at: string; used_at: string | null }
+    | undefined;
+  if (!row || row.used_at || row.expires_at < now()) return undefined;
+  return row.user_id;
+}
+
+/** Sets the new password and uses up every reset link of the account. */
+export function completePasswordReset(uid: string, hash: string) {
+  tx(() => {
+    setPasswordHash(uid, hash);
+    db().prepare("update password_resets set used_at = ? where user_id = ? and used_at is null").run(now(), uid);
+  });
+}
+
+/** Deletes the account; every table cascades from users. */
+export function deleteUser(uid: string): number {
+  return Number(db().prepare("delete from users where id = ?").run(uid).changes);
+}
+
+export interface ExportRow {
+  date: string;
+  kind: string;
+  label: string;
+  amount: number;
+  note: string | null;
+}
+
+/** Everything the user recorded, oldest first: transactions and goal entries. */
+export function exportRows(uid: string): ExportRow[] {
+  return all(
+    `select t.transaction_date as date, case t.type when 'income' then 'Pemasukan' else 'Pengeluaran' end as kind,
+            coalesce(c.name, 'Tanpa kategori') as label, t.amount as amount, t.description as note, t.created_at as created
+     from transactions t left join categories c on c.id = t.category_id and c.user_id = t.user_id
+     where t.user_id = ?
+     union all
+     select g.contribution_date, case g.kind when 'deposit' then 'Setoran tujuan' when 'withdrawal' then 'Penarikan tujuan' else 'Pemakaian tujuan' end,
+            f.title, g.amount, g.note, g.created_at
+     from goal_contributions g join financial_goals f on f.id = g.goal_id and f.user_id = g.user_id
+     where g.user_id = ?
+     order by 1, 6`,
+    uid,
+    uid,
+  ) as unknown as ExportRow[];
+}
+
+export function listInterests(uid: string): string[] {
+  return all("select feature from feature_interest where user_id = ? order by created_at", uid).map((r) => String(r.feature));
+}
+
+export function setInterest(uid: string, feature: string, on: boolean) {
+  if (on) db().prepare("insert or ignore into feature_interest (user_id, feature) values (?, ?)").run(uid, feature);
+  else db().prepare("delete from feature_interest where user_id = ? and feature = ?").run(uid, feature);
+}
+

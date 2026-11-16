@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, LoaderCircle } from "lucide-react";
-import { forwardRef, useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import { Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { cloneElement, forwardRef, isValidElement, useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactElement, type ReactNode } from "react";
 import { formatAmountInput, parseRupiahInput } from "@/lib/money";
 
 export function Spinner({ label = "Memuat" }: { label?: string }) {
@@ -60,21 +60,52 @@ export function Segmented<T extends string>({
 }
 
 export function Field({ label, error, hint, children, htmlFor }: { label: string; error?: string; hint?: string; children: ReactNode; htmlFor: string }) {
+  // The hint or error is read out with the field (aria-describedby on the control).
+  const described = error ? `${htmlFor}-err` : hint ? `${htmlFor}-hint` : undefined;
+  const control =
+    described && isValidElement(children) && !(children.props as { "aria-describedby"?: string })["aria-describedby"]
+      ? cloneElement(children as ReactElement<{ "aria-describedby"?: string }>, { "aria-describedby": described })
+      : children;
   return (
     <div>
       <label className="lbl" htmlFor={htmlFor}>
         {label}
       </label>
-      {children}
-      {hint && !error && <p className="s mut" style={{ marginTop: 6 }}>{hint}</p>}
+      {control}
+      {hint && !error && (
+        <p id={`${htmlFor}-hint`} className="s mut" style={{ marginTop: 6 }}>
+          {hint}
+        </p>
+      )}
       {error && (
-        <p className="err" role="alert">
+        <p id={`${htmlFor}-err`} className="err" role="alert">
           {error}
         </p>
       )}
     </div>
   );
 }
+
+type PasswordInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
+
+/** Password field with a show/hide button. */
+export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function PasswordInput({ className = "", ...rest }, ref) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <input ref={ref} type={show ? "text" : "password"} className={`inp ${className}`} style={{ paddingRight: 52 }} autoCapitalize="none" spellCheck={false} {...rest} />
+      <button
+        type="button"
+        className="pw-toggle"
+        aria-label={show ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+        aria-pressed={show}
+        onClick={() => setShow((v) => !v)}
+      >
+        {show ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
+      </button>
+    </div>
+  );
+});
 
 type AmountInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & {
   value: number | null | undefined;
