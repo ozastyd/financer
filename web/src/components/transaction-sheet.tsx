@@ -67,7 +67,6 @@ function orderByRecent(categories: Category[], recent: string[]): Category[] {
 export function TransactionSheet({ open, onOpenChange, initialType, edit, prefill, onScan }: Props) {
   const [mode, setMode] = useState<"detail" | "form">(edit ? "detail" : "form");
   const [dirty, setDirty] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   // A new open starts from the right view.
   useEffect(() => {
@@ -75,44 +74,25 @@ export function TransactionSheet({ open, onOpenChange, initialType, edit, prefil
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when the sheet opens
     setMode(edit ? "detail" : "form");
     setDirty(false);
-    setConfirmDiscard(false);
   }, [open, edit]);
 
   const close = () => {
     setDirty(false);
-    setConfirmDiscard(false);
     onOpenChange(false);
   };
 
   const title = mode === "detail" ? "Detail transaksi" : edit ? "Ubah transaksi" : "Catat transaksi";
 
+  // Tapping outside, Esc, the close button or dragging down must not lose what
+  // was typed: the sheet asks first (dirty).
   return (
     <Sheet
       open={open}
-      onOpenChange={(o) => {
-        if (o) return onOpenChange(true);
-        // Tapping outside or pressing Esc must not lose what was typed.
-        if (dirty && !confirmDiscard) return setConfirmDiscard(true);
-        close();
-      }}
+      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
       title={title}
+      dirty={mode === "form" && dirty}
+      discardText="Transaksi yang sedang kamu isi belum disimpan."
     >
-      {confirmDiscard && (
-        <div className="discard pinned" role="alertdialog" aria-labelledby="discard-title">
-          <p id="discard-title" className="t b">
-            Buang isian ini?
-          </p>
-          <p className="s mut">Transaksi yang sedang kamu isi belum disimpan.</p>
-          <div className="g2">
-            <button type="button" className="btn ghost sm" autoFocus onClick={() => setConfirmDiscard(false)}>
-              Lanjut isi
-            </button>
-            <button type="button" className="btn danger sm" onClick={close}>
-              Buang
-            </button>
-          </div>
-        </div>
-      )}
       {mode === "detail" && edit ? (
         <TransactionDetail tx={edit} onEdit={() => setMode("form")} onDone={close} />
       ) : (
