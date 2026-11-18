@@ -20,11 +20,13 @@ const PUBLIC_PATHS = new Set([
   "/api/password/reset",
   // The Android app sends notifications with its own device token, not a cookie.
   "/api/notifications/ingest",
+  // The iPhone shortcut sends screenshots with its device code, not a cookie.
+  "/api/shortcut/capture",
 ]);
 
 // Pages of the signed-in app. Any other unknown address shows the 404 page,
 // even to signed-out visitors, instead of a sign-in form.
-const APP_PREFIXES = ["/beranda", "/transaksi", "/tujuan", "/coach", "/profil", "/scan", "/perlu-dicek"];
+const APP_PREFIXES = ["/beranda", "/transaksi", "/tujuan", "/coach", "/profil", "/scan", "/perlu-dicek", "/catat-iphone"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

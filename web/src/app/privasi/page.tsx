@@ -51,6 +51,13 @@ export default function PrivasiPage() {
         <li>Bisa dimatikan kapan saja di Profil, dan otomatis berhenti saat kamu keluar dari akun.</li>
       </ul>
 
+      <h2>Catat dari layar iPhone</h2>
+      <p>
+        Kalau kamu memasang shortcut &ldquo;Catat ke Financer&rdquo;, iPhone mengirim tangkapan layar ke Financer hanya saat kamu menjalankannya (misalnya dengan ketuk dua kali
+        bagian belakang iPhone, atau lewat menu Bagikan). Gambar itu dibaca sekali oleh penyedia AI pembaca struk, lalu dibuang; yang tersimpan hanya transaksi yang
+        terbaca, di &ldquo;Perlu dicek&rdquo;. Kode shortcut bisa diputus kapan saja di Profil.
+      </p>
+
       <h2>Untuk apa datamu dipakai</h2>
       <ul>
         <li>Menampilkan sisa uang, grafik, rencana belanja, dan progres tujuanmu.</li>
