@@ -28,11 +28,28 @@ export default function PrivasiPage() {
         <li>
           <b>Fitur yang kamu tunggu:</b> kalau kamu menekan &ldquo;Kabari saya&rdquo; di Profil.
         </li>
+        <li>
+          <b>Perangkat terhubung:</b> kalau kamu menyalakan pencatatan otomatis di aplikasi Android, kami menyimpan penanda perangkat (dalam bentuk hash) dan kapan terakhir
+          dipakai.
+        </li>
       </ul>
       <p>
         <b>Yang tidak kami simpan:</b> foto struk dan file mutasi rekening yang kamu scan. File itu hanya dibaca saat itu juga, lalu dibuang; yang tersimpan hanya transaksi yang kamu
         konfirmasi. Kami juga tidak pernah meminta kata sandi bank atau dompet digitalmu, dan Financer tidak bisa memindahkan uang.
       </p>
+
+      <h2>Catat otomatis dari notifikasi (aplikasi Android)</h2>
+      <p>
+        Fitur ini hanya aktif kalau kamu menyalakannya di Profil dan memberi izin &ldquo;Akses notifikasi&rdquo; di Android. Aplikasi Financer lalu membaca notifikasi dari
+        aplikasi bank dan e-wallet yang didukung (myBCA, Livin&apos; by Mandiri, BRImo, DANA, ShopeePay, GoPay, OVO). Notifikasi dari aplikasi lain, termasuk chat dan media
+        sosial, tidak dibaca dan tidak dikirim.
+      </p>
+      <ul>
+        <li>Judul dan isi notifikasi dari aplikasi tersebut dikirim ke server Financer, dibaca menjadi jumlah, jenis (masuk/keluar), dan keterangan, lalu masuk ke &ldquo;Perlu dicek&rdquo;.</li>
+        <li>Teks asli notifikasi dihapus begitu kamu menyimpan atau mengabaikan transaksinya.</li>
+        <li>Kalau kamu menyalakan &ldquo;Rekam notifikasi (mode uji)&rdquo;, teks asli disimpan (maksimal 300 terbaru) sampai kamu menghapusnya atau mematikan mode itu.</li>
+        <li>Bisa dimatikan kapan saja di Profil, dan otomatis berhenti saat kamu keluar dari akun.</li>
+      </ul>
 
       <h2>Untuk apa datamu dipakai</h2>
       <ul>

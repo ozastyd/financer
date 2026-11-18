@@ -16,6 +16,8 @@ export interface AppData {
   financial: FinancialProfile | null;
   categories: Category[];
   goals: Goal[];
+  /** Transactions read from notifications, waiting in "Perlu dicek". */
+  pendingCount?: number;
 }
 
 export const EMPTY_DATA: AppData = {
@@ -23,6 +25,7 @@ export const EMPTY_DATA: AppData = {
   financial: null,
   categories: [],
   goals: [],
+  pendingCount: 0,
 };
 
 /** Session data and writes. Writes go through the app's API routes for server-side validation. */

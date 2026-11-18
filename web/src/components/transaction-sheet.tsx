@@ -533,7 +533,7 @@ function WhenField({ date, time, live, today, onChange }: { date: string; time: 
 }
 
 /** Every category of this type, in a grid, for picks outside the top four. */
-function CategorySheet({
+export function CategorySheet({
   open,
   onOpenChange,
   type,
