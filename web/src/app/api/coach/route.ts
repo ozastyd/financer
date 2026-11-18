@@ -26,8 +26,9 @@ interface Provider {
 }
 
 // Groq's free models answer first (fast, and each model has its own free
-// quota), the AI router last. A busy (429) or stalled model hands the question
-// to the next one. COACH_GROQ_MODELS overrides the order.
+// quota), then WusRouter's free models, and the AI router last. A busy (429),
+// failing or stalled model hands the question to the next one.
+// COACH_GROQ_MODELS / COACH_WUS_MODELS override the models and their order.
 const GROQ_KEY = process.env.GROQ_API_KEY || "";
 const GROQ_MODELS = (process.env.COACH_GROQ_MODELS || "openai/gpt-oss-120b,openai/gpt-oss-20b,qwen/qwen3.8-27b")
   .split(",")
@@ -42,6 +43,17 @@ const PROVIDERS: Provider[] = [
     // gpt-oss thinks briefly at "low"; Qwen answers directly with "none".
     reasoning: /qwen/i.test(model) ? "none" : "low",
   })),
+  ...(process.env.COACH_WUS_MODELS || "ds/deepseek-v4.1-flash-free,mimo-v2.5:free")
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean)
+    .map((model) => ({
+      name: `wus:${model}`,
+      url: (process.env.WUS_BASE_URL || "https://wusrouter.com/v1").replace(/\/+$/, ""),
+      key: process.env.WUS_API_KEY || "",
+      model,
+      reasoning: "low",
+    })),
   // AI_REASONING_EFFORT=none leaves the parameter out for providers that reject it.
   { name: "router", url: AI_BASE_URL, key: AI_API_KEY, model: AI_MODEL, reasoning: AI_REASONING_EFFORT === "none" ? "omit" : AI_REASONING_EFFORT },
 ].filter((p) => p.url && p.key);
@@ -51,7 +63,8 @@ const PROVIDERS: Provider[] = [
 // the other provider) is started after HEDGE_AFTER_MS; the first to write wins.
 const IDLE_TIMEOUT_MS = 15_000;
 const HEDGE_AFTER_MS = 8_000;
-const ATTEMPTS = 5;
+// Enough tries to reach every provider once.
+const ATTEMPTS = 7;
 // Whole-answer budget; after it the user gets the automatic answer instead.
 const TOTAL_BUDGET_MS = 60_000;
 /** Rounds of tool use before the model must answer. */
@@ -321,7 +334,9 @@ function runTurn(
             winner = 0;
             onReset();
           }
-          const retryable = !(err instanceof AiError) || err.status === 429 || err.status >= 500;
+          // With several providers any failure (busy, rejected key, no balance,
+          // unsupported option) moves on to the next one; alone, only busy/5xx retry.
+          const retryable = PROVIDERS.length > 1 || !(err instanceof AiError) || err.status === 429 || err.status >= 500;
           if (!retryable) {
             if (running === 0) finish(() => reject(err));
             return;
