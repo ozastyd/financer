@@ -223,6 +223,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <ShellContext.Provider value={ctx}>
+      {/* In the app, pages are drawn under the status bar: keep scrolled content from showing behind the clock. */}
+      <div className="status-cover" aria-hidden="true" />
       <StatusBanner />
       <PullToRefresh enabled={PULL_PAGES.includes(pathname)} onRefresh={retryAll} />
       {children}

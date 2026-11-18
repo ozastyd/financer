@@ -3433,3 +3433,44 @@ html {
   border-radius: 13px;
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.45);
 }
+/* Coach: the disclaimer and typing bar stay pinned above the tab bar. */
+.coach-composer {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  /* Background reaches down to the tab bar; the extra bottom padding keeps
+     the input clear of the "+" button that rises out of it. */
+  bottom: calc(57px + max(12px, env(safe-area-inset-bottom, 0px)));
+  z-index: 25;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 20px 34px;
+  background: var(--bg);
+  box-shadow: 0 -14px 18px -6px var(--bg);
+}
+html.kb-open .coach-composer {
+  padding-bottom: 12px;
+}
+/* Room under the last message so it isn't hidden behind the composer. */
+.coach-composer-space {
+  flex: none;
+  height: 126px;
+}
+/* The tab bar hides while typing: sit right above the keyboard. */
+html.kb-open .coach-composer {
+  bottom: 0;
+}
+/* Covers the status bar area when the app draws edge to edge (0 px in a browser). */
+.status-cover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 34;
+  background: var(--bg);
+  pointer-events: none;
+}
