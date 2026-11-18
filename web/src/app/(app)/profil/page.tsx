@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { AutoRecord } from "@/components/auto-record";
+import { InstallIPhone } from "@/components/install-iphone";
 import { SUPPORT_EMAIL } from "@/components/error-states";
 import { useToast } from "@/components/toast";
 import { ErrorNote, Field, PasswordInput, Segmented, Spinner } from "@/components/ui/controls";
@@ -65,6 +66,8 @@ export default function ProfilPage() {
           Ubah
         </button>
       </div>
+
+      <InstallIPhone />
 
       <section className="card" aria-labelledby="p-look">
         <h2 id="p-look" className="sec">
