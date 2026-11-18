@@ -36,6 +36,12 @@ export const transactionInput = z.object({
   amount: amountSchema,
   description: optionalText(120),
   transaction_date: dateSchema,
+  /** Time of day (HH:MM, Asia/Jakarta); optional for older records and scans. */
+  transaction_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Jam tidak valid")
+    .nullable()
+    .optional(),
 });
 export type TransactionInput = z.infer<typeof transactionInput>;
 

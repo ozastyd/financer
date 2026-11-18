@@ -1,13 +1,13 @@
 "use client";
 
-import { Calendar, Camera, Check, ChevronDown, Delete, FileUp, Pencil, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Camera, Check, Clock, Delete, FileUp, LayoutGrid, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "./app-provider";
 import { InlineError, useToast } from "./toast";
 import { ErrorNote, Segmented, Spinner } from "./ui/controls";
 import { CategoryIcon } from "./ui/icons";
 import { Sheet } from "./ui/sheet";
-import { addDays, formatLongDate, relativeDayLabel } from "@/lib/date";
+import { formatLongDate, relativeDayLabel, timeJakarta, todayJakarta } from "@/lib/date";
 import { toAppError } from "@/lib/errors";
 import { MAX_AMOUNT, formatRupiah } from "@/lib/money";
 import { firstError, transactionInput } from "@/lib/schemas";
@@ -36,7 +36,8 @@ interface Props {
 // ---------------------------------------------------------------------------
 
 const RECENT_KEY = "financer:recent-categories";
-const QUICK = 6;
+/** Categories shown as chips; the rest are one tap away in "Kategori lain". */
+const QUICK = 4;
 
 function readRecent(): string[] {
   try {
@@ -55,9 +56,12 @@ function rememberCategory(id: string) {
   }
 }
 
-function orderByRecent(categories: Category[], recent: string[]): Category[] {
+/** Most used (last 90 days, from the server) first; ties go to this browser's recent picks, then the default order. */
+function orderByUse(categories: Category[], recent: string[]): Category[] {
   const rank = new Map(recent.map((id, i) => [id, i]));
-  return [...categories].sort((a, b) => (rank.get(a.id) ?? 99 + a.sort_order) - (rank.get(b.id) ?? 99 + b.sort_order));
+  return [...categories].sort(
+    (a, b) => (b.usage ?? 0) - (a.usage ?? 0) || (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99) || a.sort_order - b.sort_order,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -155,8 +159,11 @@ function TransactionDetail({ tx, onEdit, onDone }: { tx: Transaction; onEdit: ()
           <dd>{cat?.name ?? "Tanpa kategori"}</dd>
         </div>
         <div>
-          <dt>Tanggal</dt>
-          <dd>{formatLongDate(tx.transaction_date)}</dd>
+          <dt>Waktu</dt>
+          <dd>
+            {formatLongDate(tx.transaction_date)}
+            {tx.transaction_time ? `, ${tx.transaction_time}` : ""}
+          </dd>
         </div>
       </dl>
       <InlineError message={error} />
@@ -215,19 +222,22 @@ function TransactionForm({
   const [fresh, setFresh] = useState(Boolean(edit));
   const [categoryId, setCategoryId] = useState<string | null>(edit?.category_id ?? prefill?.categoryId ?? null);
   const [date, setDate] = useState(edit?.transaction_date ?? prefill?.date ?? today);
-  const [pickDate, setPickDate] = useState(false);
+  const [time, setTime] = useState<string | null>(edit ? (edit.transaction_time ?? null) : null);
+  // Untouched, a new entry is dated "now" at the moment it is saved.
+  const [whenSet, setWhenSet] = useState(Boolean(edit || prefill?.date));
+  const [pickCategory, setPickCategory] = useState(false);
   const [note, setNote] = useState(edit?.description ?? prefill?.note ?? "");
   const [error, setError] = useState<{ field: "amount" | "category" | "other"; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showAll, setShowAll] = useState(false);
   const [recent] = useState<string[]>(() => (typeof window === "undefined" ? [] : readRecent()));
 
-  const categories = useMemo(() => orderByRecent(data.categories.filter((c) => c.type === type), recent), [data.categories, type, recent]);
+  const categories = useMemo(() => orderByUse(data.categories.filter((c) => c.type === type), recent), [data.categories, type, recent]);
   const quick = categories.slice(0, QUICK);
-  const chosenHidden = categoryId && !quick.some((c) => c.id === categoryId);
-  const shown = showAll || chosenHidden ? categories : quick;
+  const chosen = categories.find((c) => c.id === categoryId);
+  // A category picked from the full list stays visible next to the top four.
+  const shown = chosen && !quick.includes(chosen) ? [...quick, chosen] : quick;
   const value = amount ? Number(amount) : 0;
-  const yesterday = addDays(today, -1);
+  const now = useNow(!whenSet);
 
   const touch = () => onDirty(true);
 
@@ -254,7 +264,11 @@ function TransactionForm({
   const submit = async (again = false) => {
     if (!value) return setError({ field: "amount", message: "Masukkan jumlahnya dulu." });
     if (!categoryId) return setError({ field: "category", message: "Pilih kategorinya dulu." });
-    const parsed = transactionInput.safeParse({ type, category_id: categoryId, amount: value, description: note, transaction_date: date });
+    const when = whenSet ? { transaction_date: date, transaction_time: time } : { transaction_date: todayJakarta(), transaction_time: timeJakarta() };
+    if (when.transaction_date === todayJakarta() && when.transaction_time && when.transaction_time > timeJakarta()) {
+      return setError({ field: "other", message: "Jamnya belum lewat. Pilih jam yang sudah terjadi." });
+    }
+    const parsed = transactionInput.safeParse({ type, category_id: categoryId, amount: value, description: note, ...when });
     if (!parsed.success) return setError({ field: "other", message: firstError(parsed.error) });
     setBusy(true);
     setError(null);
@@ -263,7 +277,14 @@ function TransactionForm({
       await mutate((s) => (edit ? s.updateTransaction(edit.id, parsed.data) : s.addTransaction(parsed.data)));
       rememberCategory(categoryId);
       if (edit) {
-        const before = { type: edit.type, category_id: edit.category_id, amount: edit.amount, description: edit.description ?? "", transaction_date: edit.transaction_date };
+        const before = {
+          type: edit.type,
+          category_id: edit.category_id,
+          amount: edit.amount,
+          description: edit.description ?? "",
+          transaction_date: edit.transaction_date,
+          transaction_time: edit.transaction_time ?? null,
+        };
         toast.success("Perubahan tersimpan.", {
           label: "Urungkan",
           run: () => {
@@ -278,6 +299,7 @@ function TransactionForm({
         setAmount("");
         setNote("");
         setCategoryId(null);
+        setWhenSet(false);
         onDirty(false);
       } else {
         toast.success("Transaksi tersimpan.");
@@ -373,54 +395,42 @@ function TransactionForm({
               </button>
             );
           })}
-          {!showAll && !chosenHidden && categories.length > QUICK && (
-            <button type="button" className="chip" aria-expanded={false} onClick={() => setShowAll(true)}>
-              Lainnya
-              <ChevronDown size={16} aria-hidden="true" />
+          {categories.length > QUICK && (
+            <button type="button" className="chip" aria-haspopup="dialog" onClick={() => setPickCategory(true)}>
+              <LayoutGrid size={16} aria-hidden="true" />
+              Kategori lain
             </button>
           )}
         </div>
       </div>
 
-      <div className="wrap" role="group" aria-label="Tanggal">
-        {[
-          [today, "Hari ini"],
-          [yesterday, "Kemarin"],
-        ].map(([d, l]) => (
-          <button
-            key={d}
-            type="button"
-            className={`chip${date === d && !pickDate ? " on" : ""}`}
-            aria-pressed={date === d && !pickDate}
-            onClick={() => {
-              setDate(d);
-              setPickDate(false);
-              touch();
-            }}
-          >
-            {l}
-          </button>
-        ))}
-        {pickDate || (date !== today && date !== yesterday) ? (
-          <input
-            type="date"
-            className="inp"
-            aria-label="Tanggal transaksi"
-            value={date}
-            max={today}
-            onChange={(e) => {
-              if (e.target.value) setDate(e.target.value);
-              touch();
-            }}
-            style={{ height: 44, width: 168, flex: "none" }}
-          />
-        ) : (
-          <button type="button" className="chip" onClick={() => setPickDate(true)} aria-label={`Tanggal lain. Sekarang: ${relativeDayLabel(date, today)}`}>
-            <Calendar size={16} aria-hidden="true" />
-            Tanggal lain
-          </button>
-        )}
-      </div>
+      <WhenField
+        date={whenSet ? date : now.date}
+        time={whenSet ? time : now.time}
+        live={!whenSet}
+        today={today}
+        onChange={(d, t) => {
+          setDate(d);
+          setTime(t);
+          setWhenSet(true);
+          setError(null);
+          touch();
+        }}
+      />
+
+      <CategorySheet
+        open={pickCategory}
+        onOpenChange={setPickCategory}
+        type={type}
+        categories={categories}
+        value={categoryId}
+        onPick={(id) => {
+          setCategoryId(id);
+          setError(null);
+          touch();
+          setPickCategory(false);
+        }}
+      />
 
       <input
         className="inp"
@@ -465,3 +475,95 @@ function TransactionForm({
     </form>
   );
 }
+
+/** The current date and minute in Jakarta, refreshed while shown. */
+function useNow(active: boolean) {
+  const read = () => ({ date: todayJakarta(), time: timeJakarta() });
+  const [now, setNow] = useState(read);
+  useEffect(() => {
+    if (!active) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- catch up when it becomes live again
+    setNow(read());
+    const t = window.setInterval(() => setNow(read()), 15_000);
+    return () => window.clearInterval(t);
+  }, [active]);
+  return now;
+}
+
+/**
+ * When it happened: defaults to now; one tap opens the phone's date and time
+ * picker (the native input sits over the row, so the tap reaches it directly).
+ */
+function WhenField({ date, time, live, today, onChange }: { date: string; time: string | null; live: boolean; today: string; onChange: (date: string, time: string | null) => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const label = `${relativeDayLabel(date, today)}${time ? `, ${time}` : ""}`;
+  return (
+    <div className="when-field">
+      <span className="icb" aria-hidden="true">
+        <Clock size={20} />
+      </span>
+      <span className="col sp" style={{ gap: 0 }} aria-hidden="true">
+        <span className="s mut">{live ? "Waktu · sekarang" : "Waktu"}</span>
+        <span className="t b num">{label}</span>
+      </span>
+      <span className="lnk" aria-hidden="true">
+        Ubah
+      </span>
+      <input
+        ref={input}
+        type="datetime-local"
+        className="when-input"
+        aria-label={`Waktu transaksi: ${label}. Ketuk untuk mengubah.`}
+        value={`${date}T${time ?? "12:00"}`}
+        max={`${todayJakarta()}T23:59`}
+        onClick={() => {
+          try {
+            input.current?.showPicker?.();
+          } catch {
+            /* the native tap already opens it */
+          }
+        }}
+        onChange={(e) => {
+          const [d, t] = e.target.value.split("T");
+          if (d) onChange(d > todayJakarta() ? todayJakarta() : d, t ? t.slice(0, 5) : null);
+        }}
+      />
+    </div>
+  );
+}
+
+/** Every category of this type, in a grid, for picks outside the top four. */
+function CategorySheet({
+  open,
+  onOpenChange,
+  type,
+  categories,
+  value,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  type: TxType;
+  categories: Category[];
+  value: string | null;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange} title="Pilih kategori" subtitle={type === "expense" ? "Pengeluaran" : "Pemasukan"}>
+      <div className="cat-grid" role="group" aria-label="Semua kategori">
+        {categories.map((c) => {
+          const on = value === c.id;
+          return (
+            <button key={c.id} type="button" className={`cat-tile${on ? " on" : ""}`} aria-pressed={on} onClick={() => onPick(c.id)}>
+              <span className={`icb${on ? " g" : ""}`} aria-hidden="true">
+                {on ? <Check size={20} /> : <CategoryIcon icon={c.icon} size={20} />}
+              </span>
+              <span className="t b">{c.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Sheet>
+  );
+}
+

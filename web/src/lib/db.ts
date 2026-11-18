@@ -14,7 +14,7 @@ import type { Category, Contribution, FinancialProfile, Goal, UserProfile } from
 // else's goal. Amounts are whole rupiah (INTEGER).
 
 const DB_PATH = process.env.DATABASE_PATH || "./data/financer.db";
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 const NOW = "(strftime('%Y-%m-%dT%H:%M:%fZ','now'))";
 
@@ -57,6 +57,14 @@ begin
       else completed_at end
   where id = ${goal};
 end;`;
+}
+
+/** v3 -> v4: transactions can record the time of day (HH:MM, Asia/Jakarta). */
+function migrateToV4(d: DatabaseSync) {
+  const cols = d.prepare("pragma table_info(transactions)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "transaction_time")) {
+    d.exec("alter table transactions add column transaction_time text check (transaction_time is null or transaction_time glob '[0-2][0-9]:[0-5][0-9]')");
+  }
 }
 
 /** v2 -> v3: contributions gain the "spend" kind and a link to a transaction; triggers cover edits and deletes. */
@@ -137,6 +145,7 @@ create table if not exists transactions (
   amount integer not null check (amount > 0 and amount <= 1000000000000),
   description text check (description is null or length(description) <= 120),
   transaction_date text not null,
+  transaction_time text check (transaction_time is null or transaction_time glob '[0-2][0-9]:[0-5][0-9]'),
   created_at text not null default ${NOW},
   updated_at text not null default ${NOW},
   foreign key (category_id, user_id) references categories (id, user_id)
@@ -226,7 +235,8 @@ export function db(): DatabaseSync {
   const version = (d.prepare("pragma user_version").get() as { user_version: number }).user_version;
   const hasTables = Boolean(d.prepare("select 1 from sqlite_master where type = 'table' and name = 'categories'").get());
   if (hasTables && version === 2) migrateToV3(d);
-  else if (hasTables && version < SCHEMA_VERSION) {
+  if (hasTables && (version === 2 || version === 3)) migrateToV4(d);
+  else if (hasTables && version < 2) {
     d.close();
     throw new Error(`${DB_PATH} uses the old single-user layout. Move it away and restart; a new database is created automatically.`);
   }
@@ -377,8 +387,15 @@ export function getTransaction(uid: string, id: string) {
   return one("select type, category_id from transactions where id = ? and user_id = ?", id, uid) as { type: string; category_id: string } | undefined;
 }
 
+/** The owner's categories, each with how often it was used in the last 90 days (most-used first in the form). */
 export function listCategories(uid: string): Category[] {
-  return all("select id, name, type, icon, sort_order from categories where user_id = ? order by sort_order", uid) as unknown as Category[];
+  return all(
+    `select c.id, c.name, c.type, c.icon, c.sort_order,
+       (select count(*) from transactions t
+         where t.category_id = c.id and t.user_id = c.user_id and t.transaction_date >= date('now', '-90 day')) as usage
+     from categories c where c.user_id = ? order by c.sort_order`,
+    uid,
+  ) as unknown as Category[];
 }
 
 export function getUserProfile(uid: string): UserProfile | null {
@@ -617,7 +634,7 @@ export function transactionsPage(uid: string, p: PageArgs) {
   params.push(limit);
   return all(
     `with filtered as (
-       select t.id, t.type, t.category_id, t.amount, t.description, t.transaction_date, t.created_at,
+       select t.id, t.type, t.category_id, t.amount, t.description, t.transaction_date, t.transaction_time, t.created_at,
               sum(case when t.type='income' then t.amount else -t.amount end) over (partition by t.transaction_date) as day_net
        from transactions t left join categories c on c.id = t.category_id and c.user_id = t.user_id
        where t.user_id = ?

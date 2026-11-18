@@ -176,7 +176,7 @@ a {
     padding: 0 20px 24px;
   }
   .safe {
-    padding-top: max(24px, env(safe-area-inset-top));
+    padding-top: max(24px, calc(env(safe-area-inset-top, 0px) + 16px));
   }
   .row {
     display: flex;
@@ -819,7 +819,7 @@ a {
     transform: translateX(-50%);
     width: 100%;
     max-width: 480px;
-    max-height: calc(100dvh - 40px);
+    max-height: calc(100dvh - max(40px, calc(env(safe-area-inset-top, 0px) + 16px)));
     overflow-y: auto;
     background: var(--bg);
     color: var(--ink);
@@ -1786,7 +1786,7 @@ main.welcome {
 }
 .photo-viewer-close {
   position: absolute;
-  top: max(16px, env(safe-area-inset-top));
+  top: max(16px, calc(env(safe-area-inset-top, 0px) + 8px));
   right: 16px;
   background: rgba(255, 255, 255, 0.14);
   color: #fff;
@@ -2832,4 +2832,95 @@ button.rowc:active:not(:disabled) {
   color: var(--pri);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+/* While the on-screen keyboard is open (see lib/keyboard.ts) the tab bar steps
+   aside instead of riding up on top of the keyboard. */
+html.kb-open .tab {
+  display: none;
+}
+html.kb-open .tab-spacer {
+  height: 12px;
+}
+/* Transaction form: when it happened (defaults to now). The native date-time
+   input covers the row so one tap opens the phone's picker. */
+.when-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 14px 8px 8px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.when-field .icb {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.when-field:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
+  outline-offset: 2px;
+}
+.when-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  cursor: pointer;
+  font-size: 16px; /* no zoom-on-focus on iOS */
+}
+.when-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+/* "Kategori lain": every category in a two-column grid. */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.cat-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 12px 8px 8px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.15s var(--ease-out),
+    border-color 0.15s var(--ease-out);
+}
+.cat-tile .icb {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex: none;
+}
+.cat-tile .t {
+  overflow-wrap: anywhere;
+}
+.cat-tile:hover {
+  background: var(--sf2);
+}
+.cat-tile.on {
+  border-color: var(--pri);
+  background: var(--pris);
+}
+.cat-tile:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
+  outline-offset: 2px;
 }

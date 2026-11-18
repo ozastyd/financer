@@ -15,6 +15,11 @@ export function hourJakarta(now: Date = new Date()): number {
   return Number(new Intl.DateTimeFormat("en-GB", { timeZone: TIMEZONE, hour: "2-digit", hourCycle: "h23" }).format(now));
 }
 
+/** Current time of day in Jakarta, "HH:MM". */
+export function timeJakarta(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: TIMEZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
+}
+
 export function greeting(now: Date = new Date()): string {
   const h = hourJakarta(now);
   if (h >= 4 && h < 11) return "Selamat pagi";

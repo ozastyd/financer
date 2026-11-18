@@ -105,7 +105,7 @@ function AccountForm() {
   const backHref = !isLogin && pending ? "/onboarding" : "/";
 
   return (
-    <main className="scr safe" style={{ gap: 20, padding: "24px 24px 32px" }}>
+    <main className="scr safe" style={{ gap: 20, paddingInline: 24, paddingBottom: 32 }}>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <Link className="ibtn" href={backHref} aria-label="Kembali">
           <ChevronLeft size={20} aria-hidden="true" />

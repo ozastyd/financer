@@ -8,6 +8,8 @@ export interface Category {
   type: TxType;
   icon: string;
   sort_order: number;
+  /** Times used in the last 90 days. */
+  usage?: number;
 }
 
 export interface Transaction {
@@ -17,6 +19,8 @@ export interface Transaction {
   amount: number;
   description: string | null;
   transaction_date: string; // YYYY-MM-DD, Asia/Jakarta calendar day
+  /** HH:MM, Asia/Jakarta; null for records made before times were kept. */
+  transaction_time?: string | null;
   created_at: string;
 }
 
