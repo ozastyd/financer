@@ -196,6 +196,56 @@ create table if not exists password_resets (
 );
 create index if not exists password_resets_user_idx on password_resets (user_id);
 
+-- Phones running the Financer app that may send bank/e-wallet notifications.
+-- Only the SHA-256 of the device token is stored.
+create table if not exists device_tokens (
+  id text primary key,
+  user_id text not null references users (id) on delete cascade,
+  token_hash text not null unique,
+  label text check (label is null or length(label) <= 60),
+  recording integer not null default 0,
+  created_at text not null default ${NOW},
+  last_seen_at text
+);
+create index if not exists device_tokens_user_idx on device_tokens (user_id);
+
+-- Transactions read from notifications, waiting for the user to confirm.
+-- The raw notification text is kept only while pending, then cleared.
+create table if not exists pending_transactions (
+  id text primary key,
+  user_id text not null references users (id) on delete cascade,
+  source text not null check (length(source) <= 20),
+  type text not null check (type in ('income','expense')),
+  amount integer not null check (amount > 0 and amount <= 1000000000000),
+  description text check (description is null or length(description) <= 120),
+  counterparty text check (counterparty is null or length(counterparty) <= 80),
+  category_hint text check (category_hint is null or length(category_hint) <= 60),
+  maybe_transfer integer not null default 0,
+  occurred_date text not null,
+  occurred_time text,
+  raw_title text,
+  raw_text text,
+  fingerprint text not null,
+  status text not null default 'pending' check (status in ('pending','accepted','dismissed')),
+  transaction_id text references transactions (id) on delete set null,
+  created_at text not null default ${NOW},
+  unique (user_id, fingerprint)
+);
+create index if not exists pending_transactions_user_idx on pending_transactions (user_id, status, occurred_date desc);
+
+-- "Rekam notifikasi" test mode: raw texts from allow-listed apps, to check the reader against.
+create table if not exists notification_samples (
+  id text primary key,
+  user_id text not null references users (id) on delete cascade,
+  package_name text not null check (length(package_name) <= 120),
+  title text check (title is null or length(title) <= 300),
+  text text check (text is null or length(text) <= 2000),
+  parsed integer not null default 0,
+  posted_at text,
+  created_at text not null default ${NOW}
+);
+create index if not exists notification_samples_user_idx on notification_samples (user_id, created_at desc);
+
 -- "Kabari saya" on features that are still being built.
 create table if not exists feature_interest (
   user_id text not null references users (id) on delete cascade,
@@ -736,5 +786,130 @@ export function listInterests(uid: string): string[] {
 export function setInterest(uid: string, feature: string, on: boolean) {
   if (on) db().prepare("insert or ignore into feature_interest (user_id, feature) values (?, ?)").run(uid, feature);
   else db().prepare("delete from feature_interest where user_id = ? and feature = ?").run(uid, feature);
+}
+
+// ---------------------------------------------------------------------------
+// app devices, notification inbox, recorded samples
+// ---------------------------------------------------------------------------
+
+export interface DeviceRow {
+  id: string;
+  user_id: string;
+  label: string | null;
+  recording: number;
+  created_at: string;
+  last_seen_at: string | null;
+}
+
+export function createDevice(uid: string, tokenHash: string, label: string | null): string {
+  const id = newId();
+  db().prepare("insert into device_tokens (id, user_id, token_hash, label) values (?, ?, ?, ?)").run(id, uid, tokenHash, label);
+  return id;
+}
+
+export function deviceByTokenHash(tokenHash: string): DeviceRow | undefined {
+  return one("select id, user_id, label, recording, created_at, last_seen_at from device_tokens where token_hash = ?", tokenHash) as unknown as DeviceRow | undefined;
+}
+
+export function touchDevice(id: string) {
+  db().prepare("update device_tokens set last_seen_at = ? where id = ?").run(now(), id);
+}
+
+export function listDevices(uid: string): DeviceRow[] {
+  return all("select id, user_id, label, recording, created_at, last_seen_at from device_tokens where user_id = ? order by created_at desc", uid) as unknown as DeviceRow[];
+}
+
+export function setDeviceRecording(uid: string, id: string, on: boolean): number {
+  return Number(db().prepare("update device_tokens set recording = ? where id = ? and user_id = ?").run(on ? 1 : 0, id, uid).changes);
+}
+
+export function deleteDevice(uid: string, id: string): number {
+  return Number(db().prepare("delete from device_tokens where id = ? and user_id = ?").run(id, uid).changes);
+}
+
+export interface PendingRow {
+  id: string;
+  source: string;
+  type: "income" | "expense";
+  amount: number;
+  description: string | null;
+  counterparty: string | null;
+  category_hint: string | null;
+  maybe_transfer: number;
+  occurred_date: string;
+  occurred_time: string | null;
+  raw_text: string | null;
+  created_at: string;
+}
+
+/** Adds a read notification to the inbox; false when the same one was already added. */
+export function addPending(uid: string, p: Omit<PendingRow, "id" | "created_at"> & { raw_title: string | null; fingerprint: string }): boolean {
+  const r = db()
+    .prepare(
+      `insert or ignore into pending_transactions
+        (id, user_id, source, type, amount, description, counterparty, category_hint, maybe_transfer, occurred_date, occurred_time, raw_title, raw_text, fingerprint)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(newId(), uid, p.source, p.type, p.amount, p.description, p.counterparty, p.category_hint, p.maybe_transfer, p.occurred_date, p.occurred_time, p.raw_title, p.raw_text, p.fingerprint);
+  return Number(r.changes) > 0;
+}
+
+const PENDING_COLUMNS =
+  "id, source, type, amount, description, counterparty, category_hint, maybe_transfer, occurred_date, occurred_time, raw_text, created_at";
+
+export function listPending(uid: string): PendingRow[] {
+  return all(`select ${PENDING_COLUMNS} from pending_transactions where user_id = ? and status = 'pending' order by occurred_date desc, occurred_time desc, created_at desc limit 200`, uid) as unknown as PendingRow[];
+}
+
+export function countPending(uid: string): number {
+  return Number((one("select count(*) as n from pending_transactions where user_id = ? and status = 'pending'", uid)?.n as number) ?? 0);
+}
+
+export function getPending(uid: string, id: string): PendingRow | undefined {
+  return one(`select ${PENDING_COLUMNS} from pending_transactions where id = ? and user_id = ? and status = 'pending'`, id, uid) as unknown as PendingRow | undefined;
+}
+
+/** Saves an inbox item as a real transaction and clears its raw text. */
+export function acceptPending(
+  uid: string,
+  id: string,
+  record: { type: "income" | "expense"; category_id: string; amount: number; description: string | null; transaction_date: string; transaction_time: string | null },
+): string {
+  const txId = newId();
+  tx(() => {
+    insertOwned("transactions", uid, { id: txId, ...record });
+    db().prepare("update pending_transactions set status = 'accepted', transaction_id = ?, raw_text = null, raw_title = null where id = ? and user_id = ?").run(txId, id, uid);
+  });
+  return txId;
+}
+
+export function dismissPending(uid: string, id: string): number {
+  return Number(
+    db().prepare("update pending_transactions set status = 'dismissed', raw_text = null, raw_title = null where id = ? and user_id = ? and status = 'pending'").run(id, uid).changes,
+  );
+}
+
+export function addSample(uid: string, s: { package_name: string; title: string | null; text: string | null; parsed: boolean; posted_at: string | null }) {
+  db()
+    .prepare("insert into notification_samples (id, user_id, package_name, title, text, parsed, posted_at) values (?, ?, ?, ?, ?, ?, ?)")
+    .run(newId(), uid, s.package_name, s.title, s.text, s.parsed ? 1 : 0, s.posted_at);
+  // Keep the newest 300.
+  db()
+    .prepare("delete from notification_samples where user_id = ? and id not in (select id from notification_samples where user_id = ? order by created_at desc limit 300)")
+    .run(uid, uid);
+}
+
+export function listSamples(uid: string) {
+  return all("select package_name, title, text, parsed, posted_at from notification_samples where user_id = ? order by created_at desc limit 300", uid) as {
+    package_name: string;
+    title: string | null;
+    text: string | null;
+    parsed: number;
+    posted_at: string | null;
+  }[];
+}
+
+export function clearSamples(uid: string) {
+  db().prepare("delete from notification_samples where user_id = ?").run(uid);
 }
 

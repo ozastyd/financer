@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, CircleHelp, Pencil, PiggyBank, Plus, Sparkles } from "lucide-react";
+import { BellRing, Check, ChevronRight, CircleHelp, Pencil, PiggyBank, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
@@ -110,6 +110,18 @@ export default function BerandaPage() {
           {(name || "?").charAt(0).toUpperCase()}
         </Link>
       </header>
+
+      {(data.pendingCount ?? 0) > 0 && (
+        <Link className="aside-row pending-row" href="/perlu-dicek">
+          <span className="icb am" aria-hidden="true">
+            <BellRing size={18} />
+          </span>
+          <span className="s sp">
+            <span className="b">{data.pendingCount} transaksi</span> dari notifikasi perlu dicek
+          </span>
+          <ChevronRight size={18} aria-hidden="true" style={{ color: "var(--mut)" }} />
+        </Link>
+      )}
 
       <Segmented label="Rentang waktu" value={period} onChange={setPeriod} options={(["week", "month", "year"] as Period[]).map((p) => ({ value: p, label: PERIOD_LABEL[p] }))} />
 

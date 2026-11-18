@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "@/components/app-provider";
+import { AutoRecord } from "@/components/auto-record";
 import { SUPPORT_EMAIL } from "@/components/error-states";
 import { useToast } from "@/components/toast";
 import { ErrorNote, Field, PasswordInput, Segmented, Spinner } from "@/components/ui/controls";
@@ -13,6 +14,7 @@ import { MIN_PASSWORD } from "@/lib/credentials";
 import { toAppError } from "@/lib/errors";
 import { formatRupiah } from "@/lib/money";
 import { EXPERIENCE, OCCUPATIONS, labelOf } from "@/lib/options";
+import { disconnectThisPhone } from "@/lib/native";
 import { api } from "@/lib/store/local";
 import { type ThemeChoice, useTheme } from "@/lib/theme";
 import { UPCOMING } from "@/lib/upcoming";
@@ -154,6 +156,8 @@ export default function ProfilPage() {
         </div>
       </section>
 
+      <AutoRecord />
+
       <Upcoming />
 
       <button
@@ -162,6 +166,8 @@ export default function ProfilPage() {
         disabled={busy}
         onClick={async () => {
           setBusy(true);
+          // Signing out stops this phone from sending notifications for the account.
+          await disconnectThisPhone();
           await signOut();
           router.replace("/masuk?mode=masuk");
         }}
@@ -385,6 +391,7 @@ function DeleteSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
     setError(null);
     try {
       await api("/api/account", "DELETE", { password, confirm: "HAPUS" });
+      await disconnectThisPhone();
       await signOut();
       window.location.replace("/");
     } catch (e) {

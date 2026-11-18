@@ -2924,3 +2924,89 @@ html.kb-open .tab-spacer {
   outline: 3px solid color-mix(in srgb, var(--pri) 45%, transparent);
   outline-offset: 2px;
 }
+/* "Perlu dicek": transactions read from notifications. */
+.inbox-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+.inbox-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--ambs);
+  font-size: 13px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.inbox-note svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--amb);
+}
+.raw-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sf2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chip.sm-chip {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.pending-row {
+  background: var(--ambs);
+  border-color: transparent;
+}
+.switch-inline {
+  flex: none;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--ctl);
+  transition: background-color 0.2s var(--ease-out);
+}
+.switch-inline i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 27, 23, 0.3);
+  transition: transform 0.2s var(--ease-out);
+}
+.switch-inline.on {
+  background: var(--pri);
+}
+.switch-inline.on i {
+  transform: translateX(18px);
+}
+.sample-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sample-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
