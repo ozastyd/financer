@@ -12,6 +12,8 @@ export interface NativeStatus {
   deviceId: string | null;
   /** Notifications waiting on the phone to be sent. */
   queued: number;
+  /** Financer may show its own notifications (Android 13+ asks; older versions allow by default). Missing on app 0.2. */
+  notificationsEnabled?: boolean;
 }
 
 interface FinancerNativePlugin {
@@ -20,6 +22,8 @@ interface FinancerNativePlugin {
   connect(opts: { token: string; deviceId: string; endpoint: string }): Promise<void>;
   disconnect(): Promise<void>;
   flush(): Promise<{ sent: number }>;
+  /** Missing on app 0.2. */
+  requestNotifications?(): Promise<{ granted: boolean }>;
 }
 
 interface CapacitorGlobal {

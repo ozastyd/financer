@@ -208,6 +208,30 @@ function AppState({ children, queryClient }: { children: ReactNode; queryClient:
     }
   }, [loadSessionData, queryClient]);
 
+  // Coming back to the app (or tab), and every 30 s while it is on screen:
+  // quietly reload, so new "Perlu dicek" items and changes from other
+  // devices show up without navigating around. Errors stay silent here.
+  useEffect(() => {
+    let last = 0;
+    const sync = () => {
+      if (document.visibilityState !== "visible" || statusRef.current !== "ready" || !sessionRef.current) return;
+      const t = Date.now();
+      if (t - last < 10_000) return;
+      last = t;
+      loadSessionData().catch(() => undefined);
+      void queryClient.invalidateQueries({ refetchType: "active" });
+    };
+    const onShow = () => document.visibilityState === "visible" && sync();
+    document.addEventListener("visibilitychange", onShow);
+    window.addEventListener("focus", sync);
+    const timer = window.setInterval(sync, 30_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onShow);
+      window.removeEventListener("focus", sync);
+      window.clearInterval(timer);
+    };
+  }, [loadSessionData, queryClient]);
+
   // Back online: refresh what is on screen and say so once.
   const online = useOnline(() => {
     toast.info("Kembali online.");

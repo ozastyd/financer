@@ -33,6 +33,13 @@ object NotificationStore {
     fun deviceId(c: Context): String? = prefs(c).getString("deviceId", null)
     fun endpoint(c: Context): String? = prefs(c).getString("endpoint", null)
 
+    /** "https://financer.my.id" from the saved endpoint, for opening pages from a notification. */
+    @JvmStatic
+    fun origin(c: Context): String? = endpoint(c)?.let {
+        val u = java.net.URL(it)
+        "${u.protocol}://${u.authority}"
+    }
+
     fun connect(c: Context, token: String, deviceId: String, endpoint: String) {
         prefs(c).edit().putString("token", token).putString("deviceId", deviceId).putString("endpoint", endpoint).apply()
     }

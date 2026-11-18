@@ -9,6 +9,7 @@ import { ServiceDownState } from "./error-states";
 import { InlineError } from "./toast";
 import { TransactionSheet, type TxPrefill } from "./transaction-sheet";
 import { useKeyboardClass } from "@/lib/keyboard";
+import { PullToRefresh } from "./pull-to-refresh";
 import { setPendingScan } from "@/lib/scan-client";
 import { Spinner } from "./ui/controls";
 import { Sheet } from "./ui/sheet";
@@ -145,8 +146,11 @@ function SessionExpiredSheet() {
   );
 }
 
+/** Pages that refresh when pulled down from the top. */
+const PULL_PAGES = ["/beranda", "/transaksi", "/tujuan", "/perlu-dicek"];
+
 export function AppShell({ children }: { children: ReactNode }) {
-  const { status, data, loadErrorKind, refresh, online } = useApp();
+  const { status, data, loadErrorKind, refresh, retryAll, online } = useApp();
   const [retrying, setRetrying] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -220,6 +224,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <ShellContext.Provider value={ctx}>
       <StatusBanner />
+      <PullToRefresh enabled={PULL_PAGES.includes(pathname)} onRefresh={retryAll} />
       {children}
       {!focusTask && <div className="tab-spacer" aria-hidden="true" />}
       {/* Camera opens the back camera on phones; upload also takes bank-statement PDFs. */}
