@@ -40,6 +40,8 @@ export async function POST(req: Request) {
 
   let added = 0;
   let read = 0;
+  // New inbox items, so the app can say "1 transaksi perlu dicek · GoPay −Rp5.000".
+  const items: { source: string; type: "income" | "expense"; amount: number }[] = [];
   for (const n of parsed.data.notifications) {
     if (!sourceOf(n.packageName)) continue;
     const p = parseNotification(n);
@@ -61,7 +63,10 @@ export async function POST(req: Request) {
       raw_text: n.text.slice(0, 2000) || null,
       fingerprint: createHash("sha256").update(fingerprintSource(n)).digest("hex"),
     });
-    if (isNew) added++;
+    if (isNew) {
+      added++;
+      items.push({ source: p.source, type: p.type, amount: p.amount });
+    }
   }
-  return NextResponse.json({ received: parsed.data.notifications.length, read, added });
+  return NextResponse.json({ received: parsed.data.notifications.length, read, added, items });
 }

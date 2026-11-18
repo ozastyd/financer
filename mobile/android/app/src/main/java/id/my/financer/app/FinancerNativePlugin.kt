@@ -1,16 +1,24 @@
 package id.my.financer.app
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.core.app.NotificationManagerCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.PermissionState
 import com.getcapacitor.annotation.CapacitorPlugin
+import com.getcapacitor.annotation.Permission
+import com.getcapacitor.annotation.PermissionCallback
 
 /** Lets financer.my.id (inside the app) connect this phone and check notification access. */
-@CapacitorPlugin(name = "FinancerNative")
+@CapacitorPlugin(
+    name = "FinancerNative",
+    permissions = [Permission(alias = "notifications", strings = [Manifest.permission.POST_NOTIFICATIONS])],
+)
 class FinancerNativePlugin : Plugin() {
 
     private fun listenerEnabled(): Boolean =
@@ -23,6 +31,24 @@ class FinancerNativePlugin : Plugin() {
         ret.put("connected", NotificationStore.token(context) != null)
         ret.put("deviceId", NotificationStore.deviceId(context))
         ret.put("queued", NotificationStore.queued(context))
+        ret.put("notificationsEnabled", NotificationManagerCompat.from(context).areNotificationsEnabled())
+        call.resolve(ret)
+    }
+
+    /** Android 13+: ask to show Financer's own "transaksi perlu dicek" notifications. */
+    @PluginMethod
+    fun requestNotifications(call: PluginCall) {
+        if (Build.VERSION.SDK_INT < 33 || getPermissionState("notifications") == PermissionState.GRANTED) {
+            notificationsResult(call)
+        } else {
+            requestPermissionForAlias("notifications", call, "notificationsResult")
+        }
+    }
+
+    @PermissionCallback
+    private fun notificationsResult(call: PluginCall) {
+        val ret = JSObject()
+        ret.put("granted", NotificationManagerCompat.from(context).areNotificationsEnabled())
         call.resolve(ret)
     }
 

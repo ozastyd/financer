@@ -22,25 +22,41 @@ class UploadWorker(context: Context, params: WorkerParameters) : Worker(context,
         val token = NotificationStore.token(c) ?: return Result.success()
         val endpoint = NotificationStore.endpoint(c) ?: return Result.success()
         if (!endpoint.startsWith("https://")) return Result.success()
+        val found = mutableListOf<NewTransactionsNotifier.Item>()
         repeat(20) {
             val batch = NotificationStore.peek(c, 50)
-            if (batch.length() == 0) return Result.success()
-            val code = try {
+            if (batch.length() == 0) {
+                NewTransactionsNotifier.show(c, found)
+                return Result.success()
+            }
+            val (code, response) = try {
                 post(endpoint, token, JSONObject().put("notifications", batch).toString())
             } catch (e: Exception) {
+                NewTransactionsNotifier.show(c, found)
                 return Result.retry()
             }
             when {
-                code in 200..299 -> NotificationStore.drop(c, batch.length())
+                code in 200..299 -> {
+                    NotificationStore.drop(c, batch.length())
+                    found += NewTransactionsNotifier.itemsFrom(response)
+                }
                 code == 401 -> { NotificationStore.disconnect(c); return Result.success() } // device was disconnected
                 code == 400 -> NotificationStore.drop(c, batch.length()) // malformed: don't retry forever
-                else -> return Result.retry()
+                else -> {
+                    NewTransactionsNotifier.show(c, found)
+                    return Result.retry()
+                }
+            }
+            if (NotificationStore.queued(c) == 0) {
+                NewTransactionsNotifier.show(c, found)
+                return Result.success()
             }
         }
+        NewTransactionsNotifier.show(c, found)
         return Result.success()
     }
 
-    private fun post(endpoint: String, token: String, body: String): Int {
+    private fun post(endpoint: String, token: String, body: String): Pair<Int, String> {
         val conn = URL(endpoint).openConnection() as HttpURLConnection
         try {
             conn.requestMethod = "POST"
@@ -50,7 +66,9 @@ class UploadWorker(context: Context, params: WorkerParameters) : Worker(context,
             conn.setRequestProperty("content-type", "application/json")
             conn.setRequestProperty("authorization", "Bearer $token")
             conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
-            return conn.responseCode
+            val code = conn.responseCode
+            val text = if (code in 200..299) conn.inputStream.bufferedReader().use { it.readText() } else ""
+            return code to text
         } finally {
             conn.disconnect()
         }

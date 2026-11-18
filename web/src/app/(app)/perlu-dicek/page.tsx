@@ -51,6 +51,16 @@ export default function PerluDicekPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- first load
     void load();
+    // Pulled down to refresh, coming back to the app, or every 30 s: look for new items.
+    const again = () => document.visibilityState === "visible" && void load();
+    window.addEventListener("financer:refresh", again);
+    document.addEventListener("visibilitychange", again);
+    const timer = window.setInterval(again, 30_000);
+    return () => {
+      window.removeEventListener("financer:refresh", again);
+      document.removeEventListener("visibilitychange", again);
+      window.clearInterval(timer);
+    };
   }, [load]);
 
   const done = (id: string, message: string) => {

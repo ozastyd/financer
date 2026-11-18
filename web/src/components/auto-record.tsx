@@ -1,8 +1,8 @@
 "use client";
 
-import { BellRing, ChevronRight, Copy, ScrollText, Unplug } from "lucide-react";
+import { BellRing, BellPlus, ChevronRight, Copy, ScrollText, Unplug } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useApp } from "./app-provider";
 import { useToast } from "./toast";
 import { Spinner } from "./ui/controls";
@@ -35,12 +35,20 @@ export function AutoRecord() {
   const [device, setDevice] = useState<Device | null>(null);
   const [busy, setBusy] = useState(false);
   const [samplesOpen, setSamplesOpen] = useState(false);
+  const askedNotifications = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!app) return;
     try {
       const s = await app.status();
       setStatus(s);
+      // Right after notification access is granted, ask once to show Financer's own
+      // "transaksi perlu dicek" notifications (Android 13+ shows a system prompt).
+      if (s.connected && s.listenerEnabled && s.notificationsEnabled === false && !askedNotifications.current && app.requestNotifications) {
+        askedNotifications.current = true;
+        const r = await app.requestNotifications();
+        setStatus({ ...s, notificationsEnabled: r.granted });
+      }
       if (s.deviceId) {
         const list = await api<Device[]>("/api/devices");
         setDevice(list.find((d) => d.id === s.deviceId) ?? null);
@@ -156,6 +164,27 @@ export function AutoRecord() {
               <span className="col sp" style={{ gap: 0 }}>
                 <span className="t">Izinkan akses notifikasi</span>
                 <span className="s mut">Buka pengaturan Android, lalu nyalakan Financer.</span>
+              </span>
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          )}
+          {status.listenerEnabled && status.notificationsEnabled === false && app.requestNotifications && (
+            <button
+              type="button"
+              className="menu-item"
+              onClick={async () => {
+                const r = await app.requestNotifications!();
+                // Android stops showing the prompt after it was declined twice.
+                if (!r.granted) toast.info("Nyalakan lewat Pengaturan HP → Aplikasi → Financer → Notifikasi.");
+                void refresh();
+              }}
+            >
+              <span className="icb am" aria-hidden="true">
+                <BellPlus size={20} />
+              </span>
+              <span className="col sp" style={{ gap: 0 }}>
+                <span className="t">Izinkan notifikasi Financer</span>
+                <span className="s mut">Supaya kamu dikabari saat ada transaksi baru untuk dicek.</span>
               </span>
               <ChevronRight size={18} aria-hidden="true" />
             </button>
