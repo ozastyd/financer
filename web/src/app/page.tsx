@@ -139,7 +139,7 @@ export default function WelcomePage() {
 
   return (
     <main className="intro welcome flex flex-1 flex-col">
-      <div style={{ display: "flex", justifyContent: "center", padding: "22px 20px 4px" }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "max(22px, calc(env(safe-area-inset-top) + 14px)) 20px 4px" }}>
         <BrandMark height={34} />
       </div>
 
@@ -163,7 +163,7 @@ export default function WelcomePage() {
         ))}
       </div>
 
-      <div className="scr" style={{ padding: "22px 24px 28px", gap: 14, background: "transparent" }}>
+      <div className="scr" style={{ padding: "22px 24px max(28px, calc(env(safe-area-inset-bottom) + 16px))", gap: 14, background: "transparent" }}>
         <div className="welcome-dots" role="group" aria-label="Pilih slide">
           {SLIDES.map((s, i) => (
             <button key={s.title} type="button" aria-label={`Slide ${i + 1}`} aria-current={i === index} onClick={() => goTo(i)} />

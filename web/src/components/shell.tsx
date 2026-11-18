@@ -8,6 +8,7 @@ import { useApp } from "./app-provider";
 import { ServiceDownState } from "./error-states";
 import { InlineError } from "./toast";
 import { TransactionSheet, type TxPrefill } from "./transaction-sheet";
+import { useKeyboardClass } from "@/lib/keyboard";
 import { setPendingScan } from "@/lib/scan-client";
 import { Spinner } from "./ui/controls";
 import { Sheet } from "./ui/sheet";
@@ -156,6 +157,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const needsOnboarding = status === "ready" && !data.financial?.onboarding_completed;
   // Scanning is a focused task: no tab bar or "+" that could start another scan over the one being reviewed.
   const focusTask = pathname === "/scan";
+  // The tab bar steps aside while the on-screen keyboard is open.
+  useKeyboardClass();
 
   useEffect(() => {
     if (status === "signed_out") router.replace("/masuk?mode=masuk");

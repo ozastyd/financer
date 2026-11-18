@@ -254,7 +254,10 @@ export default function TransaksiPage() {
                       <span className="t b" style={{ overflowWrap: "anywhere" }}>
                         {t.description || cat?.name || "Transaksi"}
                       </span>
-                      <span className="s mut">{cat?.name ?? "Tanpa kategori"}</span>
+                      <span className="s mut">
+                        {t.transaction_time ? <span className="num">{t.transaction_time} · </span> : null}
+                        {cat?.name ?? "Tanpa kategori"}
+                      </span>
                     </span>
                     <span className={`t b num${income ? " pos" : ""}`}>{amount}</span>
                   </button>
