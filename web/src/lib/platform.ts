@@ -28,3 +28,21 @@ export function lastUsedLabel(iso: string | null, now: number = Date.now()): str
   const d = new Date(t).toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
   return d;
 }
+
+/** Opened from the Home Screen icon (full screen, no browser bars). */
+export function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  return (navigator as Navigator & { standalone?: boolean }).standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+}
+
+/**
+ * Where an iPhone user is browsing: Safari, another browser that can add to the
+ * Home Screen (Chrome, Edge, Firefox on iOS 16.4+), or an app's built-in
+ * browser (Instagram, WhatsApp, …) that can't.
+ */
+export function iosBrowser(): "safari" | "other" | "in-app" {
+  const ua = navigator.userAgent;
+  if (/Instagram|FBAN|FBAV|FB_IAB|Line\/|WhatsApp|Twitter|TikTok|musical_ly|Snapchat|GSA\//i.test(ua)) return "in-app";
+  if (/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua)) return "other";
+  return /Safari\//.test(ua) ? "safari" : "in-app";
+}
