@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowRight, Clock, Info, Plus, RotateCcw } from "lucide-react";
+import { ArrowRight, Clock, Info, Plus, RotateCcw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { useShell } from "@/components/shell";
 import { Spinner } from "@/components/ui/controls";
 import { fallbackReply, summaryFromDashboard } from "@/lib/coach";
-import { type SendContext, clearLimit, newChat, selectAccount, send as sendMessage, setInput, takeUnanswered, useCoachChat } from "@/lib/coach-chat";
+import { type SendContext, cancel, clearLimit, newChat, selectAccount, send as sendMessage, setInput, takePendingAsk, takeUnanswered, useCoachChat } from "@/lib/coach-chat";
 import { MESSAGES, isOffline } from "@/lib/errors";
 import { useDashboard } from "@/lib/queries";
 
@@ -62,6 +62,14 @@ export default function CoachPage() {
     setNow(currentTime());
     void sendMessage(text, ctx);
   };
+
+  // A question handed over from Beranda ("Tanya AI Coach cara menghematnya") is asked right away.
+  useEffect(() => {
+    const q = takePendingAsk();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sends the handed-over question once, when the page opens
+    if (q) send(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the page opens
+  }, []);
 
   return (
     <main className="scr safe" style={{ gap: 14 }}>
@@ -211,15 +219,32 @@ export default function CoachPage() {
         }}
       >
         <input className="inp" type="text" enterKeyHint="send" aria-label="Tulis pertanyaan" placeholder="Tanya soal uangmu…" value={input} maxLength={2000} onChange={(e) => setInput(e.target.value)} />
-        <button
-          className="ibtn"
-          type="submit"
-          aria-label="Kirim"
-          disabled={loading || limited || !input.trim()}
-          style={{ width: 52, height: 52, borderRadius: 14, background: "var(--pri)", color: "var(--onpri)", borderColor: "var(--pri)", opacity: loading || limited || !input.trim() ? 0.6 : 1 }}
-        >
-          <ArrowRight size={20} aria-hidden="true" />
-        </button>
+        {loading ? (
+          // Separate elements (keys): if React reused the node, the tap that stops
+          // the answer would also submit the restored question again.
+          <button
+            key="stop"
+            className="ibtn coach-send stop"
+            type="button"
+            aria-label="Berhenti menjawab"
+            onClick={(e) => {
+              e.preventDefault();
+              cancel();
+            }}
+          >
+            <Square size={18} fill="currentColor" aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            key="send"
+            className="ibtn coach-send"
+            type="submit"
+            aria-label="Kirim"
+            disabled={limited || !input.trim()}
+          >
+            <ArrowRight size={20} aria-hidden="true" />
+          </button>
+        )}
       </form>
       <div ref={endRef} />
     </main>

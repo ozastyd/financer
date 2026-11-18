@@ -94,6 +94,30 @@ export function useCoachChat(): CoachState {
 }
 
 export const setInput = (input: string) => set({ input });
+
+// A question handed over from another screen (e.g. Beranda's spending card),
+// sent as soon as the Coach page opens.
+let pendingAsk: string | null = null;
+export function queueAsk(question: string) {
+  pendingAsk = question;
+}
+export function takePendingAsk(): string | null {
+  const q = pendingAsk;
+  pendingAsk = null;
+  return q;
+}
+
+// The request in flight, so the user can stop it.
+let inFlight: AbortController | null = null;
+/** Stops the answer being written; the question goes back to the composer. */
+export function cancel() {
+  inFlight?.abort(new DOMException("cancelled", "AbortError"));
+}
+
+/** No sign of life from the server for this long: stop waiting. */
+const STALL_MS = 35_000;
+/** Longest a whole answer may take before the user gets the automatic one. */
+const MAX_MS = 75_000;
 export const newChat = () => {
   if (!state.loading) set({ messages: [], error: null });
 };
@@ -124,11 +148,25 @@ export async function send(text: string, ctx: SendContext) {
   set({ messages: next, input: "", error: null, loading: true, status: "", streaming: "" });
   // Put the question back in the composer and drop it from the conversation.
   const giveBack = (patch: Partial<CoachState>) => set({ messages: next.slice(0, -1), input: q, ...patch });
+  const ctrl = new AbortController();
+  inFlight = ctrl;
+  let stall: ReturnType<typeof setTimeout> | undefined;
+  const alive = () => {
+    clearTimeout(stall);
+    stall = setTimeout(() => ctrl.abort(new DOMException("stalled", "TimeoutError")), STALL_MS);
+  };
+  alive();
+  const cap = setTimeout(() => ctrl.abort(new DOMException("too long", "TimeoutError")), MAX_MS);
+  // While nothing new arrives, say it's still working.
+  const patience = setTimeout(() => {
+    if (state.loading && !state.streaming) set({ status: "Masih menyiapkan jawaban…" });
+  }, 12_000);
   try {
     const res = await fetch("/api/coach", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ messages: next.slice(-12).map(({ role, content }) => ({ role, content })) }),
+      signal: ctrl.signal,
     });
     if (!(res.headers.get("content-type") ?? "").includes("text/event-stream") || !res.body) {
       const json = (await res.json().catch(() => ({}))) as { error?: string; retry_after?: number };
@@ -154,6 +192,7 @@ export async function send(text: string, ctx: SendContext) {
     for (;;) {
       const chunk = await reader.read();
       if (chunk.done) break;
+      alive();
       buf += decoder.decode(chunk.value, { stream: true });
       let sep: number;
       while ((sep = buf.indexOf("\n\n")) >= 0) {
@@ -180,12 +219,24 @@ export async function send(text: string, ctx: SendContext) {
     const reply = done?.reply ?? streamed;
     if (!done || !reply) throw new Error("stream ended early");
     set({ messages: [...next, { role: "assistant", content: plain(reply).trim(), source: done.source, notice: done.notice, sources: done.sources }] });
-  } catch {
-    // network failure: answer locally from the totals already on screen, if any
+  } catch (e) {
+    const reason = ctrl.signal.reason;
+    if (!(reason instanceof DOMException)) console.warn("coach: request failed", e);
+    if (reason instanceof DOMException && reason.message === "cancelled") {
+      // Stopped by the user: back to how it was before sending.
+      giveBack({});
+      return;
+    }
+    // Too slow or no connection: answer locally from the totals on screen, if any.
+    const slow = reason instanceof DOMException && reason.name === "TimeoutError";
     const local = ctx.fallback(q);
-    if (local) set({ messages: [...next, local] });
-    else giveBack({ error: ctx.offlineMessage() });
+    if (local) set({ messages: [...next, slow ? { ...local, notice: "AI Coach terlalu lama merespons, jadi ini jawaban otomatis dari angkamu." } : local] });
+    else giveBack({ error: slow ? "AI Coach tidak merespons. Coba lagi sebentar lagi." : ctx.offlineMessage() });
   } finally {
+    clearTimeout(stall);
+    clearTimeout(cap);
+    clearTimeout(patience);
+    if (inFlight === ctrl) inFlight = null;
     set({ loading: false, status: "", streaming: "" });
   }
 }

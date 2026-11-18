@@ -3337,3 +3337,21 @@ html {
 .try-ok .btn {
   width: 100%;
 }
+/* Coach composer: send, or stop while an answer is being written. */
+.coach-send {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: 14px;
+  background: var(--pri);
+  color: var(--onpri);
+  border-color: var(--pri);
+}
+.coach-send:disabled {
+  opacity: 0.6;
+}
+.coach-send.stop {
+  background: var(--sf);
+  color: var(--ink);
+  border-color: var(--line);
+}

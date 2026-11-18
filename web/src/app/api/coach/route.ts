@@ -17,15 +17,43 @@ const AI_MODEL = process.env.AI_MODEL || "zai-org/GLM-5.3-Flash";
 // Set AI_REASONING_EFFORT=none to omit the parameter for providers that reject it.
 const AI_REASONING_EFFORT = process.env.AI_REASONING_EFFORT || "low";
 
-// The router sometimes stalls. A request is abandoned when no data arrives for
-// IDLE_TIMEOUT_MS. Until a request starts producing output, a second identical
-// one is started after HEDGE_AFTER_MS and the first to produce output wins.
+interface Provider {
+  name: string;
+  url: string;
+  key: string;
+  model: string;
+  reasoning: string;
+}
+
+// Groq's free models answer first (fast, and each model has its own free
+// quota), the AI router last. A busy (429) or stalled model hands the question
+// to the next one. COACH_GROQ_MODELS overrides the order.
+const GROQ_KEY = process.env.GROQ_API_KEY || "";
+const GROQ_MODELS = (process.env.COACH_GROQ_MODELS || "openai/gpt-oss-120b,openai/gpt-oss-20b,qwen/qwen3.8-27b")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
+const PROVIDERS: Provider[] = [
+  ...GROQ_MODELS.map((model) => ({
+    name: `groq:${model}`,
+    url: "https://api.groq.com/openai/v1",
+    key: GROQ_KEY,
+    model,
+    // gpt-oss thinks briefly at "low"; Qwen answers directly with "none".
+    reasoning: /qwen/i.test(model) ? "none" : "low",
+  })),
+  // AI_REASONING_EFFORT=none leaves the parameter out for providers that reject it.
+  { name: "router", url: AI_BASE_URL, key: AI_API_KEY, model: AI_MODEL, reasoning: AI_REASONING_EFFORT === "none" ? "omit" : AI_REASONING_EFFORT },
+].filter((p) => p.url && p.key);
+
+// A request is abandoned when nothing is written for IDLE_TIMEOUT_MS (keep-alive
+// pings don't count). Until a request starts producing output, another one (on
+// the other provider) is started after HEDGE_AFTER_MS; the first to write wins.
 const IDLE_TIMEOUT_MS = 15_000;
-const HEDGE_AFTER_MS = 12_000;
-const ATTEMPTS = 3;
-// Whole-answer budget. The reply is streamed, so Cloudflare's 100 s limit
-// (time to first byte) no longer applies once the first event is sent.
-const TOTAL_BUDGET_MS = 150_000;
+const HEDGE_AFTER_MS = 8_000;
+const ATTEMPTS = 5;
+// Whole-answer budget; after it the user gets the automatic answer instead.
+const TOTAL_BUDGET_MS = 60_000;
 /** Rounds of tool use before the model must answer. */
 const MAX_TOOL_ROUNDS = 2;
 const MAX_SEARCHES = 3;
@@ -116,6 +144,7 @@ interface TurnResult {
  * visible text so far.
  */
 async function streamTurn(
+  provider: Provider,
   messages: ChatMessage[],
   withTools: boolean,
   signal: AbortSignal,
@@ -132,16 +161,16 @@ async function streamTurn(
     idle = setTimeout(() => ctrl.abort(new DOMException("idle", "TimeoutError")), IDLE_TIMEOUT_MS);
   };
   try {
-    const res = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const res = await fetch(`${provider.url}/chat/completions`, {
       method: "POST",
-      headers: { authorization: `Bearer ${AI_API_KEY}`, "content-type": "application/json" },
+      headers: { authorization: `Bearer ${provider.key}`, "content-type": "application/json" },
       body: JSON.stringify({
-        model: AI_MODEL,
+        model: provider.model,
         // Answers are ~120 words, but reasoning models spend part of the budget
         // thinking; the cap also bounds time on a slow stream.
         max_tokens: 1800,
         stream: true,
-        ...(AI_REASONING_EFFORT !== "none" ? { reasoning_effort: AI_REASONING_EFFORT } : {}),
+        ...(provider.reasoning !== "omit" ? { reasoning_effort: provider.reasoning } : {}),
         messages,
         ...(withTools ? { tools: [SEARCH_TOOL], tool_choice: "auto" } : {}),
       }),
@@ -159,7 +188,6 @@ async function streamTurn(
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-      touch();
       buf += decoder.decode(value, { stream: true });
       let nl: number;
       while ((nl = buf.indexOf("\n")) >= 0) {
@@ -168,7 +196,7 @@ async function streamTurn(
         if (!line.startsWith("data:")) continue;
         const payload = line.slice(5).trim();
         if (payload === "[DONE]") continue;
-        let chunk: { choices?: { finish_reason?: string | null; delta?: { content?: string | null; tool_calls?: { index?: number; id?: string; function?: { name?: string; arguments?: string } }[] } }[] };
+        let chunk: { choices?: { finish_reason?: string | null; delta?: { content?: string | null; reasoning_content?: string | null; reasoning?: string | null; tool_calls?: { index?: number; id?: string; function?: { name?: string; arguments?: string } }[] } }[] };
         try {
           chunk = JSON.parse(payload);
         } catch {
@@ -177,6 +205,8 @@ async function streamTurn(
         if (chunk.choices?.[0]?.finish_reason) finish = chunk.choices[0].finish_reason;
         const delta = chunk.choices?.[0]?.delta;
         if (!delta) continue;
+        // Real progress (text, tool calls or visible thinking) keeps the request alive.
+        if (delta.content || delta.tool_calls?.length || delta.reasoning_content || delta.reasoning) touch();
         const hasOutput = Boolean(delta.content) || Boolean(delta.tool_calls?.length);
         if (hasOutput && !chosen) {
           // Another request already won this turn: give up quietly.
@@ -247,12 +277,15 @@ function runTurn(
     function launch(): boolean {
       if (settled || outer.aborted || started >= ATTEMPTS || deadline - Date.now() < 5_000) return false;
       const n = ++started;
+      // In order: Groq models first, then the router; a hedge or retry takes the next one.
+      const provider = PROVIDERS[(n - 1) % PROVIDERS.length];
       running++;
       const ctrl = new AbortController();
       controllers.set(n, ctrl);
       outer.addEventListener("abort", () => ctrl.abort(outer.reason), { once: true });
       const t0 = Date.now();
       streamTurn(
+        provider,
         messages,
         withTools,
         ctrl.signal,
@@ -271,7 +304,7 @@ function runTurn(
       ).then(
         (r) => {
           running--;
-          console.log(`coach: model ${Date.now() - t0}ms request ${n}, tool calls ${r.tool_calls.length}`);
+          console.log(`coach: ${provider.name} ${Date.now() - t0}ms request ${n}, tool calls ${r.tool_calls.length}`);
           finish(() => resolve(r));
         },
         (err) => {
@@ -281,7 +314,7 @@ function runTurn(
           const superseded = err instanceof DOMException && err.message === "superseded";
           if (superseded) return;
           const why = err instanceof AiError ? err.status : err instanceof Error ? `${err.name} ${err.message}` : "";
-          console.log(`coach: model failed after ${Date.now() - t0}ms request ${n}: ${why}`);
+          console.log(`coach: ${provider.name} failed after ${Date.now() - t0}ms request ${n}: ${why}`);
           lastErr = err;
           if (winner === n) {
             // The request whose text was on screen died: clear it and start over.
@@ -293,7 +326,8 @@ function runTurn(
             if (running === 0) finish(() => reject(err));
             return;
           }
-          const delay = err instanceof AiError && err.status === 429 ? 1500 : 0;
+          // Busy (429): try right away, which goes to the other provider.
+          const delay = err instanceof AiError && err.status === 429 && PROVIDERS.length < 2 ? 1500 : 0;
           setTimeout(() => {
             if (settled) return;
             if (running === 0 || !winner) {
@@ -328,7 +362,7 @@ async function converse(messages: ChatMessage[], send: (e: CoachEvent) => void, 
   let searches = 0;
   const deadline = Date.now() + TOTAL_BUDGET_MS;
   for (let round = 0; ; round++) {
-    const canSearch = searchEnabled && round < MAX_TOOL_ROUNDS && searches < MAX_SEARCHES && deadline - Date.now() > 50_000;
+    const canSearch = searchEnabled && round < MAX_TOOL_ROUNDS && searches < MAX_SEARCHES && deadline - Date.now() > 30_000;
     let shown = false;
     const msg = await runTurn(
       messages,
@@ -455,7 +489,7 @@ export async function POST(req: Request) {
       };
 
       try {
-        if (!AI_BASE_URL || !AI_API_KEY) {
+        if (PROVIDERS.length === 0) {
           fallback("AI Coach sedang tidak tersedia, jadi ini jawaban otomatis dari angkamu.");
         } else {
           send({ type: "status", text: "Lagi mikir…" });
