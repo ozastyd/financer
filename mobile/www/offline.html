@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Financer · Offline</title>
+<style>
+  :root { --bg:#F5F6F2; --ink:#101B17; --mut:#4B5A54; --pri:#047857; --onpri:#fff; --sf:#fff; --line:#DDE3DE; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0B1220; --ink:#EEF2F0; --mut:#A7B3AE; --pri:#34D399; --onpri:#04261B; --sf:#141D2E; --line:#26324A; } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin:0; background:var(--bg); color:var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         display:flex; flex-direction:column; justify-content:center; gap:16px; padding: max(24px, env(safe-area-inset-top)) 28px max(32px, env(safe-area-inset-bottom)); }
+  .ic { width:72px; height:72px; border-radius:24px; display:grid; place-items:center; background:var(--sf); border:1px solid var(--line); color:var(--mut); }
+  h1 { margin:0; font-size:28px; line-height:1.2; letter-spacing:-0.02em; }
+  p { margin:0; color:var(--mut); text-wrap: pretty; }
+  button { margin-top:8px; height:52px; border:0; border-radius:999px; background:var(--pri); color:var(--onpri); font: 700 16px/1 inherit; font-family: inherit; }
+  button:focus-visible { outline: 3px solid var(--pri); outline-offset: 3px; }
+</style>
+</head>
+<body>
+  <div class="ic" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="M19 12.86a10 10 0 0 0-2-1.43"/><path d="M2 8.82a15 15 0 0 1 4.18-2.65"/><path d="M22 8.82a15 15 0 0 0-11.29-3.76"/><path d="m2 2 20 20"/></svg>
+  </div>
+  <h1>Kamu sedang offline</h1>
+  <p>Financer butuh internet untuk memuat datamu. Datamu aman; sambungkan Wi-Fi atau data seluler, lalu coba lagi.</p>
+  <button type="button" onclick="location.replace('https://financer.my.id/beranda')">Coba lagi</button>
+  <script>window.addEventListener('online', function () { location.replace('https://financer.my.id/beranda'); });</script>
+</body>
+</html>
