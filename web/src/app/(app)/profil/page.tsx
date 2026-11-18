@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellRing, ChevronLeft, ChevronRight, Download, KeyRound, LifeBuoy, LogOut, Pencil, Trash2 } from "lucide-react";
+import { Bell, BellRing, ChevronLeft, ChevronRight, Download, KeyRound, LifeBuoy, LogOut, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -131,6 +131,13 @@ export default function ProfilPage() {
               <span className="s mut">File CSV, bisa dibuka di Excel atau Google Sheets</span>
             </span>
           </a>
+          <Link className="menu-item" href="/privasi">
+            <span className="icb" aria-hidden="true">
+              <ShieldCheck size={20} />
+            </span>
+            <span className="t sp">Kebijakan Privasi</span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
           {SUPPORT_EMAIL && (
             <a className="menu-item" href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Bantuan Financer")}`}>
               <span className="icb" aria-hidden="true">

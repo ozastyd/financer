@@ -2786,3 +2786,50 @@ button.rowc:active:not(:disabled) {
   user-select: text;
   -webkit-user-select: text;
 }
+/* Public reading pages (privacy policy, account deletion). */
+.legal {
+  max-width: 680px;
+  margin-inline: auto;
+}
+.legal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.legal-body h2 {
+  margin: 18px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.legal-body p,
+.legal-body ul,
+.legal-body ol {
+  margin: 0;
+}
+.legal-body ul {
+  list-style: disc;
+}
+.legal-body ol {
+  list-style: decimal;
+}
+.legal-body li::marker {
+  color: var(--pri);
+}
+.legal-body ul,
+.legal-body ol {
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.legal-body a {
+  color: var(--pri);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

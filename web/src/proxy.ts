@@ -9,6 +9,8 @@ const PUBLIC_PATHS = new Set([
   "/onboarding",
   "/lupa-sandi",
   "/atur-sandi",
+  "/privasi",
+  "/hapus-akun",
   "/api/session",
   "/api/login",
   "/api/signup",
