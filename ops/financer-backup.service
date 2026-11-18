@@ -1,0 +1,9 @@
+[Unit]
+Description=Back up the Financer database
+After=network.target
+
+[Service]
+Type=oneshot
+User=user
+EnvironmentFile=-/data/workspace/financer/ops/backup.env
+ExecStart=/usr/local/bin/node --no-warnings /data/workspace/financer/ops/backup-db.mjs

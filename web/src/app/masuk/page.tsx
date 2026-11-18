@@ -179,6 +179,15 @@ function AccountForm() {
         <button className="btn" type="submit" disabled={busy || locked}>
           {busy ? <Spinner label={isLogin ? "Masuk" : "Membuat akun"} /> : isLogin ? "Masuk" : "Buat akun"}
         </button>
+        {!isLogin && (
+          <p className="s mut" style={{ textAlign: "center" }}>
+            Dengan membuat akun, kamu setuju datamu diproses sesuai{" "}
+            <Link href="/privasi" style={{ color: "var(--pri)", textDecoration: "underline", textUnderlineOffset: 3 }}>
+              Kebijakan Privasi
+            </Link>
+            .
+          </p>
+        )}
       </form>
 
       <p className="s" style={{ textAlign: "center" }}>
