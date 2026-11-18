@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { CashFlowChart, CategoryDonut, SLICE_COLORS } from "@/components/charts";
+import { IPhoneCard } from "@/components/iphone-record";
 import { useShell } from "@/components/shell";
 import { Segmented } from "@/components/ui/controls";
 import { AnimatedRupiah } from "@/components/ui/animated-number";
@@ -110,6 +111,8 @@ export default function BerandaPage() {
           {(name || "?").charAt(0).toUpperCase()}
         </Link>
       </header>
+
+      <IPhoneCard />
 
       {(data.pendingCount ?? 0) > 0 && (
         <Link className="aside-row pending-row" href="/perlu-dicek">

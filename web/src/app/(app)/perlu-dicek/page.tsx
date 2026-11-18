@@ -30,7 +30,7 @@ interface InboxItem {
   similar: { description: string | null; category: string } | null;
 }
 
-const appName = (source: string) => SOURCES.find((s) => s.source === source)?.label ?? source;
+const appName = (source: string) => (source === "screenshot" ? "Screenshot iPhone" : (SOURCES.find((s) => s.source === source)?.label ?? source));
 
 /** Transactions read from bank and e-wallet notifications, waiting for a yes or no. */
 export default function PerluDicekPage() {

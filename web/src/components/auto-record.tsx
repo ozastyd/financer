@@ -8,6 +8,7 @@ import { useToast } from "./toast";
 import { Spinner } from "./ui/controls";
 import { Sheet } from "./ui/sheet";
 import { toAppError } from "@/lib/errors";
+import { IPhoneRecord } from "./iphone-record";
 import { type NativeStatus, nativeApp } from "@/lib/native";
 import { SOURCES } from "@/lib/notifications/parse";
 import { api } from "@/lib/store/local";
@@ -68,7 +69,9 @@ export function AutoRecord() {
     return () => document.removeEventListener("visibilitychange", onShow);
   }, [app, refresh]);
 
-  if (!app || !status) return null;
+  // Outside the Android app: iPhones get the Back Tap shortcut instead.
+  if (!app) return <IPhoneRecord />;
+  if (!status) return null;
 
   const connected = status.connected && device !== null;
 
