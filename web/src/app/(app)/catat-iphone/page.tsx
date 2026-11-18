@@ -15,8 +15,8 @@ interface Device {
   last_seen_at: string | null;
 }
 
-type StepId = "code" | "install" | "backtap" | "try";
-const STEPS: StepId[] = ["code", "install", "backtap", "try"];
+type StepId = "install" | "backtap" | "try";
+const STEPS: StepId[] = ["install", "backtap", "try"];
 const STORE = "financer:iphone-setup";
 
 interface Progress {
@@ -29,7 +29,8 @@ interface Progress {
 function readProgress(): Progress {
   try {
     const p = JSON.parse(window.localStorage.getItem(STORE) ?? "null") as Progress | null;
-    if (p && Array.isArray(p.done)) return p;
+    // Older progress may name steps that no longer exist ("code").
+    if (p && Array.isArray(p.done)) return { ...p, done: p.done.filter((d) => STEPS.includes(d)) };
   } catch {
     /* optional */
   }
@@ -44,9 +45,10 @@ function readProgress(): Progress {
 export default function CatatIPhonePage() {
   const toast = useToast();
   const [progress, setProgress] = useState<Progress>({ done: [], deviceId: null, tryFrom: null });
-  const [open, setOpen] = useState<StepId>("code");
+  const [open, setOpen] = useState<StepId>("install");
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [noAsk, setNoAsk] = useState(false);
   const [success, setSuccess] = useState(false);
   const loaded = useRef(false);
@@ -74,14 +76,49 @@ export default function CatatIPhonePage() {
     if (next) setOpen(next);
   };
 
-  const makeCode = async () => {
+  /**
+   * One tap: make a code for this iPhone, copy it, open the shortcut link.
+   * The copy is started inside the tap (Safari only allows it there) with the
+   * code still on its way, so it works even though the code comes from the server.
+   */
+  const install = async () => {
+    if (busy) return;
     setBusy(true);
-    try {
+    const previous = progress.deviceId;
+    const created = (async () => {
       // A new code replaces this browser's previous one.
-      if (progress.deviceId) await api(`/api/devices/${progress.deviceId}`, "DELETE").catch(() => undefined);
-      const r = await api<{ id: string; token: string }>("/api/devices", "POST", { label: IPHONE_LABEL });
+      if (previous) await api(`/api/devices/${previous}`, "DELETE").catch(() => undefined);
+      return api<{ id: string; token: string }>("/api/devices", "POST", { label: IPHONE_LABEL });
+    })();
+    let ok = false;
+    try {
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        await navigator.clipboard.write([new ClipboardItem({ "text/plain": created.then((r) => new Blob([r.token], { type: "text/plain" })) })]);
+        ok = true;
+      }
+    } catch {
+      /* try the simple way below */
+    }
+    try {
+      const r = await created;
+      if (!ok) ok = await navigator.clipboard.writeText(r.token).then(() => true, () => false);
       setToken(r.token);
-      setProgress((p) => ({ ...p, deviceId: r.id, done: p.done.filter((d) => d === "backtap") }));
+      setCopied(ok);
+      const next: Progress = { ...progress, deviceId: r.id, done: progress.done.filter((d) => d === "backtap") };
+      if (ok && IOS_SHORTCUT_URL) {
+        next.done = [...next.done, "install"];
+        setProgress(next);
+        // Saved now: the link leaves this page.
+        try {
+          window.localStorage.setItem(STORE, JSON.stringify(next));
+        } catch {
+          /* optional */
+        }
+        setOpen(next.done.includes("backtap") ? "try" : "backtap");
+        window.location.assign(IOS_SHORTCUT_URL);
+      } else {
+        setProgress(next);
+      }
     } catch (e) {
       const err = toAppError(e, "Gagal membuat kode. Coba lagi.");
       if (err.kind !== "session") toast.error(err.message);
@@ -90,12 +127,12 @@ export default function CatatIPhonePage() {
     }
   };
 
-  const copyCode = async () => {
+  const copyAgain = async () => {
     if (!token) return;
     try {
       await navigator.clipboard.writeText(token);
+      setCopied(true);
       toast.success("Kode disalin.");
-      finish("code");
     } catch {
       toast.error("Gagal menyalin. Tekan lama kodenya, lalu Salin.");
     }
@@ -157,47 +194,58 @@ export default function CatatIPhonePage() {
           </p>
         </div>
         <p className="s b" aria-live="polite">
-          {success ? "Selesai, semua siap" : `Langkah ${current} dari 4 · ${doneCount} selesai`}
+          {success ? "Selesai, semua siap" : `Langkah ${current} dari ${STEPS.length} · ${doneCount} selesai`}
         </p>
       </header>
 
       <ol className="steps">
-        <Step n={1} id="code" title="Buat kode untuk iPhone ini" open={open} done={progress.done} onOpen={setOpen}>
-          <p className="s pretty">Kode ini menghubungkan shortcut dengan akunmu. Simpan di clipboard dulu, nanti ditempel saat memasang shortcut.</p>
-          {token ? (
+        <Step n={1} id="install" title='Pasang shortcut "Catat ke Financer"' open={open} done={progress.done} onOpen={setOpen}>
+          {IOS_SHORTCUT_URL ? (
             <>
+              <p className="s pretty">
+                Financer membuat kode untuk iPhone ini, menyalinnya, lalu membuka shortcut. Saat iPhone bertanya <b>&ldquo;Tempel kode dari Financer&rdquo;</b>, ketuk kotaknya,
+                pilih <b>Tempel</b>, lalu <b>Tambahkan Shortcut</b>.
+              </p>
+              <button className="btn" type="button" disabled={busy} onClick={install}>
+                {busy ? (
+                  <Spinner label="Menyiapkan shortcut" />
+                ) : (
+                  <>
+                    <Download size={18} aria-hidden="true" />
+                    {progress.done.includes("install") ? "Pasang ulang shortcut" : "Pasang shortcut"}
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <p className="inbox-note">Link shortcut sedang disiapkan. Coba lagi nanti.</p>
+          )}
+          {token && (
+            <>
+              <p className="s pretty" role="status">
+                {copied ? "Kode sudah disalin. Kalau perlu menempel lagi, ini kodenya:" : "Kode belum bisa disalin otomatis. Salin dulu, lalu buka shortcut:"}
+              </p>
               <div className="code-field" aria-label="Kode Financer">
                 <KeyRound size={18} aria-hidden="true" />
                 <span className="num">{token}</span>
               </div>
-              <p className="s mut">Kode hanya ditampilkan sekali. Jangan bagikan ke orang lain.</p>
-              <button className="btn" type="button" onClick={copyCode}>
-                <Copy size={18} aria-hidden="true" />
-                Salin kode
-              </button>
+              <p className="s mut">Jangan bagikan kode ini ke orang lain.</p>
+              <div className="g2">
+                <button className="btn ghost" type="button" onClick={copyAgain}>
+                  <Copy size={18} aria-hidden="true" />
+                  Salin kode
+                </button>
+                {IOS_SHORTCUT_URL && (
+                  <a className="btn ghost" href={IOS_SHORTCUT_URL} target="_blank" rel="noopener noreferrer" onClick={() => finish("install")}>
+                    <ExternalLink size={16} aria-hidden="true" />
+                    Buka link
+                  </a>
+                )}
+              </div>
             </>
-          ) : (
-            <button className="btn" type="button" disabled={busy} onClick={makeCode}>
-              {busy ? <Spinner label="Membuat kode" /> : progress.deviceId ? "Buat kode baru" : "Buat kode"}
-            </button>
-          )}
-        </Step>
-
-        <Step n={2} id="install" title='Pasang shortcut "Catat ke Financer"' open={open} done={progress.done} onOpen={setOpen}>
-          <p className="s pretty">
-            Buka link di bawah, tekan <b>Tambahkan Shortcut</b>, lalu tempel kode saat ditanya.
-          </p>
-          {IOS_SHORTCUT_URL ? (
-            <a className="btn" href={IOS_SHORTCUT_URL} target="_blank" rel="noopener noreferrer" onClick={() => window.setTimeout(() => finish("install"), 800)}>
-              <Download size={18} aria-hidden="true" />
-              Pasang shortcut
-              <ExternalLink size={16} aria-hidden="true" />
-            </a>
-          ) : (
-            <p className="inbox-note">Link shortcut sedang disiapkan. Langkah lain sudah bisa dicoba setelah link tersedia.</p>
           )}
           <button type="button" className="lnk" style={{ alignSelf: "flex-start", minHeight: 44 }} aria-expanded={noAsk} onClick={() => setNoAsk((v) => !v)}>
-            Shortcut tidak menanyakan kode?
+            iPhone tidak menanyakan kode?
           </button>
           {noAsk && (
             <ol className="mini-steps">
@@ -205,17 +253,17 @@ export default function CatatIPhonePage() {
               <li>
                 Tekan <b>•••</b> di &ldquo;Catat ke Financer&rdquo;.
               </li>
-              <li>Tempel kode di kotak teks paling atas, lalu tekan Selesai.</li>
+              <li>Tempel kode di kotak teks (setelah &ldquo;Akhiri Jika&rdquo;), lalu tekan Selesai.</li>
             </ol>
           )}
-          {IOS_SHORTCUT_URL && (
+          {IOS_SHORTCUT_URL && !progress.done.includes("install") && (
             <button type="button" className="btn ghost sm" onClick={() => finish("install")}>
               Sudah terpasang
             </button>
           )}
         </Step>
 
-        <Step n={3} id="backtap" title="Nyalakan Ketuk Belakang" open={open} done={progress.done} onOpen={setOpen}>
+        <Step n={2} id="backtap" title="Nyalakan Ketuk Belakang" open={open} done={progress.done} onOpen={setOpen}>
           <p className="s pretty">Di aplikasi Pengaturan iPhone, buka menu berikut:</p>
           <ol className="path" aria-label="Langkah di Pengaturan">
             {[
@@ -243,7 +291,7 @@ export default function CatatIPhonePage() {
           </button>
         </Step>
 
-        <Step n={4} id="try" title="Coba sekarang" open={open} done={progress.done} onOpen={setOpen}>
+        <Step n={3} id="try" title="Coba sekarang" open={open} done={progress.done} onOpen={setOpen}>
           {success ? (
             <div className="try-ok" role="status">
               <span className="icb g" aria-hidden="true">
