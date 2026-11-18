@@ -43,7 +43,9 @@ const PROVIDERS: Provider[] = [
     // gpt-oss thinks briefly at "low"; Qwen answers directly with "none".
     reasoning: /qwen/i.test(model) ? "none" : "low",
   })),
-  ...(process.env.COACH_WUS_MODELS || "ds/deepseek-v4.1-flash-free,mimo-v2.5:free")
+  // gpt-5 and gpt-5.6-sol come with the gift pack; if it lapses they fail fast
+  // (403) and the question moves on to DeepSeek, which is free without a plan.
+  ...(process.env.COACH_WUS_MODELS || "codex/gpt-5:free,ws/gpt-5.6-sol:v4,ds/deepseek-v4.1-flash-free")
     .split(",")
     .map((m) => m.trim())
     .filter(Boolean)
@@ -64,7 +66,7 @@ const PROVIDERS: Provider[] = [
 const IDLE_TIMEOUT_MS = 15_000;
 const HEDGE_AFTER_MS = 8_000;
 // Enough tries to reach every provider once.
-const ATTEMPTS = 7;
+const ATTEMPTS = 8;
 // Whole-answer budget; after it the user gets the automatic answer instead.
 const TOTAL_BUDGET_MS = 60_000;
 /** Rounds of tool use before the model must answer. */
