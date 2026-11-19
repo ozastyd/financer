@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellRing, ChevronRight, Download, KeyRound, LifeBuoy, LogOut, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { Bell, BellRing, ChevronRight, Compass, Download, KeyRound, LifeBuoy, LogOut, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,6 +18,7 @@ import { EXPERIENCE, OCCUPATIONS, labelOf } from "@/lib/options";
 import { disconnectThisPhone } from "@/lib/native";
 import { api } from "@/lib/store/local";
 import { type ThemeChoice, useTheme } from "@/lib/theme";
+import { queueTour } from "@/lib/tour";
 import { UPCOMING } from "@/lib/upcoming";
 
 /** Message for a failed request; null when the session-expired sheet already explains it. */
@@ -128,6 +129,23 @@ export default function ProfilPage() {
               <span className="s mut">File CSV, bisa dibuka di Excel atau Google Sheets</span>
             </span>
           </a>
+          <button
+            type="button"
+            className="menu-item"
+            onClick={() => {
+              queueTour();
+              router.push("/beranda");
+            }}
+          >
+            <span className="icb" aria-hidden="true">
+              <Compass size={20} />
+            </span>
+            <span className="col sp" style={{ gap: 0 }}>
+              <span className="t">Tur singkat aplikasi</span>
+              <span className="s mut">Kenalan lagi dengan tombol dan menu utama</span>
+            </span>
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
           <Link className="menu-item" href="/privasi">
             <span className="icb" aria-hidden="true">
               <ShieldCheck size={20} />

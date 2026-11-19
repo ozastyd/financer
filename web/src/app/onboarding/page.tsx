@@ -1,5 +1,6 @@
 "use client";
 
+import { queueTour } from "@/lib/tour";
 import { Check, ChevronLeft, Flag, PiggyBank, Plus, Repeat, Smile, Sparkles, Target, TrendingUp, Wallet, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -335,6 +336,8 @@ export default function OnboardingPage() {
 
   const finish = async () => {
     const rec = profile.recommended;
+    // A quick tour of the app waits on Beranda.
+    queueTour();
     if (guest) {
       // Last step for a new visitor: create the account, which saves all of this.
       saveProgress({ step: 6, draft });

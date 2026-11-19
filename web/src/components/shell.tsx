@@ -11,6 +11,8 @@ import { TransactionSheet, type TxPrefill } from "./transaction-sheet";
 import { useKeyboardClass } from "@/lib/keyboard";
 import { newChat, queueAsk, selectAccount, useCoachChat } from "@/lib/coach-chat";
 import { CoachPanel } from "./coach-panel";
+import { AppTour } from "./app-tour";
+import { TOUR_EVENT, tourQueued } from "@/lib/tour";
 import { PullToRefresh } from "./pull-to-refresh";
 import { setPendingScan } from "@/lib/scan-client";
 import { Spinner } from "./ui/controls";
@@ -173,7 +175,7 @@ function CoachButton({ onOpen }: { onOpen: () => void }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return (
-    <button type="button" className={`coach-fab${mini ? " mini" : ""}`} aria-label={loading ? "Tanya Coach, sedang menjawab" : "Tanya Coach"} onClick={onOpen}>
+    <button type="button" data-tour="coach" className={`coach-fab${mini ? " mini" : ""}`} aria-label={loading ? "Tanya Coach, sedang menjawab" : "Tanya Coach"} onClick={onOpen}>
       <Sparkles size={20} strokeWidth={2} aria-hidden="true" />
       <span className="coach-fab-label" aria-hidden="true">
         Tanya Coach
@@ -190,6 +192,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { status, data, loadErrorKind, refresh, retryAll, online, session } = useApp();
   const [coachOpen, setCoachOpen] = useState(false);
   const coach = useCoachChat();
+  const [touring, setTouring] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -244,6 +247,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const name = data.userProfile?.display_name ?? session?.email.split("@")[0] ?? "";
   const initial = (name || "?").charAt(0).toUpperCase();
 
+  // The quick tour: once after onboarding, or when asked for from Profil.
+  useEffect(() => {
+    const check = () => {
+      if (status === "ready" && !needsOnboarding && pathname === "/beranda" && tourQueued()) setTouring(true);
+    };
+    check();
+    window.addEventListener(TOUR_EVENT, check);
+    return () => window.removeEventListener(TOUR_EVENT, check);
+  }, [status, needsOnboarding, pathname]);
+
   const ctx = useMemo(() => ({ openAddTx, startScan, openCoach }), [openAddTx, startScan, openCoach]);
 
   if (status === "error" && loadErrorKind !== "session") {
@@ -290,13 +303,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Camera opens the back camera on phones; upload also takes bank-statement PDFs. */}
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
       <input ref={uploadInput} type="file" accept="image/*,application/pdf" hidden onChange={onFile} />
-      <nav className="tab" aria-label="Navigasi utama" hidden={focusTask}>
+      <nav className="tab" aria-label="Navigasi utama" hidden={focusTask} data-tour="tabs">
         {TABS.map((t) => {
           if (!t) {
             return (
               <button
                 key="plus"
                 type="button"
+                data-tour="plus"
                 className="plus"
                 aria-label={!online ? "Tambah transaksi, tidak tersedia saat offline" : "Tambah transaksi"}
                 disabled={!online}
@@ -358,6 +372,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         onOpenChange={(open) => setSheet((s) => ({ ...s, open }))}
       />
       <SessionExpiredSheet />
+      {touring && pathname === "/beranda" && <AppTour name={name} onDone={() => setTouring(false)} onRecord={() => openAddTx()} />}
     </ShellContext.Provider>
   );
 }

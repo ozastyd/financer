@@ -3564,3 +3564,147 @@ html.kb-open .coach-fab {
   background: var(--bg);
   pointer-events: none;
 }
+/* Quick app tour (components/app-tour.tsx): the screen dims around one lit-up
+   part, with a short card beside it. The light glides from part to part. */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+.tour-block {
+  position: fixed;
+  pointer-events: auto;
+  touch-action: none;
+}
+.tour-dim {
+  background: var(--scrim);
+  animation: tour-fade 0.24s var(--ease-out) both;
+}
+.tour-spot {
+  position: fixed;
+  box-shadow: 0 0 0 2px var(--pri), 0 0 0 200vmax var(--scrim);
+  transition: top 0.38s var(--ease-out), left 0.38s var(--ease-out), width 0.38s var(--ease-out), height 0.38s var(--ease-out), border-radius 0.38s var(--ease-out);
+}
+/* Interactive steps: a soft ring breathes out from the control to tap. */
+.tour-pulse {
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--pri) 55%, transparent);
+  animation: tour-pulse 1.6s var(--ease-out) infinite;
+}
+.tour-card {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  max-width: 400px;
+  margin-inline: auto;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 18px 14px;
+  border-radius: 22px;
+  background: var(--sf);
+  color: var(--ink);
+  box-shadow: 0 18px 40px -12px rgba(6, 10, 14, 0.45), 0 2px 8px -2px rgba(6, 10, 14, 0.2);
+  animation: tour-in 0.26s var(--ease-out) both;
+}
+.tour-card.center {
+  top: 50%;
+  translate: 0 -50%;
+  padding: 22px 20px 16px;
+  gap: 10px;
+}
+.tour-card:focus {
+  outline: none;
+}
+.tour-card :focus-visible {
+  outline: 3px solid var(--pri);
+  outline-offset: 2px;
+}
+.tour-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: var(--pris);
+  color: var(--onpris);
+}
+.tour-count {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--mut);
+  font-variant-numeric: tabular-nums;
+}
+.tour-dots {
+  display: flex;
+  gap: 4px;
+}
+.tour-dots i {
+  width: 14px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--line);
+}
+.tour-dots i.on {
+  background: var(--pri);
+}
+.tour-tap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pri);
+}
+.tour-tap::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: coach-dot 1.2s ease-in-out infinite;
+}
+.tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.tour-skip {
+  margin-right: auto;
+  min-height: 44px;
+  color: var(--mut);
+}
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tour-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pri) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--pri) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-spot {
+    transition: none;
+  }
+  .tour-card,
+  .tour-dim,
+  .tour-pulse,
+  .tour-tap::before {
+    animation: none;
+  }
+}
