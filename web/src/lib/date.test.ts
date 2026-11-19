@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  BANTER,
   addDays,
+  banterLine,
   addMonths,
   endOfMonth,
   formatDayHeading,
@@ -10,6 +12,7 @@ import {
   isValidDate,
   monthsBetween,
   startOfWeek,
+  timeOfDay,
   todayJakarta,
 } from "./date";
 
@@ -22,6 +25,22 @@ describe("todayJakarta", () => {
   it("greets by Jakarta hour", () => {
     expect(greeting(new Date("2026-11-14T13:00:00Z"))).toBe("Selamat malam"); // 20:00 WIB
     expect(greeting(new Date("2026-11-14T00:30:00Z"))).toBe("Selamat pagi"); // 07:30 WIB
+  });
+});
+
+describe("banter", () => {
+  it("splits the day at Jakarta hours", () => {
+    expect(timeOfDay(new Date("2026-11-14T21:00:00Z"))).toBe("pagi"); // 04:00 WIB
+    expect(timeOfDay(new Date("2026-11-14T04:00:00Z"))).toBe("siang"); // 11:00 WIB
+    expect(timeOfDay(new Date("2026-11-14T08:00:00Z"))).toBe("sore"); // 15:00 WIB
+    expect(timeOfDay(new Date("2026-11-14T11:00:00Z"))).toBe("malam"); // 18:00 WIB
+    expect(timeOfDay(new Date("2026-11-14T20:59:00Z"))).toBe("malam"); // 03:59 WIB
+  });
+  it("picks a line for the current part of the day", () => {
+    const sore = new Date("2026-11-14T09:00:00Z");
+    expect(banterLine(sore, () => 0)).toBe(BANTER.sore[0]);
+    expect(banterLine(sore, () => 0.9999)).toBe(BANTER.sore[4]);
+    for (const k of Object.keys(BANTER) as (keyof typeof BANTER)[]) expect(BANTER[k]).toHaveLength(5);
   });
 });
 
