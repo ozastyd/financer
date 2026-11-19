@@ -20,6 +20,10 @@ interface SheetProps {
   dirty?: boolean;
   /** Second line of the discard question, e.g. what was being filled in. */
   discardText?: string;
+  /** Extra class on the sheet, e.g. "tall" for a near full-height sheet. */
+  className?: string;
+  /** A button shown next to the close button. */
+  action?: ReactNode;
 }
 
 /** Pulled further than this, or flicked down faster, the sheet closes. */
@@ -39,6 +43,8 @@ export function Sheet({
   children,
   dirty = false,
   discardText = "Isian yang belum disimpan akan hilang.",
+  className,
+  action,
 }: SheetProps) {
   const [confirm, setConfirm] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -136,7 +142,7 @@ export function Sheet({
       <Dialog.Portal>
         <Dialog.Overlay className="scrim" ref={scrimRef} />
         <Dialog.Content
-          className="sheet"
+          className={className ? `sheet ${className}` : "sheet"}
           ref={sheetRef}
           aria-describedby={undefined}
         >
@@ -153,6 +159,7 @@ export function Sheet({
                 <Dialog.Title className="h2">{title}</Dialog.Title>
                 {subtitle && <div className="s mut">{subtitle}</div>}
               </div>
+              {action}
               <Dialog.Close className="ibtn" aria-label="Tutup">
                 <X size={20} aria-hidden="true" />
               </Dialog.Close>

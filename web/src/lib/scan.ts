@@ -116,7 +116,7 @@ function categoryCodes(categories: Category[]) {
 }
 
 function instructions(categoryList: string, today: string, source: "image" | "text") {
-  return `Kamu membaca ${source === "image" ? "gambar" : "teks"} keuangan dari pengguna di Indonesia: struk belanja, screenshot mutasi/riwayat transaksi aplikasi bank atau e-wallet, atau rekening koran.
+  return `Kamu membaca ${source === "image" ? "gambar" : "teks"} keuangan dari pengguna di Indonesia: struk belanja, screenshot mutasi/riwayat transaksi aplikasi bank atau e-wallet, rekening koran, atau bukti satu transaksi (halaman "Transfer Berhasil", "Pembayaran Berhasil", bukti QRIS, top up, terima uang).
 Hari ini ${today}. Kalau tahun tidak tertulis, pakai tahun yang paling masuk akal (tidak di masa depan).
 
 Kategori pengguna (pakai KODE-nya):
@@ -129,6 +129,7 @@ Aturan:
 - Semua angka dalam rupiah utuh tanpa titik/koma ribuan (Rp86.500 -> 86500).
 - receipt: isi merchant, date, total (yang dibayar setelah diskon, bukan uang tunai/kembalian), category paling cocok untuk struk, dan items (harga baris = qty x harga satuan, diskon dikurangkan dari barang terkait kalau jelas). transactions kosong.
 - statement: isi transactions untuk setiap baris mutasi. amount selalu positif; type income untuk uang masuk (kredit/CR/+), expense untuk uang keluar (debit/DB/-). Abaikan baris saldo awal/akhir dan total. description singkat dari keterangan baris. items kosong.
+- bukti satu transaksi (transfer/pembayaran/QRIS/top up/tagihan berhasil, atau uang diterima): kind "statement" dengan TEPAT satu baris di transactions. amount = total yang benar-benar keluar atau masuk (termasuk biaya admin kalau ditulis sebagai total). type expense kalau pengguna mengirim/membayar, income kalau pengguna menerima. description singkat, misalnya "Transfer ke Budi Santoso", "QRIS Indomaret", "Top up GoPay", "Terima dari Ardhea". Jangan pakai saldo sebagai amount. Kalau statusnya gagal/dibatalkan/menunggu, kind "other".
 - date_clear true hanya kalau tanggal tercetak jelas.
 - Kalau bukan dokumen keuangan atau tidak terbaca, kind "other" dan isi yang sempat terbaca saja (misalnya total).
 - Jangan mengarang angka yang tidak ada.`;

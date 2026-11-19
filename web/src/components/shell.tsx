@@ -1,6 +1,6 @@
 "use client";
 
-import { House, List, LockKeyhole, Plus, Sparkles, Target, TriangleAlert, WifiOff } from "lucide-react";
+import { House, List, LockKeyhole, Plus, RotateCcw, Sparkles, Target, TriangleAlert, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -9,6 +9,8 @@ import { ServiceDownState } from "./error-states";
 import { InlineError } from "./toast";
 import { TransactionSheet, type TxPrefill } from "./transaction-sheet";
 import { useKeyboardClass } from "@/lib/keyboard";
+import { newChat, queueAsk, selectAccount, useCoachChat } from "@/lib/coach-chat";
+import { CoachPanel } from "./coach-panel";
 import { PullToRefresh } from "./pull-to-refresh";
 import { setPendingScan } from "@/lib/scan-client";
 import { Spinner } from "./ui/controls";
@@ -20,6 +22,8 @@ interface ShellContextValue {
   openAddTx: (opts?: { type?: TxType; edit?: Transaction; prefill?: TxPrefill }) => void;
   /** Opens the camera or the file picker, then the scan screen with the chosen file. */
   startScan: (source: "camera" | "upload") => void;
+  /** Slides the AI Coach up over the current page; with a question, asks it right away. */
+  openCoach: (question?: string) => void;
 }
 
 const ShellContext = createContext<ShellContextValue | null>(null);
@@ -35,7 +39,7 @@ const TABS = [
   { href: "/transaksi", label: "Transaksi", Icon: List },
   null,
   { href: "/tujuan", label: "Tujuan", Icon: Target },
-  { href: "/coach", label: "AI Coach", Icon: Sparkles },
+  { href: "/profil", label: "Profil", Icon: null },
 ] as const;
 
 
@@ -146,11 +150,46 @@ function SessionExpiredSheet() {
   );
 }
 
+/** Pages with the floating "Tanya Coach" button. */
+const COACH_PAGES = ["/beranda", "/transaksi", "/tujuan"];
+
+/**
+ * "Tanya Coach": floats above the tab bar on the main pages. Scrolling down
+ * shrinks it to its icon so it doesn't cover the cards; scrolling up brings
+ * the label back. A dot shows while an answer is still being written.
+ */
+function CoachButton({ onOpen }: { onOpen: () => void }) {
+  const { loading } = useCoachChat();
+  const [mini, setMini] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8) return;
+      setMini(y > last && y > 80);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <button type="button" className={`coach-fab${mini ? " mini" : ""}`} aria-label={loading ? "Tanya Coach, sedang menjawab" : "Tanya Coach"} onClick={onOpen}>
+      <Sparkles size={20} strokeWidth={2} aria-hidden="true" />
+      <span className="coach-fab-label" aria-hidden="true">
+        Tanya Coach
+      </span>
+      {loading && <span className="coach-fab-dot" aria-hidden="true" />}
+    </button>
+  );
+}
+
 /** Pages that refresh when pulled down from the top. */
 const PULL_PAGES = ["/beranda", "/transaksi", "/tujuan", "/perlu-dicek"];
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { status, data, loadErrorKind, refresh, retryAll, online } = useApp();
+  const { status, data, loadErrorKind, refresh, retryAll, online, session } = useApp();
+  const [coachOpen, setCoachOpen] = useState(false);
+  const coach = useCoachChat();
   const [retrying, setRetrying] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -163,6 +202,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const focusTask = pathname === "/scan";
   // The tab bar steps aside while the on-screen keyboard is open.
   useKeyboardClass();
+  // The conversation belongs to the signed-in account.
+  useEffect(() => selectAccount(session?.userId), [session?.userId]);
 
   useEffect(() => {
     if (status === "signed_out") router.replace("/masuk?mode=masuk");
@@ -186,7 +227,24 @@ export function AppShell({ children }: { children: ReactNode }) {
     else router.push("/scan");
   };
 
-  const ctx = useMemo(() => ({ openAddTx, startScan }), [openAddTx, startScan]);
+  const openCoach = useCallback((question?: string) => {
+    if (question) queueAsk(question);
+    setCoachOpen(true);
+  }, []);
+
+  // Old links to /coach (bookmarks, the Android app) land on Beranda with the Coach open.
+  useEffect(() => {
+    if (pathname === "/coach") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reacts to arriving at the old address
+      setCoachOpen(true);
+      router.replace("/beranda");
+    }
+  }, [pathname, router]);
+
+  const name = data.userProfile?.display_name ?? session?.email.split("@")[0] ?? "";
+  const initial = (name || "?").charAt(0).toUpperCase();
+
+  const ctx = useMemo(() => ({ openAddTx, startScan, openCoach }), [openAddTx, startScan, openCoach]);
 
   if (status === "error" && loadErrorKind !== "session") {
     return (
@@ -228,7 +286,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <StatusBanner />
       <PullToRefresh enabled={PULL_PAGES.includes(pathname)} onRefresh={retryAll} />
       {children}
-      {!focusTask && <div className="tab-spacer" aria-hidden="true" />}
+      {!focusTask && <div className={COACH_PAGES.includes(pathname) ? "tab-spacer with-coach" : "tab-spacer"} aria-hidden="true" />}
       {/* Camera opens the back camera on phones; upload also takes bank-statement PDFs. */}
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
       <input ref={uploadInput} type="file" accept="image/*,application/pdf" hidden onChange={onFile} />
@@ -252,12 +310,42 @@ export function AppShell({ children }: { children: ReactNode }) {
           const on = pathname === t.href || pathname.startsWith(`${t.href}/`);
           return (
             <Link key={t.href} href={t.href} className={on ? "on" : ""} aria-current={on ? "page" : undefined}>
-              <t.Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+              {t.Icon ? (
+                <t.Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+              ) : (
+                // Profil shows the user's own avatar (their initial).
+                <span className="tab-ava" aria-hidden="true">
+                  {initial}
+                </span>
+              )}
               {t.label}
             </Link>
           );
         })}
       </nav>
+      {COACH_PAGES.includes(pathname) && !coachOpen && <CoachButton onOpen={() => openCoach()} />}
+      <Sheet
+        open={coachOpen}
+        onOpenChange={setCoachOpen}
+        title="AI Coach"
+        subtitle="Jawab pakai angkamu sendiri"
+        className="tall coach-sheet"
+        action={
+          coach.messages.length > 0 && !coach.loading ? (
+            <button className="btn ghost sm coach-new" type="button" aria-label="Mulai obrolan baru" onClick={newChat}>
+              <RotateCcw size={16} aria-hidden="true" />
+              Baru
+            </button>
+          ) : null
+        }
+      >
+        <CoachPanel
+          onAddTx={() => {
+            setCoachOpen(false);
+            openAddTx();
+          }}
+        />
+      </Sheet>
       <TransactionSheet
         open={sheet.open}
         initialType={sheet.type}

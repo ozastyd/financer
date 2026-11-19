@@ -3433,35 +3433,125 @@ html {
   border-radius: 13px;
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.45);
 }
-/* Coach: the disclaimer and typing bar stay pinned above the tab bar. */
-.coach-composer {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  /* Background reaches down to the tab bar; the extra bottom padding keeps
-     the input clear of the "+" button that rises out of it. */
-  bottom: calc(57px + max(12px, env(safe-area-inset-bottom, 0px)));
-  z-index: 25;
-  width: 100%;
-  max-width: 480px;
+/* AI Coach: a tall sheet. Its typing bar stays pinned at the bottom while the
+   conversation scrolls (the sheet's own bottom padding moves into the bar). */
+.sheet.tall {
+  height: calc(100dvh - max(28px, calc(env(safe-area-inset-top, 0px) + 12px)));
+  padding-bottom: 0;
+}
+.coach-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 20px 34px;
+  margin: 0 -20px;
+  padding: 10px 20px max(14px, env(safe-area-inset-bottom, 0px));
   background: var(--bg);
   box-shadow: 0 -14px 18px -6px var(--bg);
 }
-html.kb-open .coach-composer {
-  padding-bottom: 12px;
+html.kb-open .coach-dock {
+  padding-bottom: 10px;
 }
-/* Room under the last message so it isn't hidden behind the composer. */
-.coach-composer-space {
+html.kb-open .coach-dock > p {
+  display: none;
+}
+/* "Tanya Coach": floats above the tab bar, right side; shrinks to its icon while scrolling down. */
+.coach-fab {
+  position: fixed;
+  right: max(16px, calc(50% - 240px + 16px));
+  bottom: calc(68px + max(12px, env(safe-area-inset-bottom, 0px)) + 14px);
+  z-index: 29;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 16px 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--pri) 22%, var(--line));
+  background: var(--sf);
+  color: var(--pri);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 8px 22px -8px rgba(4, 60, 44, 0.35), 0 2px 6px -2px rgba(4, 60, 44, 0.18);
+  cursor: pointer;
+  transition: padding 0.22s var(--ease-out), gap 0.22s var(--ease-out), translate 0.22s var(--ease-out);
+}
+.coach-fab:active {
+  translate: 0 1px;
+}
+.coach-fab:focus-visible {
+  outline: 3px solid var(--pri);
+  outline-offset: 2px;
+}
+.coach-fab-label {
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.22s var(--ease-out), opacity 0.18s;
+}
+.coach-fab.mini {
+  gap: 0;
+  padding: 0 13px;
+}
+.coach-fab.mini .coach-fab-label {
+  max-width: 0;
+  opacity: 0;
+}
+.coach-fab-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--pri);
+  box-shadow: 0 0 0 2px var(--sf);
+  animation: coach-dot 1.2s ease-in-out infinite;
+}
+@keyframes coach-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+/* Profil tab: the user's avatar instead of an icon; ringed when active. */
+.tab-ava {
+  width: 22px;
+  height: 22px;
+  margin: -1px 0; /* same line box as the 20 px icons */
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pris);
+  color: var(--onpris);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+.tab a.on .tab-ava {
+  box-shadow: 0 0 0 1.5px var(--bg), 0 0 0 3px var(--ink);
+}
+/* Lets the last card scroll clear of the floating button. */
+.tab-spacer.with-coach {
+  height: 152px;
+}
+.coach-new {
   flex: none;
-  height: 126px;
+  padding-inline: 14px;
 }
-/* The tab bar hides while typing: sit right above the keyboard. */
-html.kb-open .coach-composer {
-  bottom: 0;
+html.kb-open .coach-fab {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-fab,
+  .coach-fab-label {
+    transition: none;
+  }
+  .coach-fab-dot {
+    animation: none;
+  }
 }
 /* Covers the status bar area when the app draws edge to edge (0 px in a browser). */
 .status-cover {

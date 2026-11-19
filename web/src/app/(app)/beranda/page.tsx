@@ -2,12 +2,10 @@
 
 import { BellRing, Check, ChevronRight, CircleHelp, Pencil, PiggyBank, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { CashFlowChart, CategoryDonut, SLICE_COLORS } from "@/components/charts";
 import { IPhoneCard } from "@/components/iphone-record";
-import { queueAsk } from "@/lib/coach-chat";
 import { useShell } from "@/components/shell";
 import { Segmented } from "@/components/ui/controls";
 import { AnimatedRupiah } from "@/components/ui/animated-number";
@@ -50,8 +48,7 @@ function GoalRing({ goal }: { goal: Goal }) {
 
 export default function BerandaPage() {
   const { data, today, session } = useApp();
-  const { openAddTx } = useShell();
-  const router = useRouter();
+  const { openAddTx, openCoach } = useShell();
   const [period, setPeriod] = useState<Period>("month");
   const [explain, setExplain] = useState(false);
 
@@ -110,9 +107,6 @@ export default function BerandaPage() {
           </h1>
           <p className="s mut">{formatLongDate(today)}</p>
         </div>
-        <Link className="ava" href="/profil" aria-label={`Profil ${name}`}>
-          {(name || "?").charAt(0).toUpperCase()}
-        </Link>
       </header>
 
       <IPhoneCard />
@@ -363,8 +357,7 @@ export default function BerandaPage() {
               // Opens the Coach and asks right away, with this card's numbers.
               const parts = slices.map((sl, i) => `${sl.name} ${formatRupiah(sl.amount)} (${pcts[i]}%)`).join(", ");
               const money = cur.income > 0 ? ` dari pemasukan ${formatRupiah(cur.income)}` : "";
-              queueAsk(`Pengeluaranku ${periodName} ${formatRupiah(cur.expense)}${money}. Paling banyak untuk: ${parts}. Gimana cara menghematnya?`);
-              router.push("/coach");
+              openCoach(`Pengeluaranku ${periodName} ${formatRupiah(cur.expense)}${money}. Paling banyak untuk: ${parts}. Gimana cara menghematnya?`);
             }}
           >
             <Sparkles size={16} aria-hidden="true" />
