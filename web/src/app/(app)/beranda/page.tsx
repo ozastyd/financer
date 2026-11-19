@@ -125,7 +125,7 @@ export default function BerandaPage() {
 
       <Segmented label="Rentang waktu" value={period} onChange={setPeriod} options={(["week", "month", "year"] as Period[]).map((p) => ({ value: p, label: PERIOD_LABEL[p] }))} />
 
-      <section className="col" style={{ gap: 10 }} aria-labelledby="hero-title">
+      <section className="col" style={{ gap: 10 }} aria-labelledby="hero-title" data-tour="sisa">
         <h2 id="hero-title" className="sec">
           {headline}
         </h2>
