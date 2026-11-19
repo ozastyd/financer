@@ -20,12 +20,56 @@ export function timeJakarta(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-GB", { timeZone: TIMEZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
 }
 
-export function greeting(now: Date = new Date()): string {
+export type TimeOfDay = "pagi" | "siang" | "sore" | "malam";
+
+/** Part of the day in Jakarta, as Indonesians greet it. */
+export function timeOfDay(now: Date = new Date()): TimeOfDay {
   const h = hourJakarta(now);
-  if (h >= 4 && h < 11) return "Selamat pagi";
-  if (h >= 11 && h < 15) return "Selamat siang";
-  if (h >= 15 && h < 18) return "Selamat sore";
-  return "Selamat malam";
+  if (h >= 4 && h < 11) return "pagi";
+  if (h >= 11 && h < 15) return "siang";
+  if (h >= 15 && h < 18) return "sore";
+  return "malam";
+}
+
+export function greeting(now: Date = new Date()): string {
+  return `Selamat ${timeOfDay(now)}`;
+}
+
+/** Light-hearted lines shown under the greeting on Beranda, one picked at random. */
+export const BANTER: Record<TimeOfDay, string[]> = {
+  pagi: [
+    "Kopi dulu, baru cek saldo. Urutannya penting.",
+    "Pagi-pagi udah buka Financer? Dompetmu pasti bangga.",
+    "Sarapan boleh enak, asal dompet tetap kenyang.",
+    "Gajian mungkin masih jauh, tapi semangatnya jangan ikut jauh.",
+    "Hari baru, catatan baru. Yuk mulai yang rapi.",
+  ],
+  siang: [
+    "Makan siang apa hari ini? Jangan lupa dicatat ya.",
+    "Panas-panas gini, jangan sampai dompet ikut kepanasan.",
+    "Es teh boleh, tapi jangan tiap jam juga.",
+    "Istirahat sebentar, cek uangmu sambil rebahan.",
+    "Setengah hari lewat. Dompetmu masih aman?",
+  ],
+  sore: [
+    "Jam segini paling rawan godaan jajan sore.",
+    "Gorengan memang murah, tapi kalau tiap hari kerasa juga.",
+    "Pulang kerja jangan mampir checkout ya.",
+    "Langit boleh oranye, saldo tetap hijau.",
+    "Ngopi sore sambil ngintip pengeluaran, pas.",
+  ],
+  malam: [
+    "Sebelum tidur, cek dulu: hari ini uangmu ke mana aja?",
+    "Keranjang belanja boleh diintip, checkout-nya besok aja.",
+    "Malam tenang, dompet tenang.",
+    "Lapar tengah malam? Dapur lebih hemat dari ojek online.",
+    "Kerja bagus hari ini. Tinggal catat, lalu istirahat.",
+  ],
+};
+
+export function banterLine(now: Date = new Date(), rand: () => number = Math.random): string {
+  const lines = BANTER[timeOfDay(now)];
+  return lines[Math.min(lines.length - 1, Math.floor(rand() * lines.length))];
 }
 
 function parts(d: string): [number, number, number] {

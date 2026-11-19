@@ -2,7 +2,7 @@
 
 import { BellRing, Check, ChevronRight, CircleHelp, Pencil, PiggyBank, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useApp } from "@/components/app-provider";
 import { CashFlowChart, CategoryDonut, SLICE_COLORS } from "@/components/charts";
 import { IPhoneCard } from "@/components/iphone-record";
@@ -11,7 +11,7 @@ import { Segmented } from "@/components/ui/controls";
 import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { GoalIcon } from "@/components/ui/icons";
 import { ProgressRing } from "@/components/ui/progress";
-import { formatLongDate, formatMonthYearShort, greeting } from "@/lib/date";
+import { banterLine, formatMonthYearShort, greeting, timeOfDay } from "@/lib/date";
 import { type Period, cumulativeSeriesFromNet, flexiblePlan, periodRange, planCheck, roundedPercents, sameDayComparison, slicesFromAmounts, topNamesFromSlices } from "@/lib/finance";
 import { goalProgress, goalRemaining, monthStatus, sortGoals } from "@/lib/goals";
 import { formatPercent, formatRupiah } from "@/lib/money";
@@ -44,6 +44,25 @@ function GoalRing({ goal }: { goal: Goal }) {
       </span>
     </Link>
   );
+}
+
+// One line per part of the day, picked once per app open so it stays put while moving between tabs.
+const banterPicked = new Map<string, string>();
+function currentBanter(): string {
+  const tod = timeOfDay();
+  let line = banterPicked.get(tod);
+  if (!line) {
+    line = banterLine();
+    banterPicked.set(tod, line);
+  }
+  return line;
+}
+const noSubscribe = () => () => {};
+
+/** A friendly line under the greeting; picked in the browser only, so the server render matches. */
+function Banter() {
+  const line = useSyncExternalStore(noSubscribe, currentBanter, () => "\u00a0");
+  return <p className="s mut pretty">{line}</p>;
 }
 
 export default function BerandaPage() {
@@ -105,7 +124,7 @@ export default function BerandaPage() {
             {greeting()}
             {name ? `, ${name}` : ""}
           </h1>
-          <p className="s mut">{formatLongDate(today)}</p>
+          <Banter />
         </div>
       </header>
 
