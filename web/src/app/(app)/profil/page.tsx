@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellRing, ChevronLeft, ChevronRight, Download, KeyRound, LifeBuoy, LogOut, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { Bell, BellRing, ChevronRight, Download, KeyRound, LifeBuoy, LogOut, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -40,15 +40,7 @@ export default function ProfilPage() {
 
   return (
     <main className="scr safe" style={{ gap: 14 }}>
-      <div className="row">
-        <Link className="ibtn" href="/beranda" aria-label="Kembali ke Beranda">
-          <ChevronLeft size={20} aria-hidden="true" />
-        </Link>
-        <h1 className="h3 sp" style={{ textAlign: "center" }}>
-          Profil
-        </h1>
-        <span style={{ width: 44 }} />
-      </div>
+      <h1 className="h1">Profil</h1>
 
       <div className="row" style={{ gap: 14 }}>
         <span className="ava" style={{ width: 56, height: 56, fontSize: 22 }} aria-hidden="true">
