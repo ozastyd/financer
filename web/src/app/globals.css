@@ -3708,3 +3708,41 @@ html.kb-open .coach-fab {
     animation: none;
   }
 }
+
+/* Coach: suggested questions load in after a short placeholder. */
+.chip-skel {
+  border-color: transparent;
+  background: linear-gradient(90deg, var(--sf2) 0%, var(--ctl) 50%, var(--sf2) 100%);
+  background-size: 200% 100%;
+  opacity: 0.55;
+  animation: chip-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes chip-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.suggest-in {
+  animation: rise 0.28s ease-out both;
+}
+.suggest-in:nth-child(2) {
+  animation-delay: 60ms;
+}
+.suggest-in:nth-child(3) {
+  animation-delay: 120ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip-skel,
+  .suggest-in {
+    animation: none;
+  }
+}
+/* Suggested questions can run to two lines; they read as text, left-aligned. */
+.coach-sheet .chip.suggest-in {
+  text-align: left;
+  padding-block: 10px;
+  line-height: 1.35;
+}

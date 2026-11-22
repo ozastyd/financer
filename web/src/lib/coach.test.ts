@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFinancialSummary, extractAmount, fallbackReply } from "./coach";
+import { buildFinancialSummary, extractAmount, fallbackReply, suggestQuestions } from "./coach";
 import { EMPTY_FINANCIAL_PROFILE } from "./types";
 
 describe("extractAmount", () => {
@@ -42,5 +42,29 @@ describe("fallbackReply", () => {
 
   it("summarises the month otherwise", () => {
     expect(fallbackReply("gimana keuanganku?", summary)).toContain("arus kas bersih Rp3.500.000");
+  });
+});
+
+describe("suggestQuestions", () => {
+  const base = {
+    financial: { ...EMPTY_FINANCIAL_PROFILE, monthly_income: 4_000_000, onboarding_completed: true, emergency_fund_status: "belum_ada" },
+    categories: [{ id: "food", name: "Makan & minum", type: "expense" as const, icon: "makan", sort_order: 1 }],
+    goals: [],
+  };
+  it("asks about the user's own spending first", () => {
+    const s = buildFinancialSummary(
+      { ...base, transactions: [{ id: "1", type: "expense" as const, category_id: "food", amount: 450_000, description: null, transaction_date: "2026-11-10", created_at: "2026-11-10T00:00:00Z" }] },
+      "2026-11-14",
+    );
+    const qs = suggestQuestions(s);
+    expect(qs).toHaveLength(3);
+    expect(qs[0]).toBe("Bulan ini aku minus. Gimana nutupnya?");
+    expect(qs[1]).toContain("makan & minum yang sudah 450 rb");
+  });
+  it("falls back to profile questions before any record", () => {
+    const qs = suggestQuestions(buildFinancialSummary({ ...base, transactions: [] }, "2026-11-14"));
+    expect(qs).toHaveLength(3);
+    expect(qs).toContain("Dana darurat idealnya berapa buatku?");
+    expect(new Set(qs).size).toBe(3);
   });
 });

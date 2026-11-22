@@ -702,6 +702,44 @@ export function transactionsPage(uid: string, p: PageArgs) {
   );
 }
 
+export interface CoachTxSearch {
+  /** Any of these words in the note or category name (empty: every transaction in range). */
+  terms: string[];
+  type: "income" | "expense" | null;
+  from: string;
+  to: string;
+  order: "terbaru" | "terbesar";
+  limit: number;
+}
+
+/**
+ * The AI Coach's look-up over the user's own records: the matching rows
+ * (newest or largest first) plus the count and total of every match, so it
+ * can answer "berapa total…" without seeing more rows than it needs.
+ */
+export function coachSearchTransactions(uid: string, q: CoachTxSearch) {
+  const terms = q.terms.map((t) => t.trim()).filter((t) => t.length >= 2).slice(0, 8);
+  const likes = terms.map((t) => `%${t.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+  const match = likes.length ? `and (${likes.map(() => "t.description like ? escape '\\' or c.name like ? escape '\\'").join(" or ")})` : "";
+  const where = `from transactions t left join categories c on c.id = t.category_id and c.user_id = t.user_id
+     where t.user_id = ? and t.transaction_date between ? and ? and (? is null or t.type = ?) ${match}`;
+  const params: SQLInputValue[] = [uid, q.from, q.to, q.type, q.type, ...likes.flatMap((l) => [l, l])];
+  const totals = one(
+    `select count(*) as n,
+            coalesce(sum(case when t.type='expense' then t.amount end),0) as expense,
+            coalesce(sum(case when t.type='income' then t.amount end),0) as income ${where}`,
+    ...params,
+  ) as { n: number; expense: number; income: number };
+  const order = q.order === "terbesar" ? "t.amount desc, t.transaction_date desc" : "t.transaction_date desc, t.transaction_time desc, t.created_at desc";
+  const rows = all(
+    `select t.transaction_date as date, t.transaction_time as time, t.type, t.amount, c.name as category, t.description ${where}
+     order by ${order} limit ?`,
+    ...params,
+    Math.min(Math.max(q.limit || 10, 1), 25),
+  ) as { date: string; time: string | null; type: string; amount: number; category: string | null; description: string | null }[];
+  return { ...totals, rows };
+}
+
 /** Maps a SQLite error to the same messages the app used with Postgres. */
 export function dbErrorMessage(e: unknown): { message: string; status: number } {
   const msg = e instanceof Error ? e.message : "";

@@ -102,3 +102,14 @@ export function useGoalContributions(goalId: string | undefined) {
     },
   });
 }
+
+/** Three suggested questions for the Coach's empty state, written from the user's own figures. */
+export function useCoachSuggestions(enabled: boolean) {
+  return useQuery<string[]>({
+    queryKey: ["coach-suggest"],
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    queryFn: async () => (await get<{ questions: string[] }>("/api/coach/suggest", {})).questions,
+  });
+}
