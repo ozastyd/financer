@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { todayJakarta } from "@/lib/date";
 import { AppError, type ErrorKind, toAppError } from "@/lib/errors";
+import { nativeApp } from "@/lib/native";
 import { createLocalAuth, createLocalStore } from "@/lib/store/local";
 import { type AppData, type AuthClient, type DataStore, EMPTY_DATA, type Session, type SignUpExtras } from "@/lib/store/types";
 import { SplashScreen } from "./brand";
@@ -231,6 +232,43 @@ function AppState({ children, queryClient }: { children: ReactNode; queryClient:
       window.clearInterval(timer);
     };
   }, [loadSessionData, queryClient]);
+
+  // Android app: the website loading means the server is reachable, so the phone
+  // sends what it saved while the server was asleep (and missed notifications
+  // still in the shade) right away instead of waiting out its retry delay. The
+  // results land in "Perlu dicek"; a quiet reload a few seconds later shows them.
+  const signedIn = status === "ready" && Boolean(session);
+  useEffect(() => {
+    const app = nativeApp();
+    if (!app || !signedIn) return;
+    let last = 0;
+    let later = 0;
+    const flush = () => {
+      if (document.visibilityState !== "visible") return;
+      const t = Date.now();
+      if (t - last < 60_000) return;
+      last = t;
+      app
+        .status()
+        .then((s) => (s.connected ? app.flush() : null))
+        .then((r) => {
+          if (!r || r.sent === 0) return;
+          window.clearTimeout(later);
+          later = window.setTimeout(() => {
+            loadSessionData().catch(() => undefined);
+            void queryClient.invalidateQueries({ refetchType: "active" });
+          }, 6_000);
+        })
+        .catch(() => undefined);
+    };
+    flush();
+    const onShow = () => document.visibilityState === "visible" && flush();
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      document.removeEventListener("visibilitychange", onShow);
+      window.clearTimeout(later);
+    };
+  }, [signedIn, loadSessionData, queryClient]);
 
   // Back online: refresh what is on screen and say so once.
   const online = useOnline(() => {

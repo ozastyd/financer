@@ -84,5 +84,20 @@ class UploadWorker(context: Context, params: WorkerParameters) : Worker(context,
                 .build()
             WorkManager.getInstance(c).enqueueUniqueWork(NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, req)
         }
+
+        /**
+         * Sends right away, replacing an upload that is waiting out its retry
+         * delay (after the server was unreachable the delay grows to hours).
+         * Called when Financer is opened and its website has loaded, i.e. the
+         * server is reachable again. An interrupted send is repeated; the
+         * server adds each notification only once.
+         */
+        fun sendNow(c: Context) {
+            val req = OneTimeWorkRequestBuilder<UploadWorker>()
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(c).enqueueUniqueWork(NAME, ExistingWorkPolicy.REPLACE, req)
+        }
     }
 }
