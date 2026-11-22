@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { parseBody } from "@/lib/api";
-import { COACH_SYSTEM_PROMPT, type FinancialSummary, fallbackReply, summaryFromDashboard } from "@/lib/coach";
-import { dashboardArgs, parseDashboard } from "@/lib/dashboard";
-import { startOfMonth, todayJakarta } from "@/lib/date";
-import { dashboard, getFinancialProfile, listCategories, listGoals } from "@/lib/db";
+import { COACH_SYSTEM_PROMPT, type FinancialSummary, fallbackReply } from "@/lib/coach";
+import { loadSummary } from "@/lib/coach-server";
+import { addMonths, todayJakarta } from "@/lib/date";
+import { coachSearchTransactions } from "@/lib/db";
 import { coachRequest } from "@/lib/schemas";
 import { type SearchResult, searchEnabled, webSearch } from "@/lib/search";
 import { requireUser } from "@/lib/server";
@@ -72,6 +72,7 @@ const TOTAL_BUDGET_MS = 60_000;
 /** Rounds of tool use before the model must answer. */
 const MAX_TOOL_ROUNDS = 2;
 const MAX_SEARCHES = 3;
+const MAX_LOOKUPS = 3;
 
 // Simple in-memory limit per user (resets on server restart).
 const WINDOW_MS = 60 * 60 * 1000;
@@ -122,6 +123,41 @@ const SEARCH_TOOL = {
   },
 } as const;
 
+const TX_TOOL = {
+  type: "function",
+  function: {
+    name: "cari_transaksi",
+    description:
+      "Cari di catatan transaksi pengguna sendiri (tanggal, jam, jumlah, kategori, keterangan). Pakai untuk pertanyaan soal transaksi tertentu, misalnya 'tiket kereta terakhir berapa', 'berapa kali beli kopi bulan ini', 'total transport minggu lalu', 'pengeluaran terbesar bulan ini'. Hasilnya juga memuat jumlah dan total semua transaksi yang cocok.",
+    parameters: {
+      type: "object",
+      properties: {
+        kata_kunci: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Kata yang dicari di keterangan atau nama kategori; transaksi cocok kalau mengandung salah satunya. Beri beberapa variasi pendek termasuk versi bahasa Inggris, singkatan, dan nama merek, misalnya ['tiket', 'kereta', 'KAI'] atau ['kopi', 'coffee', 'kenangan', 'starbucks']. Kosongkan untuk semua transaksi di rentang tanggal.",
+        },
+        jenis: { type: "string", enum: ["pengeluaran", "pemasukan", "semua"], description: "Default semua." },
+        dari: { type: "string", description: "Tanggal awal YYYY-MM-DD. Default 12 bulan lalu." },
+        sampai: { type: "string", description: "Tanggal akhir YYYY-MM-DD. Default hari ini." },
+        urutan: { type: "string", enum: ["terbaru", "terbesar"], description: "Default terbaru." },
+        batas: { type: "integer", description: "Jumlah baris yang ditampilkan, 1–25. Default 10." },
+      },
+    },
+  },
+} as const;
+
+const TX_PROMPT = `
+
+Kamu punya alat cari_transaksi untuk membaca catatan transaksi pengguna satu per satu (ringkasan JSON hanya berisi total).
+- Pakai kalau pertanyaan menyangkut transaksi tertentu, keterangan, toko, frekuensi, atau total untuk hal tertentu. Jangan bilang datanya tidak ada sebelum mencari.
+- Beri beberapa kata kunci pendek sekaligus (sinonim, singkatan, nama merek). Kalau tidak ketemu, coba sekali lagi dengan kata lain atau tanpa kata kunci di rentang tanggal yang masuk akal.
+- Jawab seperti teman yang mengecek catatan: sebut keterangannya, tanggal dalam format biasa (misalnya "22 Nov"), dan jumlahnya persis dari hasil. Angka dari hasil ini adalah angka tercatat, jadi tidak perlu diberi label "(angka tercatat)".
+- "Pengeluaran terbesar" bisa berarti satu transaksi terbesar (cari dengan urutan terbesar) atau kategori terbesar (dari ringkasan); kalau ragu, sebut keduanya singkat.`;
+
+const TOOLS = searchEnabled ? [TX_TOOL, SEARCH_TOOL] : [TX_TOOL];
+
 const SEARCH_PROMPT = `
 
 Kamu punya alat web_search untuk mencari di internet secara real-time.
@@ -129,7 +165,7 @@ Kamu punya alat web_search untuk mencari di internet secara real-time.
 - Pakai web_search kalau pengguna tanya soal membeli produk tertentu, harga, perbandingan toko, promo, atau info terbaru. Cukup 1–2 pencarian yang spesifik.
 - Untuk rencana beli barang: sebutkan kisaran harga termurah–termahal yang kamu temukan beserta nama tokonya, lalu hubungkan dengan angka di ringkasan (mampu atau tidak, dampak ke tujuan, alternatif lebih hemat seperti varian lain, barang second, atau menunggu promo).
 - Tandai harga sebagai "hasil pencarian, bisa berubah". Jangan menulis URL; daftar sumber ditampilkan otomatis oleh aplikasi.
-- Pertanyaan yang tidak butuh internet (misalnya ringkasan pengeluaran atau tips umum) jawab langsung tanpa mencari.`;
+- Pertanyaan yang tidak butuh internet (misalnya ringkasan pengeluaran, transaksi pengguna, atau tips umum) jawab langsung tanpa web_search.`;
 
 /** Visible text of a reply: drops <think>…</think> blocks, including one still open. */
 function visibleText(raw: string): string {
@@ -187,7 +223,7 @@ async function streamTurn(
         stream: true,
         ...(provider.reasoning !== "omit" ? { reasoning_effort: provider.reasoning } : {}),
         messages,
-        ...(withTools ? { tools: [SEARCH_TOOL], tool_choice: "auto" } : {}),
+        ...(withTools ? { tools: TOOLS, tool_choice: "auto" } : {}),
       }),
       signal: ctrl.signal,
     });
@@ -373,17 +409,18 @@ type CoachEvent =
   | { type: "reset" }
   | { type: "done"; source: "ai" | "fallback"; reply?: string; notice?: string; sources?: SourceLink[] };
 
-/** Runs the conversation, searching the web when the model asks to, and streams events. */
-async function converse(messages: ChatMessage[], send: (e: CoachEvent) => void, signal: AbortSignal): Promise<{ text: string; sources: SourceLink[] }> {
+/** Runs the conversation, looking up the user's records or the web when the model asks to, and streams events. */
+async function converse(uid: string, messages: ChatMessage[], send: (e: CoachEvent) => void, signal: AbortSignal): Promise<{ text: string; sources: SourceLink[] }> {
   const sources = new Map<string, SourceLink>();
   let searches = 0;
+  let lookups = 0;
   const deadline = Date.now() + TOTAL_BUDGET_MS;
   for (let round = 0; ; round++) {
-    const canSearch = searchEnabled && round < MAX_TOOL_ROUNDS && searches < MAX_SEARCHES && deadline - Date.now() > 30_000;
+    const canUseTools = round < MAX_TOOL_ROUNDS && deadline - Date.now() > 30_000;
     let shown = false;
     const msg = await runTurn(
       messages,
-      canSearch,
+      canUseTools,
       deadline,
       signal,
       (visible) => {
@@ -395,25 +432,39 @@ async function converse(messages: ChatMessage[], send: (e: CoachEvent) => void, 
         send({ type: "reset" });
       },
     );
-    if (!canSearch || msg.tool_calls.length === 0) return { text: msg.content, sources: [...sources.values()].slice(0, 6) };
+    if (!canUseTools || msg.tool_calls.length === 0) return { text: msg.content, sources: [...sources.values()].slice(0, 6) };
 
-    // The model wants to search: anything it wrote before the call is not the answer.
+    // The model wants to look something up: anything it wrote before the call is not the answer.
     if (shown) send({ type: "reset" });
     messages.push({ role: "assistant", content: msg.content || null, tool_calls: msg.tool_calls });
-    const queries = msg.tool_calls.map((call) => {
+    const args = msg.tool_calls.map((call) => {
       try {
-        return String((JSON.parse(call.function.arguments || "{}") as { query?: string }).query ?? "").trim();
+        return (JSON.parse(call.function.arguments || "{}") ?? {}) as Record<string, unknown>;
       } catch {
-        return "";
+        return {};
       }
     });
-    const shownQueries = queries.filter(Boolean).slice(0, 2);
-    send({ type: "status", text: shownQueries.length ? `Mencari: ${shownQueries.join(" · ")}` : "Mencari di internet…" });
+    const webQueries = msg.tool_calls.map((call, i) => (call.function?.name === "web_search" ? String(args[i].query ?? "").trim() : "")).filter(Boolean);
+    const looksUp = msg.tool_calls.some((call) => call.function?.name === "cari_transaksi");
+    send({
+      type: "status",
+      text: webQueries.length ? `Mencari: ${webQueries.slice(0, 2).join(" · ")}` : looksUp ? "Mencari di catatanmu…" : "Mencari di internet…",
+    });
     const results = await Promise.all(
       msg.tool_calls.map(async (call, i) => {
-        const query = queries[i];
-        if (call.function?.name !== "web_search" || searches >= MAX_SEARCHES) return "Alat tidak tersedia. Jawab dengan data yang sudah ada.";
+        if (call.function?.name === "cari_transaksi") {
+          if (lookups >= MAX_LOOKUPS) return "Batas pencarian catatan tercapai. Jawab dengan hasil yang sudah ada.";
+          lookups++;
+          try {
+            return lookUpTransactions(uid, args[i]);
+          } catch (e) {
+            console.error("coach: transaction lookup failed", e instanceof Error ? e.message : "");
+            return "Gagal membaca catatan. Bilang ke pengguna untuk cek di halaman Transaksi.";
+          }
+        }
+        if (call.function?.name !== "web_search" || !searchEnabled || searches >= MAX_SEARCHES) return "Alat tidak tersedia. Jawab dengan data yang sudah ada.";
         searches++;
+        const query = String(args[i].query ?? "").trim();
         if (!query) return "Kata kunci pencarian kosong.";
         try {
           const found: SearchResult[] = await webSearch(query);
@@ -431,14 +482,63 @@ async function converse(messages: ChatMessage[], send: (e: CoachEvent) => void, 
   }
 }
 
-// Reads only totals computed by the database, never the full transaction history.
-function loadSummary(uid: string): FinancialSummary {
+// Notes mix Indonesian, English and brand names; a search for one also finds the others.
+// Only words long enough not to hide inside others ("KA" is in "makan", "KAI" in "pakaian").
+const SYNONYMS: string[][] = [
+  ["kopi", "coffee", "cafe", "kafe"],
+  ["kereta", "commuter", "KRL", "whoosh"],
+  ["pesawat", "flight", "airlines", "citilink", "lion"],
+  ["bensin", "BBM", "pertalite", "pertamax", "SPBU", "shell"],
+  ["ojek", "ojol", "gojek", "grab", "maxim"],
+  ["makan", "food", "resto", "warung"],
+  ["belanja", "shopping", "indomaret", "alfamart", "supermarket"],
+  ["pulsa", "kuota", "paket data"],
+  ["listrik", "PLN", "token listrik"],
+];
+function expandTerms(terms: string[]): string[] {
+  const out = new Set(terms);
+  for (const t of terms) {
+    const lower = t.toLowerCase().trim();
+    for (const group of SYNONYMS) if (group.some((g) => g.toLowerCase().trim() === lower)) group.forEach((g) => out.add(g));
+  }
+  return [...out];
+}
+
+const isDate = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+/** Runs the model's cari_transaksi call on this user's records only and words the result for it. */
+function lookUpTransactions(uid: string, a: Record<string, unknown>): string {
   const today = todayJakarta();
-  return summaryFromDashboard(
-    { financial: getFinancialProfile(uid), categories: listCategories(uid), goals: listGoals(uid, startOfMonth(todayJakarta())) },
-    parseDashboard(dashboard(uid, dashboardArgs("month", today))),
-    today,
-  );
+  const terms = (Array.isArray(a.kata_kunci) ? a.kata_kunci : typeof a.kata_kunci === "string" ? [a.kata_kunci] : [])
+    .filter((t): t is string => typeof t === "string")
+    .map((t) => t.slice(0, 40));
+  const from = isDate(a.dari) ? a.dari : addMonths(today, -12);
+  const to = isDate(a.sampai) ? a.sampai : today;
+  const type = a.jenis === "pengeluaran" ? "expense" : a.jenis === "pemasukan" ? "income" : null;
+  const r = coachSearchTransactions(uid, {
+    terms: expandTerms(terms),
+    type,
+    from,
+    to,
+    order: a.urutan === "terbesar" ? "terbesar" : "terbaru",
+    limit: typeof a.batas === "number" ? a.batas : 10,
+  });
+  if (r.n === 0) return `Tidak ada transaksi yang cocok (${terms.length ? `kata kunci: ${terms.join(", ")}; ` : ""}${from} sampai ${to}).`;
+  return JSON.stringify({
+    rentang: `${from} sampai ${to}`,
+    jumlah_cocok: r.n,
+    total_pengeluaran: r.expense,
+    total_pemasukan: r.income,
+    ditampilkan: r.rows.length,
+    transaksi: r.rows.map((t) => ({
+      tanggal: t.date,
+      jam: t.time,
+      jenis: t.type === "income" ? "pemasukan" : "pengeluaran",
+      jumlah: t.amount,
+      kategori: t.category,
+      keterangan: t.description,
+    })),
+  });
 }
 
 /**
@@ -473,7 +573,7 @@ export async function POST(req: Request) {
   const question = last.content;
   const today = todayJakarta();
   const messages: ChatMessage[] = [
-    { role: "system", content: `${COACH_SYSTEM_PROMPT}${searchEnabled ? SEARCH_PROMPT : ""}\n\nTanggal hari ini: ${today} (Asia/Jakarta).` },
+    { role: "system", content: `${COACH_SYSTEM_PROMPT}${TX_PROMPT}${searchEnabled ? SEARCH_PROMPT : ""}\n\nTanggal hari ini: ${today} (Asia/Jakarta).` },
     { role: "user", content: `Ringkasan data keuangan pengguna (JSON):\n${JSON.stringify(summary)}` },
     { role: "assistant", content: "Oke, aku sudah baca ringkasannya." },
     ...body.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -511,7 +611,7 @@ export async function POST(req: Request) {
         } else {
           send({ type: "status", text: "Lagi mikir…" });
           try {
-            const { text, sources } = await converse(messages, send, req.signal);
+            const { text, sources } = await converse(auth.uid, messages, send, req.signal);
             if (!text) fallback("AI tidak memberi jawaban, jadi ini jawaban otomatis dari angkamu.");
             else send({ type: "done", source: "ai", reply: text, sources: sources.length ? sources : undefined });
           } catch (err) {

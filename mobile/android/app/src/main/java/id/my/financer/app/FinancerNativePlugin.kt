@@ -80,10 +80,13 @@ class FinancerNativePlugin : Plugin() {
 
     @PluginMethod
     fun flush(call: PluginCall) {
+        // Missed notifications still in the shade join the queue, then everything is sent now.
+        val swept = BankNotificationListener.instance?.sweep() ?: 0
         val queued = NotificationStore.queued(context)
-        UploadWorker.schedule(context)
+        if (queued > 0) UploadWorker.sendNow(context)
         val ret = JSObject()
         ret.put("sent", queued)
+        ret.put("swept", swept)
         call.resolve(ret)
     }
 }

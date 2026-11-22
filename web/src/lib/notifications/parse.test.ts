@@ -6,6 +6,7 @@ const BCA = "com.bca.mybca.omni.android";
 const DANA = "id.dana";
 const SHOPEE = "com.shopee.id";
 const GOPAY = "com.gojek.gopay";
+const LIVIN = "id.bmri.livin";
 
 describe("amounts in both number styles", () => {
   it.each([
@@ -98,6 +99,29 @@ describe("GoPay", () => {
   });
   it("ignores its promos", () => {
     expect(parseNotification({ packageName: GOPAY, title: "Hadiahmu nunggu", text: "Buka sekarang sebelum hangus dan nikmatin bermacam-macam hadiah." })).toBeNull();
+  });
+});
+
+describe("Livin' by Mandiri", () => {
+  const title = "Ini Dia Transaksi Terbaru Anda";
+  it("reads a debit card payment, despite the login call to action", () => {
+    expect(
+      parseNotification({ packageName: LIVIN, title, text: "Dana Rp 100.000,00 didebit dari rek. ****3106. Login ke Livin' by Mandiri untuk cek Mutasi Transaksi." }),
+    ).toEqual({
+      source: "livin",
+      type: "expense",
+      amount: 100_000,
+      counterparty: null,
+      categoryHint: null,
+      description: "Kartu debit Mandiri · rek. 3106",
+      maybeTransfer: false,
+    });
+    expect(
+      parseNotification({ packageName: LIVIN, title, text: "Dana Rp 11.500,00 didebit dari rek. ****3106. Login ke Livin' by Mandiri untuk cek Mutasi Transaksi." }),
+    ).toMatchObject({ type: "expense", amount: 11_500 });
+  });
+  it("still ignores its login alerts", () => {
+    expect(parseNotification({ packageName: LIVIN, title: "Livin' by Mandiri", text: "Login ke Livin' by Mandiri berhasil pada perangkat baru." })).toBeNull();
   });
 });
 

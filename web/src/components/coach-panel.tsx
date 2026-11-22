@@ -4,15 +4,11 @@ import { ArrowRight, Clock, Info, Plus, RotateCcw, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/app-provider";
 import { Spinner } from "@/components/ui/controls";
-import { fallbackReply, summaryFromDashboard } from "@/lib/coach";
+import { fallbackReply, suggestQuestions, summaryFromDashboard } from "@/lib/coach";
 import { type SendContext, cancel, clearLimit, send as sendMessage, setInput, takePendingAsk, takeUnanswered, useCoachChat } from "@/lib/coach-chat";
 import { MESSAGES, isOffline } from "@/lib/errors";
-import { useDashboard } from "@/lib/queries";
+import { useCoachSuggestions, useDashboard } from "@/lib/queries";
 
-// With records the coach can read where money went; before the first record it
-// answers from the onboarding profile, so it only suggests questions it can answer.
-const SUGGESTIONS = ["Gimana cara nabung lebih banyak bulan ini?", "Aku mampu beli HP Rp5 juta nggak?", "Ke mana uangku paling banyak keluar?"];
-const FIRST_SUGGESTIONS = ["Dana darurat idealnya berapa buatku?", "Aku mampu beli HP Rp5 juta nggak?", "Gimana mulai nabung dari gajiku?"];
 
 /** Wall-clock time, read only from event handlers and timers. */
 function currentTime(): number {
@@ -34,6 +30,10 @@ export function CoachPanel({ onAddTx }: { onAddTx: () => void }) {
   const last = messages[messages.length - 1];
   const unanswered = !loading && last?.role === "user";
   const endRef = useRef<HTMLDivElement>(null);
+  // Questions written by the AI from the user's own figures; if that fails, picked from the same figures here.
+  const suggestQuery = useCoachSuggestions(messages.length === 0);
+  const suggestions =
+    suggestQuery.data ?? (suggestQuery.isError && dashQuery.data ? suggestQuestions(summaryFromDashboard(data, dashQuery.data, today)) : null);
 
   useEffect(() => {
     if (limitedUntil === null) return;
@@ -175,12 +175,14 @@ export function CoachPanel({ onAddTx }: { onAddTx: () => void }) {
       )}
 
       {messages.length === 0 && (
-        <div className="wrap" role="group" aria-label="Contoh pertanyaan">
-          {(noRecords ? FIRST_SUGGESTIONS : SUGGESTIONS).map((s) => (
-            <button key={s} className="chip" type="button" onClick={() => send(s)}>
-              {s}
-            </button>
-          ))}
+        <div className="wrap" role="group" aria-label="Contoh pertanyaan" aria-busy={!suggestions}>
+          {suggestions
+            ? suggestions.map((s) => (
+                <button key={s} className="chip suggest-in" type="button" onClick={() => send(s)}>
+                  {s}
+                </button>
+              ))
+            : [72, 58, 66].map((w) => <span key={w} className="chip chip-skel" style={{ width: `${w}%` }} aria-hidden="true" />)}
         </div>
       )}
 

@@ -8,7 +8,7 @@ const SUPPORT = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@financer.my.id
 
 export default function PrivasiPage() {
   return (
-    <LegalPage title="Kebijakan Privasi" updated="18 November 2026">
+    <LegalPage title="Kebijakan Privasi" updated="22 November 2026">
       <p>
         Financer adalah aplikasi untuk mencatat keuangan pribadi, menabung untuk tujuan, dan bertanya ke AI Coach. Halaman ini menjelaskan data apa yang kami simpan, untuk apa,
         siapa saja yang ikut memprosesnya, dan apa hakmu. Kami mengikuti Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.
@@ -72,7 +72,8 @@ export default function PrivasiPage() {
       <ul>
         <li>
           <b>Penyedia model AI (melalui router AI)</b> untuk AI Coach: pertanyaanmu dan ringkasan angka (total pemasukan, pengeluaran, kategori teratas, dan nama serta target
-          tujuanmu). Nama panggilan, email, dan catatan transaksimu tidak dikirim.
+          tujuanmu). Kalau pertanyaanmu soal transaksi tertentu (misalnya &ldquo;tiket kereta terakhir berapa?&rdquo;), AI Coach mencari di catatanmu di server Financer
+          dan hanya transaksi yang cocok (tanggal, jumlah, kategori, dan keterangan; paling banyak 25) yang ikut dikirim untuk pertanyaan itu. Nama panggilan dan email tidak dikirim.
         </li>
         <li>
           <b>Exa</b> untuk pencarian harga di internet: kata kunci pencarian yang disusun AI Coach dari pertanyaanmu.

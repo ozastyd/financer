@@ -77,6 +77,9 @@ const cleanName = (s: string | undefined | null) => {
   return t === t.toUpperCase() ? t.toLowerCase().replace(/\b\p{L}/gu, (c) => c.toUpperCase()) : t;
 };
 
+/** Fixed calls to action at the end of a real transaction notice (removed before IGNORE, which looks for "login"). */
+const TRAILERS = /\s*Login\s+ke\s+Livin'?\s+by\s+Mandiri\s+untuk\s+cek\s+Mutasi\s+Transaksi\.?\s*$/i;
+
 /** Wording that is never a completed transaction. */
 const IGNORE = /\b(OTP|kode verifikasi|jangan berikan|promo|cashback hingga|diskon|voucher|login|masuk ke akun|gagal|dibatalkan|pending|sedang diproses|menunggu)\b/i;
 
@@ -102,6 +105,16 @@ const RULES: Partial<Record<NotifSource, Rule[]>> = {
         description: `${hint}${who ? ` · ${who}` : ""}`,
         maybeTransfer: /transfer|top ?up|tarik tunai/i.test(hint),
       };
+    },
+  ],
+  livin: [
+    // title "Ini Dia Transaksi Terbaru Anda", "Dana Rp 100.000,00 didebit dari rek. ****3106."
+    // (sent for Visa/Mastercard debit card payments; the merchant isn't named)
+    ({ text }) => {
+      const m = text.match(new RegExp(String.raw`^Dana\s+${AMOUNT}\s+didebit\s+dari\s+rek(?:ening)?\.?\s*[*•x]*(\d{3,4})\b`, "i"));
+      const amount = m && parseAmount(m[1]);
+      if (!m || !amount) return null;
+      return { type: "expense", amount, counterparty: null, categoryHint: null, description: `Kartu debit Mandiri · rek. ${m[2]}`, maybeTransfer: false };
     },
   ],
   dana: [
@@ -147,7 +160,7 @@ export function parseNotification(n: RawNotification): ParsedNotification | null
   const source = sourceOf(n.packageName);
   if (!source) return null;
   const title = (n.title ?? "").trim();
-  const text = (n.text ?? "").replace(/\s+/g, " ").trim();
+  const text = (n.text ?? "").replace(/\s+/g, " ").trim().replace(TRAILERS, "");
   if (!text || IGNORE.test(`${title} ${text}`)) return null;
   for (const rule of RULES[source] ?? []) {
     const r = rule({ title, text });

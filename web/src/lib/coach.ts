@@ -2,7 +2,7 @@ import { formatMonthYear } from "./date";
 import type { Dashboard } from "./dashboard";
 import { type CategoryAmount, periodRange, recordedBalance, slicesFromAmounts, totals } from "./finance";
 import { estimateCompletion, goalProgress, goalRemaining } from "./goals";
-import { formatRupiah } from "./money";
+import { formatRupiah, formatShort } from "./money";
 import type { Category, FinancialProfile, Goal, Transaction } from "./types";
 
 /**
@@ -185,4 +185,32 @@ export function fallbackReply(question: string, s: FinancialSummary): string {
     lines.push("Coba tanya lagi nanti untuk saran yang lebih personal.");
   }
   return lines.join("\n");
+}
+
+const STARTER_QUESTIONS = ["Gimana cara nabung lebih banyak bulan ini?", "Dana darurat idealnya berapa buatku?", "Aku mampu beli HP Rp5 juta nggak?"];
+
+/**
+ * Three questions drawn from the user's own figures, used when the AI can't
+ * suggest any. Most telling first; generic starters only fill the gaps.
+ */
+export function suggestQuestions(s: FinancialSummary): string[] {
+  const out: string[] = [];
+  const add = (q: string | null | false | undefined) => {
+    if (q && !out.includes(q) && out.length < 3) out.push(q);
+  };
+  const m = s.this_month;
+  const top = m.top_expense_categories[0];
+  const goal = s.goals.find((g) => g.status === "active" && g.remaining > 0);
+  const p = s.profile;
+
+  add(m.transactions > 0 && m.net < 0 && "Bulan ini aku minus. Gimana nutupnya?");
+  add(top && top.amount > 0 && `Gimana cara hemat ${top.name.toLowerCase()} yang sudah ${formatShort(top.amount)}?`);
+  add(goal && `Kapan ${goal.title} bisa tercapai?`);
+  add(m.transactions > 0 && s.last_month.expense > 0 && m.expense > s.last_month.expense && "Kenapa pengeluaranku naik dari bulan lalu?");
+  add(p && p.existing_debt > 0 && "Gimana cara lunasin utangku lebih cepat?");
+  add(p && (p.emergency_fund_status === "belum_ada" || p.emergency_fund_status === "sebagian") && "Dana darurat idealnya berapa buatku?");
+  add(m.free_to_spend > 0 && `Sisa ${formatShort(m.free_to_spend)} bulan ini enaknya buat apa?`);
+  add(p && p.uses_paylater && p.uses_paylater !== "tidak" && "Aman nggak aku pakai paylater?");
+  for (const q of STARTER_QUESTIONS) add(q);
+  return out;
 }

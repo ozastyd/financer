@@ -21,7 +21,8 @@ interface FinancerNativePlugin {
   openListenerSettings(): Promise<void>;
   connect(opts: { token: string; deviceId: string; endpoint: string }): Promise<void>;
   disconnect(): Promise<void>;
-  flush(): Promise<{ sent: number }>;
+  /** Sweeps missed notifications from the shade (app 0.4+) and sends the queue now. */
+  flush(): Promise<{ sent: number; swept?: number }>;
   /** Missing on app 0.2. */
   requestNotifications?(): Promise<{ granted: boolean }>;
 }

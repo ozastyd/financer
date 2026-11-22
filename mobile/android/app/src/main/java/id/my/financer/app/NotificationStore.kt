@@ -41,8 +41,12 @@ object NotificationStore {
     }
 
     fun connect(c: Context, token: String, deviceId: String, endpoint: String) {
-        prefs(c).edit().putString("token", token).putString("deviceId", deviceId).putString("endpoint", endpoint).apply()
+        prefs(c).edit().putString("token", token).putString("deviceId", deviceId).putString("endpoint", endpoint)
+            .putLong("connectedAt", System.currentTimeMillis()).apply()
     }
+
+    /** When this phone was connected (0 for phones connected before app 0.4). */
+    fun connectedAt(c: Context): Long = prefs(c).getLong("connectedAt", 0L)
 
     /** Forget the account on this phone, including anything not yet sent. */
     fun disconnect(c: Context) {
