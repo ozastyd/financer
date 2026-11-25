@@ -13,8 +13,8 @@ import { pipeline } from "node:stream/promises";
 import { createGzip } from "node:zlib";
 import { DatabaseSync } from "node:sqlite";
 
-const DB = process.env.DATABASE_PATH || "/data/workspace/financer-data/financer.db";
-const DIR = process.env.BACKUP_DIR || "/data/workspace/financer-backups";
+const DB = process.env.DATABASE_PATH || "/data/workspace/financer/data/financer.db";
+const DIR = process.env.BACKUP_DIR || "/data/workspace/financer/backups";
 const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z");
 const daily = join(DIR, "daily");
 const weekly = join(DIR, "weekly");

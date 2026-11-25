@@ -13,7 +13,7 @@ Bump `versionCode` (and `versionName`) in `android/app/build.gradle` for every u
 
 ## Signing
 Release builds are signed with the **upload key** described in `android/keystore.properties`
-(never committed). On the build server the key lives in `/data/workspace/financer-secrets/`.
+(never committed). On the build server the key lives in `/data/workspace/financer/secrets/`.
 Keep an offline backup of `financer-upload.jks` and its password: with Play App Signing,
 Google holds the app-signing key, and a lost upload key can be reset through Play Console
 support, but it is slow.

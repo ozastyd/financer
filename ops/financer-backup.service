@@ -5,5 +5,5 @@ After=network.target
 [Service]
 Type=oneshot
 User=user
-EnvironmentFile=-/data/workspace/financer/ops/backup.env
-ExecStart=/usr/local/bin/node --no-warnings /data/workspace/financer/ops/backup-db.mjs
+EnvironmentFile=-/data/workspace/financer/app/ops/backup.env
+ExecStart=/usr/local/bin/node --no-warnings /data/workspace/financer/app/ops/backup-db.mjs
