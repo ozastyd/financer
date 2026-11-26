@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { parseBody } from "@/lib/api";
 import { COACH_SYSTEM_PROMPT, type FinancialSummary, fallbackReply } from "@/lib/coach";
-import { loadSummary } from "@/lib/coach-server";
-import { addMonths, todayJakarta } from "@/lib/date";
+import { SAYS_NOT_FOUND, keywordsOf, loadSummary } from "@/lib/coach-server";
+import { addDays, addMonths, todayJakarta } from "@/lib/date";
 import { coachSearchTransactions } from "@/lib/db";
+import { formatRupiah } from "@/lib/money";
 import { coachRequest } from "@/lib/schemas";
 import { type SearchResult, searchEnabled, webSearch } from "@/lib/search";
 import { requireUser } from "@/lib/server";
@@ -151,7 +152,9 @@ const TX_TOOL = {
 const TX_PROMPT = `
 
 Kamu punya alat cari_transaksi untuk membaca catatan transaksi pengguna satu per satu (ringkasan JSON hanya berisi total).
-- Pakai kalau pertanyaan menyangkut transaksi tertentu, keterangan, toko, frekuensi, atau total untuk hal tertentu. Jangan bilang datanya tidak ada sebelum mencari.
+- Pakai kalau pertanyaan menyangkut transaksi tertentu, keterangan, toko, hotel, frekuensi, atau total untuk hal tertentu. Jangan bilang datanya tidak ada sebelum mencari.
+- Pertanyaan soal uang yang sudah dikeluarkan atau diterima pengguna ("pengeluaran X", "bayar X berapa", "kemarin beli apa") selalu dijawab dari cari_transaksi, bukan dari internet, walaupun sebelumnya kalian membahas harga X di internet.
+- "Kemarin"/"kemaren", "minggu lalu", dan sejenisnya hitung dari tanggal hari ini di bawah. Kalau ragu soal tanggal, cari tanpa batas tanggal sempit.
 - Beri beberapa kata kunci pendek sekaligus (sinonim, singkatan, nama merek). Kalau tidak ketemu, coba sekali lagi dengan kata lain atau tanpa kata kunci di rentang tanggal yang masuk akal.
 - Jawab seperti teman yang mengecek catatan: sebut keterangannya, tanggal dalam format biasa (misalnya "22 Nov"), dan jumlahnya persis dari hasil. Angka dari hasil ini adalah angka tercatat, jadi tidak perlu diberi label "(angka tercatat)".
 - "Pengeluaran terbesar" bisa berarti satu transaksi terbesar (cari dengan urutan terbesar) atau kategori terbesar (dari ringkasan); kalau ragu, sebut keduanya singkat.`;
@@ -165,7 +168,7 @@ Kamu punya alat web_search untuk mencari di internet secara real-time.
 - Pakai web_search kalau pengguna tanya soal membeli produk tertentu, harga, perbandingan toko, promo, atau info terbaru. Cukup 1–2 pencarian yang spesifik.
 - Untuk rencana beli barang: sebutkan kisaran harga termurah–termahal yang kamu temukan beserta nama tokonya, lalu hubungkan dengan angka di ringkasan (mampu atau tidak, dampak ke tujuan, alternatif lebih hemat seperti varian lain, barang second, atau menunggu promo).
 - Tandai harga sebagai "hasil pencarian, bisa berubah". Jangan menulis URL; daftar sumber ditampilkan otomatis oleh aplikasi.
-- Pertanyaan yang tidak butuh internet (misalnya ringkasan pengeluaran, transaksi pengguna, atau tips umum) jawab langsung tanpa web_search.`;
+- Pertanyaan yang tidak butuh internet (misalnya ringkasan pengeluaran, transaksi pengguna, atau tips umum) jawab tanpa web_search. Transaksi pengguna dicari dengan cari_transaksi.`;
 
 /** Visible text of a reply: drops <think>…</think> blocks, including one still open. */
 function visibleText(raw: string): string {
@@ -183,6 +186,7 @@ function endAtSentence(text: string): string {
   if (m && m[0].length >= text.length * 0.4) return m[0].trim();
   return text ? `${text.replace(/[\s,;:(]+$/, "")}…` : text;
 }
+
 
 interface TurnResult {
   content: string;
@@ -355,7 +359,7 @@ function runTurn(
       ).then(
         (r) => {
           running--;
-          console.log(`coach: ${provider.name} ${Date.now() - t0}ms request ${n}, tool calls ${r.tool_calls.length}`);
+          console.log(`coach: ${provider.name} ${Date.now() - t0}ms request ${n}, tools ${r.tool_calls.map((c) => c.function?.name).join(",") || "none"}`);
           finish(() => resolve(r));
         },
         (err) => {
@@ -410,13 +414,14 @@ type CoachEvent =
   | { type: "done"; source: "ai" | "fallback"; reply?: string; notice?: string; sources?: SourceLink[] };
 
 /** Runs the conversation, looking up the user's records or the web when the model asks to, and streams events. */
-async function converse(uid: string, messages: ChatMessage[], send: (e: CoachEvent) => void, signal: AbortSignal): Promise<{ text: string; sources: SourceLink[] }> {
+async function converse(uid: string, question: string, messages: ChatMessage[], send: (e: CoachEvent) => void, signal: AbortSignal): Promise<{ text: string; sources: SourceLink[] }> {
   const sources = new Map<string, SourceLink>();
   let searches = 0;
   let lookups = 0;
   const deadline = Date.now() + TOTAL_BUDGET_MS;
+  let rescued = false;
   for (let round = 0; ; round++) {
-    const canUseTools = round < MAX_TOOL_ROUNDS && deadline - Date.now() > 30_000;
+    const canUseTools = !rescued && round < MAX_TOOL_ROUNDS && deadline - Date.now() > 30_000;
     let shown = false;
     const msg = await runTurn(
       messages,
@@ -432,7 +437,33 @@ async function converse(uid: string, messages: ChatMessage[], send: (e: CoachEve
         send({ type: "reset" });
       },
     );
-    if (!canUseTools || msg.tool_calls.length === 0) return { text: msg.content, sources: [...sources.values()].slice(0, 6) };
+    if (!canUseTools || msg.tool_calls.length === 0) {
+      // Saying "not in your records" without having looked (say, after a web search on the same name)
+      // is the one wrong answer the user can't catch, so it gets a forced lookup and a second try.
+      // An empty reply without a lookup is usually the model reaching for the records tool it wasn't offered.
+      // Asking it again to search is not reliable on the smaller fallback models, so the server searches
+      // with the words of the question and the model answers from those rows.
+      if (lookups === 0 && !rescued && question && (!msg.content.trim() || SAYS_NOT_FOUND.test(msg.content)) && deadline - Date.now() > 20_000) {
+        rescued = true;
+        lookups++;
+        const kata_kunci = keywordsOf(question);
+        console.log(`coach: answered 'not found' or nothing without a lookup; searching the records (${kata_kunci.length} words)`);
+        if (shown) send({ type: "reset" });
+        send({ type: "status", text: "Mencari di catatanmu…" });
+        let result: string;
+        try {
+          result = lookUpTransactions(uid, { kata_kunci, batas: 10 });
+        } catch (e) {
+          console.error("coach: transaction lookup failed", e instanceof Error ? e.message : "");
+          return { text: msg.content, sources: [...sources.values()].slice(0, 6) };
+        }
+        const call: ToolCall = { id: "records-check", type: "function", function: { name: TX_TOOL.function.name, arguments: JSON.stringify({ kata_kunci }) } };
+        messages.push({ role: "assistant", content: null, tool_calls: [call] }, { role: "tool", tool_call_id: call.id, content: result });
+        send({ type: "status", text: "Menyusun jawaban…" });
+        continue;
+      }
+      return { text: msg.content, sources: [...sources.values()].slice(0, 6) };
+    }
 
     // The model wants to look something up: anything it wrote before the call is not the answer.
     if (shown) send({ type: "reset" });
@@ -527,14 +558,14 @@ function lookUpTransactions(uid: string, a: Record<string, unknown>): string {
   return JSON.stringify({
     rentang: `${from} sampai ${to}`,
     jumlah_cocok: r.n,
-    total_pengeluaran: r.expense,
-    total_pemasukan: r.income,
+    total_pengeluaran: formatRupiah(r.expense),
+    total_pemasukan: formatRupiah(r.income),
     ditampilkan: r.rows.length,
     transaksi: r.rows.map((t) => ({
       tanggal: t.date,
       jam: t.time,
       jenis: t.type === "income" ? "pemasukan" : "pengeluaran",
-      jumlah: t.amount,
+      jumlah: formatRupiah(t.amount),
       kategori: t.category,
       keterangan: t.description,
     })),
@@ -573,7 +604,7 @@ export async function POST(req: Request) {
   const question = last.content;
   const today = todayJakarta();
   const messages: ChatMessage[] = [
-    { role: "system", content: `${COACH_SYSTEM_PROMPT}${TX_PROMPT}${searchEnabled ? SEARCH_PROMPT : ""}\n\nTanggal hari ini: ${today} (Asia/Jakarta).` },
+    { role: "system", content: `${COACH_SYSTEM_PROMPT}${TX_PROMPT}${searchEnabled ? SEARCH_PROMPT : ""}\n\nTanggal hari ini: ${today} (Asia/Jakarta). Kemarin: ${addDays(today, -1)}.` },
     { role: "user", content: `Ringkasan data keuangan pengguna (JSON):\n${JSON.stringify(summary)}` },
     { role: "assistant", content: "Oke, aku sudah baca ringkasannya." },
     ...body.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -611,7 +642,7 @@ export async function POST(req: Request) {
         } else {
           send({ type: "status", text: "Lagi mikir…" });
           try {
-            const { text, sources } = await converse(auth.uid, messages, send, req.signal);
+            const { text, sources } = await converse(auth.uid, question, messages, send, req.signal);
             if (!text) fallback("AI tidak memberi jawaban, jadi ini jawaban otomatis dari angkamu.");
             else send({ type: "done", source: "ai", reply: text, sources: sources.length ? sources : undefined });
           } catch (err) {

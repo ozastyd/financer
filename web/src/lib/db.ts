@@ -718,12 +718,17 @@ export interface CoachTxSearch {
  * can answer "berapa total…" without seeing more rows than it needs.
  */
 export function coachSearchTransactions(uid: string, q: CoachTxSearch) {
-  const terms = q.terms.map((t) => t.trim()).filter((t) => t.length >= 2).slice(0, 8);
-  const likes = terms.map((t) => `%${t.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
-  const match = likes.length ? `and (${likes.map(() => "t.description like ? escape '\\' or c.name like ? escape '\\'").join(" or ")})` : "";
+  // A term matches when every word of it appears, in any order ("sewa axon" finds "AXON Suites … sewa").
+  const terms = q.terms
+    .map((t) => t.split(/\s+/).filter((w) => w.length >= 2))
+    .filter((words) => words.length > 0)
+    .slice(0, 8);
+  const like = (w: string) => `%${w.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const wordMatch = "(t.description like ? escape '\\' or c.name like ? escape '\\')";
+  const match = terms.length ? `and (${terms.map((words) => `(${words.map(() => wordMatch).join(" and ")})`).join(" or ")})` : "";
   const where = `from transactions t left join categories c on c.id = t.category_id and c.user_id = t.user_id
      where t.user_id = ? and t.transaction_date between ? and ? and (? is null or t.type = ?) ${match}`;
-  const params: SQLInputValue[] = [uid, q.from, q.to, q.type, q.type, ...likes.flatMap((l) => [l, l])];
+  const params: SQLInputValue[] = [uid, q.from, q.to, q.type, q.type, ...terms.flatMap((words) => words.flatMap((w) => [like(w), like(w)]))];
   const totals = one(
     `select count(*) as n,
             coalesce(sum(case when t.type='expense' then t.amount end),0) as expense,

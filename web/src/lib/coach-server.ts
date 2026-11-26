@@ -140,3 +140,27 @@ export async function coachSuggestions(uid: string, summary: FinancialSummary): 
     inflight.delete(uid);
   }
 }
+
+/**
+ * A reply saying something is not in the user's records ("nggak menemukan", "belum ada di catatanmu")
+ * or asking for what it can look up itself ("aku perlu mengakses catatanmu", "tambahkan dulu transaksinya").
+ * Broad on purpose: a false match only costs one local search before the answer.
+ */
+export const SAYS_NOT_FOUND =
+  /\b(?:nggak|ngga|gak|enggak|tidak|belum|tak|bukan)\b[^.!?\n]{0,50}?(?:catatan|tercatat|dicatat|mencatat|menemukan|nemu|ketemu|ditemukan|akses)|\b(?:perlu|butuh)\s+(?:akses|mengakses|melihat|membaca|mengecek|cek)\b|\b(?:kirim(?:kan)?|tambahkan|masukkan|catat)\s+(?:dulu\s+)?(?:data|catatan|detail|transaksi)/i;
+
+// Words of a question that say nothing about which transaction is meant.
+const QUESTION_WORDS = new Set(
+  (
+    "pengeluaran pemasukan transaksi catatan catat tercatat bayar bayarnya dibayar beli belinya membeli habis keluar uang duit total jumlah " +
+    "berapa kapan apa aja saja mana yang untuk buat dari ke di dan atau sama dengan itu ini tadi lalu kemarin kemaren kemarén minggu bulan tahun hari " +
+    "terakhir terbaru pertama kali aku saya gue gua kamu dong sih kok ya yah nih deh cek lihat liat tolong coba ada sudah udah belum " +
+    "the for and of my spent spending"
+  ).split(" "),
+);
+
+/** Up to six words of the user's question to search the records with ("pengeluaran axon suites kemaren" → axon, suites). */
+export function keywordsOf(question: string): string[] {
+  const words = question.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  return [...new Set(words.filter((w) => w.length >= 3 && !QUESTION_WORDS.has(w) && !/^\d+$/.test(w)))].slice(0, 6);
+}
