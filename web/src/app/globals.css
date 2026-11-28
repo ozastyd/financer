@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Tailwind's dark: follows the app theme: data-theme="dark", or the system
+   preference while the user hasn't picked one (same rule as the tokens below). */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
+
 /* Financer design tokens, ported from design/project/fo.css.
    Light palette on :root; dark palette applies with data-theme="dark", or with
    the system preference when the user has not picked a theme. */
@@ -3745,4 +3758,41 @@ html.kb-open .coach-fab {
   text-align: left;
   padding-block: 10px;
   line-height: 1.35;
+}
+
+/* Profil → Tampilan: theme row with the sun/moon switch. */
+.theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.theme-row-text {
+  min-width: 0;
+}
+.theme-row-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+/* Both states take the link's 44px tap height, so the row doesn't jump. */
+.theme-row-text .s {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+button.theme-row-system {
+  padding: 0;
+  font-size: 13px;
+  color: var(--pri);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.theme-switch {
+  min-height: 44px;
+  min-width: 104px;
+  border-radius: 999px;
 }
