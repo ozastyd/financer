@@ -5,6 +5,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import type { DashboardArgs, DashboardRaw } from "./dashboard";
+import type { RatingStats } from "./rating";
 import type { Category, Contribution, FinancialProfile, Goal, UserProfile } from "./types";
 
 // SQLite storage with one account per person. Every row belongs to a user and
@@ -252,6 +253,23 @@ create table if not exists feature_interest (
   feature text not null check (length(feature) between 1 and 40),
   created_at text not null default ${NOW},
   primary key (user_id, feature)
+);
+
+-- "Seberapa Financer membantumu?": one answer per user (sending again replaces it).
+create table if not exists app_ratings (
+  user_id text primary key references users (id) on delete cascade,
+  rating integer not null check (rating between 1 and 5),
+  reasons text not null default '[]',
+  note text not null default '' check (length(note) <= 500),
+  created_at text not null default ${NOW},
+  updated_at text not null default ${NOW}
+);
+
+-- How often the rating card was shown, so a close asks again later and not forever.
+create table if not exists rating_prompts (
+  user_id text primary key references users (id) on delete cascade,
+  asks integer not null default 0,
+  last_asked_at text
 );
 `;
 
@@ -956,3 +974,39 @@ export function clearSamples(uid: string) {
   db().prepare("delete from notification_samples where user_id = ?").run(uid);
 }
 
+// ---------------------------------------------------------------------------
+// app rating
+// ---------------------------------------------------------------------------
+
+export function ratingStats(uid: string): RatingStats | undefined {
+  const user = one("select created_at from users where id = ?", uid) as { created_at: string } | undefined;
+  if (!user) return undefined;
+  const use = one("select count(*) as n, count(distinct transaction_date) as days from transactions where user_id = ?", uid) as { n: number; days: number };
+  const prompt = one("select asks, last_asked_at from rating_prompts where user_id = ?", uid) as { asks: number; last_asked_at: string | null } | undefined;
+  return {
+    accountCreatedAt: user.created_at,
+    activeDays: use.days,
+    transactions: use.n,
+    rated: !!one("select 1 from app_ratings where user_id = ?", uid),
+    asks: prompt?.asks ?? 0,
+    lastAskedAt: prompt?.last_asked_at ?? null,
+  };
+}
+
+export function markRatingAsked(uid: string) {
+  db()
+    .prepare(
+      `insert into rating_prompts (user_id, asks, last_asked_at) values (?, 1, ${NOW})
+       on conflict (user_id) do update set asks = asks + 1, last_asked_at = excluded.last_asked_at`,
+    )
+    .run(uid);
+}
+
+export function saveRating(uid: string, r: { rating: number; reasons: string[]; note: string }) {
+  db()
+    .prepare(
+      `insert into app_ratings (user_id, rating, reasons, note) values (?, ?, ?, ?)
+       on conflict (user_id) do update set rating = excluded.rating, reasons = excluded.reasons, note = excluded.note, updated_at = ${NOW}`,
+    )
+    .run(uid, r.rating, JSON.stringify(r.reasons), r.note);
+}

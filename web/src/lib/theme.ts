@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 export type ThemeChoice = "light" | "dark" | "system";
 
@@ -34,4 +34,22 @@ export function useTheme(): [ThemeChoice, (c: ThemeChoice) => void] {
     }
   };
   return [choice, update];
+}
+
+const DARK_QUERY = "(prefers-color-scheme: dark)";
+
+function subscribeSystem(onChange: () => void) {
+  const mq = window.matchMedia(DARK_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+/** The theme actually on screen: the user's pick, or the device's when they follow the system. */
+export function useResolvedTheme(choice: ThemeChoice): "light" | "dark" {
+  const systemDark = useSyncExternalStore(
+    subscribeSystem,
+    () => window.matchMedia(DARK_QUERY).matches,
+    () => false,
+  );
+  return choice === "system" ? (systemDark ? "dark" : "light") : choice;
 }

@@ -8,7 +8,7 @@ const SUPPORT = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@financer.my.id
 
 export default function PrivasiPage() {
   return (
-    <LegalPage title="Kebijakan Privasi" updated="22 November 2026">
+    <LegalPage title="Kebijakan Privasi" updated="27 November 2026">
       <p>
         Financer adalah aplikasi untuk mencatat keuangan pribadi, menabung untuk tujuan, dan bertanya ke AI Coach. Halaman ini menjelaskan data apa yang kami simpan, untuk apa,
         siapa saja yang ikut memprosesnya, dan apa hakmu. Kami mengikuti Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.
@@ -27,6 +27,10 @@ export default function PrivasiPage() {
         </li>
         <li>
           <b>Fitur yang kamu tunggu:</b> kalau kamu menekan &ldquo;Kabari saya&rdquo; di Profil.
+        </li>
+        <li>
+          <b>Penilaianmu:</b> kalau kamu menjawab &ldquo;Seberapa Financer membantumu?&rdquo;, kami menyimpan nilai, alasan yang kamu pilih, dan catatanmu untuk memperbaiki
+          aplikasi. Jawaban ini terhapus bersama akunmu.
         </li>
         <li>
           <b>Perangkat terhubung:</b> kalau kamu menyalakan pencatatan otomatis di aplikasi Android, kami menyimpan penanda perangkat (dalam bentuk hash) dan kapan terakhir

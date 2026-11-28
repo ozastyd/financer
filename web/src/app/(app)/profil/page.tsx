@@ -9,7 +9,7 @@ import { AutoRecord } from "@/components/auto-record";
 import { InstallIPhone } from "@/components/install-iphone";
 import { SUPPORT_EMAIL } from "@/components/error-states";
 import { useToast } from "@/components/toast";
-import { ErrorNote, Field, PasswordInput, Segmented, Spinner } from "@/components/ui/controls";
+import { ErrorNote, Field, PasswordInput, Spinner } from "@/components/ui/controls";
 import { Sheet } from "@/components/ui/sheet";
 import { MIN_PASSWORD } from "@/lib/credentials";
 import { toAppError } from "@/lib/errors";
@@ -17,7 +17,8 @@ import { formatRupiah } from "@/lib/money";
 import { EXPERIENCE, OCCUPATIONS, labelOf } from "@/lib/options";
 import { disconnectThisPhone } from "@/lib/native";
 import { api } from "@/lib/store/local";
-import { type ThemeChoice, useTheme } from "@/lib/theme";
+import SwitchButton from "@/components/kokonutui/switch-button";
+import { useResolvedTheme, useTheme } from "@/lib/theme";
 import { queueTour } from "@/lib/tour";
 import { UPCOMING } from "@/lib/upcoming";
 
@@ -32,6 +33,7 @@ export default function ProfilPage() {
   const { data, session, signOut } = useApp();
   const router = useRouter();
   const [theme, setTheme] = useTheme();
+  const resolvedTheme = useResolvedTheme(theme);
   const [busy, setBusy] = useState(false);
   const [sheet, setSheet] = useState<"name" | "password" | "delete" | null>(null);
   const up = data.userProfile;
@@ -66,16 +68,19 @@ export default function ProfilPage() {
         <h2 id="p-look" className="sec">
           Tampilan
         </h2>
-        <Segmented<ThemeChoice>
-          label="Tema"
-          value={theme}
-          onChange={setTheme}
-          options={[
-            { value: "light", label: "Terang" },
-            { value: "dark", label: "Gelap" },
-            { value: "system", label: "Ikuti sistem" },
-          ]}
-        />
+        <div className="theme-row">
+          <div className="theme-row-text">
+            <p className="theme-row-title">Tema</p>
+            {theme === "system" ? (
+              <p className="s mut">Mengikuti tema perangkatmu</p>
+            ) : (
+              <button type="button" className="lnk s theme-row-system" onClick={() => setTheme("system")}>
+                Ikuti tema perangkat
+              </button>
+            )}
+          </div>
+          <SwitchButton size="lg" theme={resolvedTheme} onThemeChange={setTheme} className="theme-switch" />
+        </div>
       </section>
 
       {fp && (

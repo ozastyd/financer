@@ -12,6 +12,7 @@ import { useKeyboardClass } from "@/lib/keyboard";
 import { newChat, queueAsk, selectAccount, useCoachChat } from "@/lib/coach-chat";
 import { CoachPanel } from "./coach-panel";
 import { AppTour } from "./app-tour";
+import { RatingCard } from "./rating-card";
 import { TOUR_EVENT, tourQueued } from "@/lib/tour";
 import { PullToRefresh } from "./pull-to-refresh";
 import { setPendingScan } from "@/lib/scan-client";
@@ -372,6 +373,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         onOpenChange={(open) => setSheet((s) => ({ ...s, open }))}
       />
       <SessionExpiredSheet />
+      {status === "ready" && !needsOnboarding && (
+        <RatingCard allowed={pathname === "/beranda" && !touring && !coachOpen && !sheet.open && !tourQueued()} />
+      )}
       {touring && pathname === "/beranda" && <AppTour name={name} onDone={() => setTouring(false)} onRecord={() => openAddTx()} />}
     </ShellContext.Provider>
   );
